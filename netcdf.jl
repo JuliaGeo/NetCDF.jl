@@ -7,12 +7,18 @@ NC_MAX_NAME=256
 NC_VERBOSE=false
 
 
-NC_CHAR =2
-NC_SHORT =3
-NC_INT =4
-NC_FLOAT=5
-NC_DOUBLE =6
+NC_CHAR =int32(2)
+NC_SHORT =int32(3)
+NC_INT =int32(4)
+NC_FLOAT=int32(5)
+NC_DOUBLE =int32(6)
 NC_GLOBAL=int32(-1)
+
+
+jltype2nctype={Int16=>NC_SHORT,
+               Int32=>NC_INT,
+               Float32=>NC_FLOAT,
+               Float64=>NC_DOUBLE}
 
 
 type NcDim
@@ -24,6 +30,7 @@ type NcDim
   vals::Array
   atts::Dict{Any,Any}
 end
+NcDim(name::String,vals::Union(AbstractArray,Number):,atts::Dict{Any,Any})=NcDim(-1,-1,-1,name,length(vals),vals,atts)
 
 
 type NcVar
@@ -37,7 +44,15 @@ type NcVar
   dim::Dict{Int32,NcDim}
   atts::Dict{Any,Any}
 end
-
+function NcVar(name::String,dimin,atts::Dict{Any,Any},jltype::Type)
+  i=int32(0)
+  dim=Dict{Int32,NcDim}()
+  for d in dim
+    dim[i]=d
+    i=i+1
+  end
+  return(NcVar(nothing,nothing,length(dim),length(atts),jltype2nctype(jltype),name,Array{Int32}(),dim,atts))
+end
 
 type NcFile
   ncid::Int32
@@ -316,13 +331,14 @@ function quickread(fil::String)
   return x
 end
 
+
 function show(nc::NcFile)
   println("File: ",nc.name)
   println("Number of variables: ",nc.nvar)
 end
 
 #
-#  CCall wrapper functions, thanks to TimHoly, taken from the HDF5-package
+#  CCall wrapper functions, thanks to TimHoly, copied from the HDF5-package
 #
 #
 #
