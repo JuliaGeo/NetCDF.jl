@@ -30,8 +30,8 @@ type NcDim
   vals::Array
   atts::Dict{Any,Any}
 end
-NcDim(name::String,vals::Union(AbstractArray,Number):,atts::Dict{Any,Any})=NcDim(-1,-1,-1,name,length(vals),vals,atts)
-
+NcDim(name::String,vals::Union(AbstractArray,Number),atts::Dict{Any,Any})=NcDim(-1,-1,-1,name,length(vals),vals,atts)
+NcDim(name::String,vals::Union(AbstractArray,Number))=NcDim(name,vals,{"units"=>"unknown"})
 
 type NcVar
   ncid::Int32
@@ -251,6 +251,41 @@ function readvar(nc::NcFile,varid::NcVar,start,count)
 end
 
 
+function putvar(nc::NcFile,varid::Int32,start::Array{Int64},vals::Array)
+  ncid=nc.ncid
+  start=start-1
+  @assert nc.vars[varid].ndim==length(start)
+  println(keys(nc.vars))
+  count=size(a)
+  #Determine size of Array
+  p=1
+  for i in count
+    p=p*i
+  end
+  NC_VERBOSE ? println("$ncid $varid $p $count ${nc.vars[varid].nctype}") : nothing
+  x=reshape(vals,p)
+  if nc.vars[varid].nctype==NC_DOUBLE
+    _nc_put_vara_double_c(ncid,varid,start,count,x)
+  elseif nc.vars[varid].nctype==NC_FLOAT
+    _nc_put_vara_double_c(ncid,varid,start,count,x)
+  elseif nc.vars[varid].nctype==NC_INT
+    _nc_put_vara_int_c(ncid,varid,start,count,retvalsa)
+  elseif nc.vars[varid].nctype==NC_SHORT
+    _nc_put_vara_int_c(ncid,varid,start,count,retvalsa)
+  elseif nc.vars[varid].nctype==NC_CHAR
+    _nc_put_vara_text_c(ncid,varid,start,count,retvalsa)
+  end
+  NC_VERBOSE ? println("Successfully wrote to file ",ncid) : nothing
+end
+function putvar(nc::NcFile,varid::Integer,start::Array{Int32}) putvar(nc,int32(varid),int64(start)) end
+function putvar(nc::NcFile,varid::String,start,vals) 
+  va=_nc_getvarindexbyname(nc,varid)
+  va == nothing ? error("Error: Variable $varid not found in $(nc.name)") : return putvar(nc,va.varid,start,vals)
+end
+function readvar(nc::NcFile,varid::NcVar,start,count) 
+  return readvar(nc,varid.varid,start,count)
+end
+
 
 function close(nco::NcFile)
   #Close file
@@ -316,6 +351,9 @@ function open(fil::String)
   return ncf
 end
 
+function new(filename::String,vars::Array{NcVar})
+
+end
 
 function quickread(fil::String)
   nc=open(fil)
@@ -396,10 +434,17 @@ for (jlname, h5name, outtype, argtypes, argsyms, ex_error) in
       (:_nc_get_att_float_c,:nc_get_att_float,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Float32}),(:ncid,:varid,:name,:valsa),:(error("Error reading attribute"))),
       (:_nc_get_att_double_c,:nc_get_att_double,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Float64}),(:ncid,:varid,:name,:valsa),:(error("Error reading attribute"))),
       (:_nc_inq_var_c,:nc_inq_var,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Int32},Ptr{Int32},Ptr{Int32}),(:id,:varid,:namea,:xtypea,:ndimsa,:dimida,:natta),:(error("Error reading variable information"))),
+      
       (:_nc_get_vara_double_c,:nc_get_vara_double,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Float64}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
-      (:_nc_get_vara_int_c,:nc_get_vara_int,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Float64}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
-      (:_nc_get_vara_short_c,:nc_get_vara_short,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Float64}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
-      (:_nc_get_vara_text_c,:nc_get_vara_text,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Float64}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
+      (:_nc_get_vara_int_c,:nc_get_vara_int,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Int32}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
+      (:_nc_get_vara_short_c,:nc_get_vara_short,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Int16}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
+      (:_nc_get_vara_text_c,:nc_get_vara_text,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Uint8}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
+      
+      (:_nc_put_vara_text_c,:nc_put_vara_text,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Float64}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
+      (:_nc_put_vara_double_c,:nc_get_vara_double,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Float64}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
+      (:_nc_put_vara_int_c,:nc_get_vara_int,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Int32}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
+      (:_nc_put_vara_short_c,:nc_get_vara_short,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Int16}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
+      
       (:_nc_close_c,:nc_close,Int32,(Int32,),(:ncid,),:(error("Error closing variable"))),
       (:_nc_create_c,:nc_create,Int32,(Ptr{Uint8},Int32,Ptr{Int32}),(:path,:comde,:ncida),:(error("Error creating netcdf file"))),
       (:_nc_def_dim_c,:nc_def_dim,Int32,(Int32,Ptr{Uint8},Int32,Ptr{Int32}),(:ncid,:name,:len,:dimida),:(error("Error creating dimension"))),
