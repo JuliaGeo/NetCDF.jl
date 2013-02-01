@@ -7,12 +7,14 @@ NC_MAX_NAME=256
 NC_VERBOSE=false
 
 
-NC_CHAR =int32(2)
+const NC_CHAR =int32(2)
 NC_SHORT =int32(3)
 NC_INT =int32(4)
 NC_FLOAT=int32(5)
 NC_DOUBLE =int32(6)
 NC_GLOBAL=int32(-1)
+NC_CLOBBER=int32(0x0000)
+NC_NOCLOBBER=int32(0x0004)
 
 
 jltype2nctype={Int16=>NC_SHORT,
@@ -47,7 +49,7 @@ end
 function NcVar(name::String,dimin,atts::Dict{Any,Any},jltype::Type)
   i=int32(0)
   dim=Dict{Int32,NcDim}()
-  for d in dim
+  for d in dimin
     dim[i]=d
     i=i+1
   end
@@ -287,6 +289,40 @@ function readvar(nc::NcFile,varid::NcVar,start,count)
 end
 
 
+function new(name::String,varlist::Union(Array{NcVar},NcVar))
+  ida=Array(Int32,1)
+  #Create the file
+  nc_create_c(name,NC_CLOBBER,ida);
+  id=ida[1];
+  # Collect Dimensions
+  dims=Set{NcDim}();
+  for v in varlist
+    for d in v.dim
+      add!(dims,d[2]);
+    end
+  end
+  nunlim=0;
+  ndim=int32(length(dims));
+  #Create Dimensions in the file
+  dim=Dict{Int32,NcDim}();
+  for d in dims
+    dima=Array(Int32,1);
+    _nc_def_dim_c(id,d.name,d.dimlen,dima);
+    d.dimid=dima[1];
+    dim[d.dimid]=d;
+  end
+  # Create variables in the file
+  vars=Dict{Int32,NcVar}();
+  for v in varlist
+    vara=Array(Int32,1);
+    _nc_def_var_c(id,v.name,v.nctype,v.ndim,v.dimids,vara);
+    v.varid=vara[1];
+    vars[v.varid]=v;
+  end
+  #Create the NcFile Object
+  nc=NcFile(id,length(vars),ndim,0,vars,dim,Dict{Any,Any},0)
+end
+
 function close(nco::NcFile)
   #Close file
   _nc_close_c(nco.ncid) 
@@ -380,7 +416,7 @@ end
 #
 #
 #
-const libnetcdf = dlopen("libnetcdf")
+const libnetcdf = dlopen("/opt/local/lib/libnetcdf")
 
 function ccallexpr(ccallsym::Symbol, outtype, argtypes::Tuple, argsyms::Tuple)
     ccallargs = Any[expr(:quote, ccallsym), outtype, expr(:tuple, Any[argtypes...])]
