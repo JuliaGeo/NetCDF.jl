@@ -256,7 +256,6 @@ end
 
 function putvar(nc::NcFile,varid::Int32,start::Array{Int32},vals::Array)
   ncid=nc.ncid
-  start=start-1
   @assert nc.vars[varid].ndim==length(start)
   println(keys(nc.vars))
   coun=size(vals)
@@ -274,7 +273,7 @@ function putvar(nc::NcFile,varid::Int32,start::Array{Int32},vals::Array)
   if nc.vars[varid].nctype==NC_DOUBLE
     _nc_put_vara_double_c(ncid,varid,start,count,x)
   elseif nc.vars[varid].nctype==NC_FLOAT
-    _nc_put_vara_float_c(int32(ncid),int32(varid),int32(start),int32(count),x)
+    _nc_put_vara_float_c(ncid,varid,start,count,x)
   elseif nc.vars[varid].nctype==NC_INT
     _nc_put_vara_int_c(ncid,varid,start,count,x)
   elseif nc.vars[varid].nctype==NC_SHORT
@@ -293,6 +292,7 @@ end
 
 function new(name::String,varlist::Union(Array{NcVar},NcVar))
   ida=Array(Int32,1)
+  vars=Dict{Int32,NcVar}();
   #Create the file
   _nc_create_c(name,NC_CLOBBER,ida);
   id=ida[1];
@@ -313,26 +313,39 @@ function new(name::String,varlist::Union(Array{NcVar},NcVar))
   dim=Dict{Int32,NcDim}();
   for d in dims
     dima=Array(Int32,1);
+    println("Dimension length ", d.dimlen)
     _nc_def_dim_c(id,d.name,d.dimlen,dima);
     d.dimid=dima[1];
     dim[d.dimid]=d;
+    #Create dimension variable
+    varida=Array(Int32,1)
+    _nc_def_var_c(id,d.name,NC_DOUBLE,1,[d.dimid],varida)
+    d.varid=varida[1]
+    dd=Dict{Int32,NcDim}()
+    dd[d.dimid]=d
+    vars[varida[1]]=NcVar(id,varida[1],int32(1),int32(length(d.atts)),NC_DOUBLE,d.name,[d.dimid],dd,d.atts)
   end
   # Create variables in the file
-  vars=Dict{Int32,NcVar}();
   for v in varlist
     i=1
     for d in v.dim
       v.dimids[i]=d[2].dimid
+      i=i+1
     end
     vara=Array(Int32,1);
-    _nc_def_var_c(id,v.name,v.nctype,v.ndim,v.dimids,vara);
+    _nc_def_var_c(id,v.name,v.nctype,v.ndim,[v.dimids],vara);
     v.varid=vara[1];
     vars[v.varid]=v;
   end
-  #Create the NcFile Object
-  nc=NcFile(id,int32(length(vars)),ndim,int32(0),vars,dim,Dict{Any,Any}(),int32(0),name)
   # Leave define mode
   _nc_enddef_c(id)
+  #Write dimension variables
+  for d in dims
+    #Write dimension variable
+    _nc_put_vara_double_c(id,d.varid,int32([0]),[d.dimlen],float64([d.vals]))
+  end
+  #Create the NcFile Object
+  nc=NcFile(id,int32(length(vars)),ndim,int32(0),vars,dim,Dict{Any,Any}(),int32(0),name)
 end
 
 function close(nco::NcFile)
