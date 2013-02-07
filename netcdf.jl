@@ -204,6 +204,16 @@ function _getdimindexbyname(nc::NcFile,dimname::String)
   return da.dimid
 end
 
+function _readdimdvar(ncid::Integer,dim::NcDim)
+  start=0
+  p=dim.dimlen
+  #Determine size of Array
+  retvalsa=Array(Float64,p)
+  _nc_get_vara_double_c(ncid,varid,start,count,retvalsa)
+  NC_VERBOSE ? println("Successfully read dimension from file ",dim.name) : nothing
+  dim.vals=retvalsa
+  end
+
 # Read block of data from file
 function readvar(nc::NcFile,varid::Integer,start::Array,count::Array)
   ncid=nc.ncid
@@ -266,14 +276,13 @@ function putvar(nc::NcFile,varid::Integer,start::Array,vals::Array)
     p=p*coun[i]
     count[i]=coun[i]
   end
-  NC_VERBOSE ? println("$ncid $varid $p $count ${nc.vars[varid].nctype}") : nothing
-  x=reshape(vals,p)
-  println(x)
-  println(ncid,varid,start,count)
+  NC_VERBOSE ? println("$ncid $varid $p $count ",nc.vars[varid].nctype) : nothing
+  #x=reshape(vals,p)
+  x=vals
   if nc.vars[varid].nctype==NC_DOUBLE
-    _nc_put_vara_double_c(ncid,varid,int64(start),count,x)
+    _nc_put_vara_double_c(ncid,varid,start,count,x)
   elseif nc.vars[varid].nctype==NC_FLOAT
-    _nc_put_vara_float_c(ncid,varid,int64(start),count,x)
+    _nc_put_vara_double_c(ncid,varid,start,count,x)
   elseif nc.vars[varid].nctype==NC_INT
     _nc_put_vara_int_c(ncid,varid,start,count,x)
   elseif nc.vars[varid].nctype==NC_SHORT
@@ -332,6 +341,7 @@ function new(name::String,varlist::Union(Array{NcVar},NcVar))
       i=i+1
     end
     vara=Array(Int32,1);
+    println("dimids=",v.dimids)
     _nc_def_var_c(id,v.name,v.nctype,v.ndim,[v.dimids],vara);
     v.varid=vara[1];
     vars[v.varid]=v;
@@ -341,7 +351,9 @@ function new(name::String,varlist::Union(Array{NcVar},NcVar))
   #Write dimension variables
   for d in dims
     #Write dimension variable
-    _nc_put_vara_double_c(id,d.varid,[0],int64([d.dimlen]),[d.vals])
+    y=float64(d.vals)
+    diml=d.dimlen
+    _nc_put_vara_double_c(id,d.varid,[0],[diml],y)
   end
   #Create the NcFile Object
   nc=NcFile(id,length(vars),ndim,0,vars,dim,Dict{Any,Any}(),0,name)
