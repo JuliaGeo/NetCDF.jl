@@ -448,7 +448,7 @@ end
 #
 #
 #
-const libnetcdf = dlopen("/opt/local/lib/libnetcdf")
+const libnetcdf = dlopen("libnetcdf")
 
 function ccallexpr(ccallsym::Symbol, outtype, argtypes::Tuple, argsyms::Tuple)
     ccallargs = Any[expr(:quote, ccallsym), outtype, expr(:tuple, Any[argtypes...])]
