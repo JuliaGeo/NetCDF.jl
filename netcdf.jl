@@ -189,8 +189,8 @@ function new(name::String,varlist::Union(Array{NcVar},NcVar))
       i=i+1
     end
     vara=Array(Int32,1);
-    println("dimids=",v.dimids)
-    C._nc_def_var_c(id,v.name,v.nctype,v.ndim,[v.dimids],vara);
+    dumids=[v.dimids]
+    C._nc_def_var_c(id,v.name,v.nctype,v.ndim,dumids,vara);
     v.varid=vara[1];
     vars[v.varid]=v;
   end
