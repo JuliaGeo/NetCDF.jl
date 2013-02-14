@@ -214,18 +214,6 @@ function close(nco::NcFile)
   return nco.ncid
 end
 
-function _readdimvars(nc::NcFile)
-  for d in nc.dim
-    for v in nc.vars
-      if (d[2].name==v[2].name)
-        println(d[2].name," ",v[2].name)
-        d[2].vals=readvar(nc,v[2].varid,[1],[-1])
-        d[2].atts=v[2].atts
-      end
-    end
-  end
-end
-
 
 function open(fil::String)
   # Open netcdf file
