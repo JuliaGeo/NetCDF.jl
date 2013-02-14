@@ -410,17 +410,17 @@ function open(fil::String)
     (name,nctype,dimids,natts,vndim,isdimvar)=_ncv_inq(ncf,varid)
     if (isdimvar)
       ncf.dim[_getdimindexbyname(ncf,name)].varid=varid
-    else
-      atts=_nc_getatts_all(ncid,varid,natts)
-      vdim=Dict{Int,NcDim}()
-      for did in dimids
-        vdim[did]=ncf.dim[did]
-      end
-      ncf.vars[varid]=NcVar(ncid,varid,vndim,natts,nctype,name,int(dimids),vdim,atts)
+    end
+    atts=_nc_getatts_all(ncid,varid,natts)
+    vdim=Dict{Int,NcDim}()
+    for did in dimids
+      vdim[did]=ncf.dim[did]
+    end
+    ncf.vars[varid]=NcVar(ncid,varid,vndim,natts,nctype,name,int(dimids),vdim,atts)
     end
   end
   _readdimvars(ncf)
-  return ncf
+  ncf
 end
 
 function quickread(fil::String)
