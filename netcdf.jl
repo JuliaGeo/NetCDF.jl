@@ -220,24 +220,27 @@ function open(fil::String)
   (ndim,nvar,ngatt,nunlimdimid)=ncHelpers._ncf_inq(ncid)
   NC_VERBOSE ? println(ndim,nvar,ngatt,nunlimdimid) : nothing
   #Create ncdf object
-  ncf=NcFile(ncid,nvar-ndim,ndim,ngatt,Dict{Int,NcVar}(),Dict{Int,NcDim}(),Dict{Any,Any}(),nunlimdimid,fil)
+  ncf=NcFile(ncid,nvar-ndim,ndim,ngatt,Dict{String,NcVar}(),Dict{String,NcDim}(),Dict{Any,Any}(),nunlimdimid,fil)
   #Read global attributes
   ncf.gatts=ncHelpers._nc_getatts_all(ncid,NC_GLOBAL,ngatt)
   #Read dimensions
   for dimid = 0:ndim-1
     (name,dimlen)=ncHelpers._nc_inq_dim(ncid,dimid)
-    ncf.dim[dimid]=NcDim(ncid,dimid,-1,name,dimlen,[1:dimlen],Dict{Any,Any}())
+    ncf.dim[name]=NcDim(ncid,dimid,-1,name,dimlen,[1:dimlen],Dict{Any,Any}())
   end
   #Read variable information
   for varid = 0:nvar-1
     (name,nctype,dimids,natts,vndim,isdimvar)=ncHelpers._ncv_inq(ncf,varid)
     if (isdimvar)
-      ncf.dim[ncHelpers._getdimindexbyname(ncf,name)].varid=varid
+      ncf.dim[name].varid=varid
     end
     atts=ncHelpers._nc_getatts_all(ncid,varid,natts)
-    vdim=Dict{Int,NcDim}()
+    vdim=Array(NcDim,length(dimids))
+    i=1;
     for did in dimids
-      vdim[did]=ncf.dim[did]
+      # !!! Need to implementent getnameby dimid here
+      vdim[i]=ncf.dim[did]
+      i=i+1
     end
     ncf.vars[varid]=NcVar(ncid,varid,vndim,natts,nctype,name,int(dimids),vdim,atts)
   end
