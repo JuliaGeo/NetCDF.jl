@@ -14,7 +14,7 @@ function _cchartostring(in)
   #println(in)
   if (length(in)>0)
     while (char(in[iname])!='\0' && iname<length(in))
-      name=strcat(name,char(in[iname]))
+      name=string(name,char(in[iname]))
       iname=iname+1
     end
   end
@@ -173,5 +173,5 @@ function _readdimvars(nc::NcFile)
   end
 end
 
-  
+
 end #Module
