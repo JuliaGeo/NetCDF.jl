@@ -2,7 +2,7 @@ module netcdf
 include("netcdf_c_wrappers.jl")
 using Base
 using C
-export show,NcDim,NcVar,NcFile,new,ncread
+export show,NcDim,NcVar,NcFile,new,ncread,ncwrite
 #Some constants
 
 
@@ -55,7 +55,7 @@ end
 
 include("netcdf_helpers.jl")
 using ncHelpers
-global currentNcFiles=Dict{Int,NcFile}()  
+global currentNcFiles=Dict{String,NcFile}()  
 
 # Read block of data from file
 function readvar(nc::NcFile,varname::String,start::Array,count::Array)
@@ -109,6 +109,7 @@ end
 
 function putvar(nc::NcFile,varname::String,start::Array,vals::Array)
   ncid=nc.ncid
+  has(nc.vars,varname) ? nothing : error("No variable $varname in file $nc.name")
   @assert nc.vars[varname].ndim==length(start)
   coun=size(vals)
   count=Array(Int64,length(coun))
@@ -245,28 +246,47 @@ function open(fil::String)
     end
     ncf.vars[name]=NcVar(ncid,varid,vndim,natts,nctype,name,int(dimids),vdim,atts)
   end
-  currentNcFiles[ncid]=ncf
+  currentNcFiles[realpath(ncf.name)]=ncf
   return ncf
 end
 
 # Define some high-level functions
-function ncread(fil::String,vname::String,start,count)
-  id=ncHelpers._nc_op(fil);
-  nc= has(currentNcFiles,id) ? currentNcFiles[id] : open(fil)
-  iv=ncHelpers._getvarindexbyname(nc,vname)
-  x=readvar(nc,iv,s,c)
+# High-level functions for writing data to files
+function ncread(fil::String,vname::String,start::Array,count::Array)
+  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil)
+  x=readvar(nc,vname,start,count)
   return x
 end
-
+function ncread(fil::String,vname::String,ran...)
+  s=ones(length(ran))
+  c=ones(length(ran))
+  for i in 1:length(ran)
+    typeof(ran[i])<:Range1 ? nothing : error("Expected range as input for reading netcdf variable")
+    s[i]=int(ran[i][1])
+    c[i]=int(length(ran[i]))
+  end
+  return ncread(fil,vname,s,c)  
+end
 function ncread(fil::String,vname::String)
-  id=ncHelpers._nc_op(fil);
-  nc= has(currentNcFiles,id) ? currentNcFiles[id] : open(fil)
-  iv=ncHelpers._getvarindexbyname(nc,vname)
-  s=ones(Int,nc.vars[iv].ndim)
+  println(vname)
+  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[vname] : open(fil)
+  s=ones(Int,nc.vars[vname].ndim)
   c=s*(-1)
   return ncread(fil,vname,s,c)
 end
 
+#High-level functions for writing data to a file
+function ncwrite(x,fil::String,vname::String,start::Array)
+  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil)
+  x=putvar(nc,vname,start,x)
+  return x
+end
+function ncwrite(x,fil::String,vname::String)
+  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil)
+  start=ones(nc.vars[vname].ndim)
+  x=putvar(nc,vname,start,x)
+  return x
+end
 
 function show(nc::NcFile)
   println("File: ",nc.name)
