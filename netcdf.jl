@@ -175,7 +175,8 @@ function new(name::String,varlist::Union(Array{NcVar},NcVar))
     dim[d.dimid]=d;
     #Create dimension variable
     varida=Array(Int32,1)
-    C._nc_def_var_c(id,d.name,NC_DOUBLE,1,[d.dimid],varida)
+    dumids=[d.dimid]
+    C._nc_def_var_c(id,d.name,NC_DOUBLE,1,dumids,varida)
     d.varid=varida[1]
     dd=Dict{Int,NcDim}()
     dd[d.dimid]=d
@@ -189,8 +190,8 @@ function new(name::String,varlist::Union(Array{NcVar},NcVar))
       i=i+1
     end
     vara=Array(Int32,1);
-    dumids=[v.dimids]
-    C._nc_def_var_c(id,v.name,v.nctype,v.ndim,dumids,vara);
+    dumids=copy(v.dimids)
+    C._nc_def_var_c(id,v.name,v.nctype,v.ndim,[dumids],vara);
     v.varid=vara[1];
     vars[v.varid]=v;
   end
