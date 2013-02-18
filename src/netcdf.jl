@@ -58,35 +58,36 @@ using ncHelpers
 global currentNcFiles=Dict{Int,NcFile}()  
 
 # Read block of data from file
-function readvar(nc::NcFile,varid::Integer,start::Array,count::Array)
+function readvar(nc::NcFile,varname::String,start::Array,count::Array)
   ncid=nc.ncid
+  varid=nc.vars[varname].varid
   start=int64(start)-1
   count=int64(count)
-  @assert nc.vars[varid].ndim==length(start)
-  @assert nc.vars[varid].ndim==length(count)
+  @assert nc.vars[varname].ndim==length(start)
+  @assert nc.vars[varname].ndim==length(count)
   println(keys(nc.vars))
   for i = 1:length(count)
-    count[i]= count[i]>0 ? count[i] : nc.vars[varid].dim[nc.vars[varid].dimids[i]].dimlen
+    count[i]= count[i]>0 ? count[i] : nc.vars[varname].dim[i].dimlen
   end
   #Determine size of Array
   p=1
   for i in count
     p=p*i
   end
-  NC_VERBOSE ? println("$ncid $varid $p $count ${nc.vars[varid].nctype}") : nothing
-  if nc.vars[varid].nctype==NC_DOUBLE
+  NC_VERBOSE ? println("$ncid $varid $p $count ${nc.vars[varname].nctype}") : nothing
+  if nc.vars[varname].nctype==NC_DOUBLE
     retvalsa=Array(Float64,p)
     C._nc_get_vara_double_c(ncid,varid,start,count,retvalsa)
-  elseif nc.vars[varid].nctype==NC_FLOAT
+  elseif nc.vars[varname].nctype==NC_FLOAT
     retvalsa=Array(Float64,p)
     C._nc_get_vara_double_c(ncid,varid,start,count,retvalsa)
-  elseif nc.vars[varid].nctype==NC_INT
+  elseif nc.vars[varname].nctype==NC_INT
     retvalsa=Array(Int32,p)
     C._nc_get_vara_int_c(ncid,varid,start,count,retvalsa)
-  elseif nc.vars[varid].nctype==NC_SHORT
+  elseif nc.vars[varname].nctype==NC_SHORT
     retvalsa=Array(Int32,p)
     C._nc_get_vara_int_c(ncid,varid,start,count,retvalsa)
-  elseif nc.vars[varid].nctype==NC_CHAR
+  elseif nc.vars[varname].nctype==NC_CHAR
     retvalsa=Array(Uint8,p)
     C._nc_get_vara_text_c(ncid,varid,start,count,retvalsa)
   end
@@ -97,9 +98,9 @@ function readvar(nc::NcFile,varid::Integer,start::Array,count::Array)
     return retvalsa
   end
 end
-function readvar(nc::NcFile,varid::String,start,count) 
-  va=ncHelpers._getvarindexbyname(nc,varid)
-  va == nothing ? error("Error: Variable $varid not found in $(nc.name)") : return readvar(nc,va.varid,start,count)
+function readvar(nc::NcFile,varid::Integer,start,count) 
+  va=ncHelpers.getvarbyid(nc,varid)
+  va == nothing ? error("Error: Variable $varid not found in $(nc.name)") : return readvar(nc,va.varname,start,count)
 end
 function readvar(nc::NcFile,varid::NcVar,start,count) 
   return readvar(nc,varid.varid,start,count)
@@ -170,11 +171,7 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar))
     dim[d.name]=d;
     #Create dimension variable
     varida=Array(Int32,1)
-<<<<<<< HEAD
-    dumids=[d.dimid]
-=======
     dumids=[copy(d.dimid)]
->>>>>>> c56044d4c7ed10f142bff9155d9df06e19df5c2b
     C._nc_def_var_c(id,d.name,NC_DOUBLE,1,dumids,varida)
     d.varid=varida[1]
     dd=Array(NcDim,1)
@@ -189,14 +186,9 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar))
       i=i+1
     end
     vara=Array(Int32,1);
-<<<<<<< HEAD
-    dumids=copy(v.dimids)
-    C._nc_def_var_c(id,v.name,v.nctype,v.ndim,[dumids],vara);
-=======
     dumids=int32(v.dimids)
     println(dumids)
     C._nc_def_var_c(id,v.name,v.nctype,v.ndim,int32(dumids),vara);
->>>>>>> c56044d4c7ed10f142bff9155d9df06e19df5c2b
     v.varid=vara[1];
     vars[v.name]=v;
   end
@@ -248,10 +240,10 @@ function open(fil::String)
     i=1;
     for did in dimids
       # !!! Need to implementent getnameby dimid here
-      vdim[i]=ncf.dim[did]
+      vdim[i]=ncf.dim[ncHelpers.getdimnamebyid(ncf,did)]
       i=i+1
     end
-    ncf.vars[varid]=NcVar(ncid,varid,vndim,natts,nctype,name,int(dimids),vdim,atts)
+    ncf.vars[name]=NcVar(ncid,varid,vndim,natts,nctype,name,int(dimids),vdim,atts)
   end
   currentNcFiles[ncid]=ncf
   return ncf

@@ -133,12 +133,28 @@ function _getvarindexbyname(nc::NcFile,varname::String)
   return va
 end
 
-function _getdimindexbyname(nc::NcFile,dimname::String)
+function getvarbyid(nc::NcFile,varid::Integer)
+  va=nothing
+  for v in nc.vars
+    va = v[2].varid==varid ? v[2] : va
+  end
+  return va
+end
+
+function getdimidbyname(nc::NcFile,dimname::String)
   da=nothing
   for d in nc.dim
-    da = d[2].name==dimname ? d[2] : da
+    da = d.name==dimname ? d : da
   end
   return da.dimid
+end
+
+function getdimnamebyid(nc::NcFile,dimid::Integer)
+  da=nothing
+  for d in nc.dim
+    da = d[2].dimid==dimid ? d[2] : da
+  end
+  return da.name
 end
 
 function _readdimdvar(ncid::Integer,dim::NcDim)
