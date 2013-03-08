@@ -7,8 +7,9 @@ export NC_NOERR,NC_MAX_NAME,NC_VERBOSE,NC_CHAR,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBL
 #
 #
 const NC_NOERR=0
+
 const NC_MAX_NAME=256
-const NC_VERBOSE=false
+const NC_VERBOSE=true
 const NC_CHAR =2
 const NC_SHORT =3
 const NC_INT =4
@@ -17,6 +18,8 @@ const NC_DOUBLE =6
 const NC_GLOBAL=-1
 const NC_CLOBBER=0x0000
 const NC_NOCLOBBER=0x0004
+const NC_NOWRITE=0x0000	
+const NC_WRITE=0x0001	
 
 const libnetcdf = dlopen("libnetcdf")
 
@@ -63,6 +66,7 @@ end
 for (jlname, h5name, outtype, argtypes, argsyms, ex_error) in
     ( (:_nc_open_c, :nc_open, Int32, (Ptr{Uint8}, Int32, Ptr{Int32}), (:fname,:omode,:ida), :(error("Error Opening file ", fname))),
       (:_nc_inq_dim_c,:nc_inq_dim,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Int32}),(:id,:idim,:namea,:lengtha),:(error("Error inquiring dimension information"))),
+      (:_nc_inq_dimid_c,:nc_inq_dimid,Int32,(Int32,Ptr{Uint8},Ptr{Int32}),(:id,:namea,:dimida),:(error("Error inquiring dimension id"))),
       (:_nc_inq_c,:nc_inq,Int32,(Int32,Ptr{Int32},Ptr{Int32},Ptr{Int32},Ptr{Int32}),(:id,:ndima,:nvara,:ngatta,:nunlimdimida),:(error("Error inquiring file information"))),
       (:_nc_inq_attname_c,:nc_inq_attname,Int32,(Int32,Int32,Int32,Ptr{Uint8}),(:ncid,:varid,:attnum,:namea),:(error("Error inquiring attribute name"))),
       (:_nc_inq_att_c,:nc_inq_att,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Int32},Ptr{Int32}),(:ncid,:varid,:name,:typea,:nvals),:(error("Error inquiring attribute properties"))),
@@ -85,6 +89,8 @@ for (jlname, h5name, outtype, argtypes, argsyms, ex_error) in
       (:_nc_put_vara_short_c,:nc_put_vara_short,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Int16}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
       (:_nc_close_c,:nc_close,Int32,(Int32,),(:ncid,),:(error("Error closing variable"))),
       (:_nc_enddef_c,:nc_enddef,Int32,(Int32,),(:ncid,),:(error("Error leaving define mode"))),
+      (:_nc_redef_c,:nc_redef,Int32,(Int32,),(:ncid,),:(error("Error entering define mode"))),
+      (:_nc_sync_c,:nc_sync,Int32,(Int32,),(:ncid,),:(error("Error syncing file"))),
       (:_nc_create_c,:nc_create,Int32,(Ptr{Uint8},Int32,Ptr{Int32}),(:path,:comde,:ncida),:(error("Error creating netcdf file"))),
       (:_nc_def_dim_c,:nc_def_dim,Int32,(Int32,Ptr{Uint8},Int32,Ptr{Int32}),(:ncid,:name,:len,:dimida),:(error("Error creating dimension"))),
       (:_nc_def_var_c,:nc_def_var,Int32,(Int32,Ptr{Uint8},Int32,Int32,Ptr{Int32},Ptr{Int32}),(:ncid,:name,:xtype,:ndims,:dimida,:varida),:(error("Error creating variable"))),

@@ -22,10 +22,9 @@ function _cchartostring(in)
 end
 
 
-function _nc_op(fname::String)
+function _nc_op(fname::String,omode::Uint16)
   # Open netcdf file
   ida=Array(Int32,1)
-  omode=0
   netcdf.C._nc_open_c(fname,omode,ida)
   id=ida[1]
   println("Successfully opened ",fname," dimid=",id)
@@ -41,6 +40,18 @@ function _nc_inq_dim(id::Integer,idim::Integer)
   NC_VERBOSE ? println("name=",name," dimlen=",dimlen) : nothing
   return (name,dimlen)
 end
+
+function _nc_inq_dimid(id::Integer,name::String)
+  dimida=Array(Int32,1)
+  try
+    netcdf.C._nc_inq_dimid_c(id,name,dimida)
+  catch
+    dimida[1]=-1
+  end
+  NC_VERBOSE ? println("Successfully read from file") : nothing
+  return dimida[1]
+end
+
 
 function _ncf_inq(id::Integer)
   # Inquire number of codes in netCDF file

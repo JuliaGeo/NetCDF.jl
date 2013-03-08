@@ -2,7 +2,7 @@ module netcdf
 include("netcdf_c_wrappers.jl")
 using Base
 using C
-export show,NcDim,NcVar,NcFile,new,ncread,ncwrite
+export show,NcDim,NcVar,NcFile,new,ncread,ncwrite,nccreate,ncsync
 #Some constants
 
 
@@ -21,8 +21,10 @@ type NcDim
   vals::AbstractArray
   atts::Dict{Any,Any}
 end
+
 NcDim(name::String,vals::Union(AbstractArray,Number),atts::Dict{Any,Any})=NcDim(-1,-1,-1,name,length(vals),vals,atts)
 NcDim(name::String,vals::Union(AbstractArray,Number))=NcDim(name,vals,{"units"=>"unknown"})
+
 
 type NcVar
   ncid::Integer
@@ -51,7 +53,11 @@ type NcFile
   gatts::Dict{Any,Any}
   nunlimdimid::Integer
   name::String
+  omode::Uint16
+  in_def_mode::Bool
 end
+NcFile(ncid::Integer,nvar::Integer,ndim::Integer,ngatts::Integer,vars::Dict{String,NcVar},dim::Dict{String,NcDim},gatts::Dict{Any,Any},nunlimdimid::Integer,name::String,omode::Uint16)=NcFile(ncid,nvar,ndim,ngatts,vars,dim,gatts,nunlimdimid,name,omode,false)
+
 
 include("netcdf_helpers.jl")
 using ncHelpers
@@ -143,6 +149,22 @@ end
 #end
 
 
+# Function to synchronize all files with disk
+function ncsync()
+  for ncf in currentNcFiles
+    id=ncf[2].ncid
+    C._nc_sync_c(int32(id))
+  end
+end
+
+#Function to close netcdf files
+function ncclose(fil::String)
+  if (has(currentNcFiles,realpath(fil)))
+    close(currentNcFiles[fil])
+  end
+  
+end
+
 function create(name::String,varlist::Union(Array{NcVar},NcVar))
   ida=Array(Int32,1)
   vars=Dict{String,NcVar}();
@@ -203,7 +225,22 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar))
     C._nc_put_vara_double_c(id,d.varid,[0],[diml],y)
   end
   #Create the NcFile Object
-  nc=NcFile(id,length(vars),ndim,0,vars,dim,Dict{Any,Any}(),0,name)
+  nc=NcFile(id,length(vars),ndim,0,vars,dim,Dict{Any,Any}(),0,name,C.NC_WRITE)
+end
+
+function vardef(fid::Integer,v::NcVar)
+    C.redef(ncid)
+    i=1
+    for d in v.dim
+      v.dimids[i]=d.dimid
+      i=i+1
+    end
+    vara=Array(Int32,1);
+    dumids=int32(v.dimids)
+    println(dumids)
+    C._nc_def_var_c(id,v.name,v.nctype,v.ndim,int32(dumids),vara);
+    v.varid=vara[1];
+    vars[v.name]=v;
 end
 
 function close(nco::NcFile)
@@ -214,15 +251,15 @@ function close(nco::NcFile)
 end
 
 
-function open(fil::String)
+function open(fil::String,omode::Uint16)
   # Open netcdf file
-  ncid=ncHelpers._nc_op(fil)
+  ncid=ncHelpers._nc_op(fil,omode)
   NC_VERBOSE ? println(ncid) : nothing
   #Get initial information
   (ndim,nvar,ngatt,nunlimdimid)=ncHelpers._ncf_inq(ncid)
   NC_VERBOSE ? println(ndim,nvar,ngatt,nunlimdimid) : nothing
   #Create ncdf object
-  ncf=NcFile(ncid,nvar-ndim,ndim,ngatt,Dict{String,NcVar}(),Dict{String,NcDim}(),Dict{Any,Any}(),nunlimdimid,fil)
+  ncf=NcFile(ncid,nvar-ndim,ndim,ngatt,Dict{String,NcVar}(),Dict{String,NcDim}(),Dict{Any,Any}(),nunlimdimid,fil,omode)
   #Read global attributes
   ncf.gatts=ncHelpers._nc_getatts_all(ncid,NC_GLOBAL,ngatt)
   #Read dimensions
@@ -240,7 +277,6 @@ function open(fil::String)
     vdim=Array(NcDim,length(dimids))
     i=1;
     for did in dimids
-      # !!! Need to implementent getnameby dimid here
       vdim[i]=ncf.dim[ncHelpers.getdimnamebyid(ncf,did)]
       i=i+1
     end
@@ -249,6 +285,7 @@ function open(fil::String)
   currentNcFiles[realpath(ncf.name)]=ncf
   return ncf
 end
+open(fil::String) = open(fil,C.NC_NOWRITE)
 
 # Define some high-level functions
 # High-level functions for writing data to files
@@ -277,15 +314,82 @@ end
 
 #High-level functions for writing data to a file
 function ncwrite(x,fil::String,vname::String,start::Array)
-  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil)
-  x=putvar(nc,vname,start,x)
-  return x
+  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil,C.NC_WRITE)
+  if (nc.omode==C.NC_NOWRITE)
+    close(nc)
+    println("reopening file in WRITE mode")
+    open(fil,C.NC_WRITE)
+  end
+  putvar(nc,vname,start,x)
 end
+
 function ncwrite(x,fil::String,vname::String)
-  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil)
+  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil,C.NC_WRITE)
+  if (nc.omode==C.NC_NOWRITE)
+    close(nc)
+    println("reopening file in WRITE mode")
+    open(fil,C.NC_WRITE)
+  end
   start=ones(nc.vars[vname].ndim)
-  x=putvar(nc,vname,start,x)
-  return x
+  putvar(nc,vname,start,x)
+end
+
+#High-level function for creating files and variables
+# 
+# if the file does not exist, it will be created
+# if the file already exists, the variable will be added to the file
+
+function nccreate(fil::String,varname::String,atts::Dict,dims…)
+  # Checking dims argument for correctness
+  dim=[NcDim("longitude",[1:10])]
+  # to be done
+  # open the file
+  # create the NcVar object
+  v=NcVar(varname,dim,atts,Float64)
+  # Test if the file already exists
+  if (isfile(fil)) 
+    nc=has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil,C.NC_WRITE)
+    if (nc.omode==C.NC_NOWRITE)
+      close(nc)
+      println("reopening file in WRITE mode")
+      open(fil,C.NC_WRITE)
+    end
+    # Check if dimensions exist, if not, create
+    i=1
+    for d in dim
+      did=ncHelpers._nc_inq_dimid(nc.ncid,d.name)
+      if (did==-1)
+        dima=Array(Int32,1);
+        #C._nc_redef_c(nc.ncid)
+        if (!nc.in_def_mode) 
+          C._nc_redef_c(nc.ncid)
+          nc.in_def_mode=true
+        end
+        C._nc_def_dim_c(nc.ncid,d.name,d.dimlen,dima);
+        d.dimid=dima[1];
+        v.dimids[i]=d.dimid;
+      else
+        v.dimids[i]=nc.dim[d.name].dimid;
+      end
+      i=i+1
+    end
+    # Create variable
+    vara=Array(Int32,1);
+    dumids=int32(v.dimids)
+    if (!nc.in_def_mode) 
+          C._nc_redef_c(nc.ncid)
+          nc.in_def_mode=true
+    end
+    C._nc_def_var_c(nc.ncid,v.name,v.nctype,v.ndim,int32(dumids),vara);
+    v.varid=vara[1];
+    nc.vars[v.name]=v;
+    if (nc.in_def_mode) 
+          C._nc_enddef_c(nc.ncid)
+          nc.in_def_mode=false
+    end
+  else
+    nc=create(fil,v)
+  end
 end
 
 function show(nc::NcFile)
