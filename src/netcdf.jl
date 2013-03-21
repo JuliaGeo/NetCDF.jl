@@ -339,9 +339,9 @@ end
 # if the file does not exist, it will be created
 # if the file already exists, the variable will be added to the file
 
-function nccreate(fil::String,varname::String,atts::Dict,dims…)
+function nccreate(fil::String,varname::String,atts::Dict,dims...)
   # Checking dims argument for correctness
-  dim=[NcDim("longitude",[1:10])]
+  dim=ncHelpers.parsedimargs(dims)
   # to be done
   # open the file
   # create the NcVar object
@@ -356,6 +356,8 @@ function nccreate(fil::String,varname::String,atts::Dict,dims…)
     end
     # Check if dimensions exist, if not, create
     i=1
+    # Remember if dimension was created
+    dcreate=Array(Bool,length(dim))
     for d in dim
       did=ncHelpers._nc_inq_dimid(nc.ncid,d.name)
       if (did==-1)
@@ -387,8 +389,18 @@ function nccreate(fil::String,varname::String,atts::Dict,dims…)
           C._nc_enddef_c(nc.ncid)
           nc.in_def_mode=false
     end
+    i=1
+    for d in dim
+      if (dcreate[i])
+        ncwrite(d.vals,fil,d.name)
+      end
+      i=i+1
+    end
   else
     nc=create(fil,v)
+    for d in dim
+      ncwrite(d.vals,fil,d.name)
+    end
   end
 end
 

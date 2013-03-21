@@ -200,5 +200,68 @@ function _readdimvars(nc::NcFile)
   end
 end
 
+function parsedimargs(dim)
+  idim=0
+  dimlen=nothing
+  dimvals=nothing
+  dimatts=nothing
+  name=nothing
+  #Determine number of dimensions
+  ndim=0
+  for a in dim
+    if (typeof(a)<:String)
+      ndim=ndim+1
+    end
+    println(a)
+  end
+  d=Array(NcDim,ndim)
+  idim=1
+  for a in dim
+    println(a,idim)
+    if (typeof(a)<:String)
+      #Assume a name is given
+      #first create an NcDim object from the last dim
+      if (name!=nothing)
+        d[idim]=finalizedim(dimlen,dimvals,dimatts,name)
+        idim=idim+1
+        dimlen=nothing
+        dimvals=nothing
+        dimatts=nothing
+        name=nothing
+      end
+      name=a
+    elseif (typeof(a)<:Integer)
+      #Assume a dimension length is given
+      dimlen=a
+    elseif (typeof(a)<:AbstractArray)
+      #Assume dimension values are given
+      if dimvals==nothing 
+        dimvals=float64(a)
+        dimlen=length(dimvals)
+      else 
+        error ("Dimension values of $name defined more than once")
+      end
+    elseif (typeof(a)<:Dict)
+      #Assume attributes are given
+      dimatts= dimatts==nothing ? a : error("Dimension attributes of $name defined more than once")
+    end
+  end
+  d[idim]=finalizedim(dimlen,dimvals,dimatts,name)
+  return(d)
+end
+
+function finalizedim(dimlen,dimvals,dimatts,name)
+  if ((dimlen==nothing) & (dimvals==nothing))
+    dimlen=1
+  end
+  if ((dimlen!=nothing) & (dimvals==nothing))
+    dimvals=float64([1:dimlen])
+  end
+  if (dimatts==nothing)
+    dimatts=Dict{Any,Any}()
+  end
+  return(NcDim(name,dimvals,dimatts))
+end
+
 
 end #Module
