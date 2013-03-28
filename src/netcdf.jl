@@ -1,6 +1,7 @@
 module netcdf
 include("netcdf_c_wrappers.jl")
 using Base
+import Base.show
 using C
 export show,NcDim,NcVar,NcFile,new,ncread,ncwrite,nccreate,ncsync
 #Some constants
@@ -404,10 +405,18 @@ function nccreate(fil::String,varname::String,atts::Dict,dims...)
   end
 end
 
-function show(nc::NcFile)
-  println("File: ",nc.name)
-  println("Number of variables: ",nc.nvar)
+function show(io::IO,nc::NcFile)
+  println(io,"File: ",nc.name)
+  println(io,"Number of variables: ",nc.nvar)
+  println(io,"Number of Dimensions: ",nc.ndim)
+  println(io,"")
+  println(io,"##### Dimensions #####")
+  println(io,"")
+  @printf(io,"%15s %8s","Name","Length\n")
+  println("-------------------------------")
+  for d in nc.dim
+    @printf(io,"%15s %8d\n",d[2].name,d[2].dimlen)
+  end
 end
-
 
 end # Module
