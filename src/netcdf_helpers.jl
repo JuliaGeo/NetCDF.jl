@@ -27,7 +27,7 @@ function _nc_op(fname::String,omode::Uint16)
   ida=Array(Int32,1)
   netcdf.C._nc_open_c(fname,omode,ida)
   id=ida[1]
-  println("Successfully opened ",fname," dimid=",id)
+  NC_VERBOSE ? println("Successfully opened ",fname," dimid=",id) : nothing
   return id
 end
 
@@ -108,6 +108,11 @@ function _nc_get_att(ncid::Integer,varid::Integer,name,attype::Integer,attlen::I
   elseif (attype==NC_DOUBLE)
     valsa=Array(Float64,attlen)
     C._nc_get_att_double_c(ncid,varid,name,valsa)
+  elseif (attype==NC_BYTE)
+    valsa=Array(Uint8,attlen)
+    C._nc_get_att_ubyte_c(ncid,varid,name,valsa)
+  else
+    valsa="Could not read attribute, currently unsupported datatype by the netcdf package"  
   end
   return valsa
 end
@@ -118,7 +123,7 @@ function _ncv_inq(nc::NcFile,varid::Integer)
   # Inquire variables in the file
   namea=Array(Uint8,NC_MAX_NAME+1);xtypea=Array(Int32,1);ndimsa=Array(Int32,1);dimida=Array(Int32,ndim);natta=Array(Int32,1)
   C._nc_inq_var_c(id,varid,namea,xtypea,ndimsa,dimida,natta)
-  println("dimida=",dimida," ndimsa=",ndimsa)
+  NC_VERBOSE ? println("dimida=",dimida," ndimsa=",ndimsa) : nothing
   nctype=xtypea[1]
   vndim=ndimsa[1]
   dimids=vndim>0 ? dimida[1:vndim] : []
@@ -192,7 +197,7 @@ function _readdimvars(nc::NcFile)
   for d in nc.dim
     for v in nc.vars
       if (d[2].name==v[2].name)
-        println(d[2].name," ",v[2].name)
+        NC_VERBOSE ?println(d[2].name," ",v[2].name) : nothing
         d[2].vals=readvar(nc,v[2].varid,[1],[-1])
         d[2].atts=v[2].atts
       end
@@ -212,12 +217,12 @@ function parsedimargs(dim)
     if (typeof(a)<:String)
       ndim=ndim+1
     end
-    println(a)
+    NC_VERBOSE ? println(a) : nothing
   end
   d=Array(NcDim,ndim)
   idim=1
   for a in dim
-    println(a,idim)
+    NC_VERBOSE ? println(a,idim) : nothing
     if (typeof(a)<:String)
       #Assume a name is given
       #first create an NcDim object from the last dim

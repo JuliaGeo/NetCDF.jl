@@ -1,6 +1,6 @@
 module C
 using Base
-export NC_NOERR,NC_MAX_NAME,NC_VERBOSE,NC_CHAR,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE,NC_GLOBAL,NC_CLOBBER,NC_NOCLOBBER
+export NC_NOERR,NC_MAX_NAME,NC_VERBOSE,NC_CHAR,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE,NC_GLOBAL,NC_CLOBBER,NC_NOCLOBBER
 #
 #  CCall wrapper functions, thanks to TimHoly, copied from the HDF5-package
 #
@@ -9,7 +9,8 @@ export NC_NOERR,NC_MAX_NAME,NC_VERBOSE,NC_CHAR,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBL
 const NC_NOERR=0
 
 const NC_MAX_NAME=256
-const NC_VERBOSE=true
+const NC_VERBOSE=false
+const NC_BYTE=1
 const NC_CHAR =2
 const NC_SHORT =3
 const NC_INT =4
@@ -75,6 +76,7 @@ for (jlname, h5name, outtype, argtypes, argsyms, ex_error) in
       (:_nc_get_att_int_c,:nc_get_att_int,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Int32}),(:ncid,:varid,:name,:valsa),:(error("Error reading attribute"))),
       (:_nc_get_att_float_c,:nc_get_att_float,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Float32}),(:ncid,:varid,:name,:valsa),:(error("Error reading attribute"))),
       (:_nc_get_att_double_c,:nc_get_att_double,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Float64}),(:ncid,:varid,:name,:valsa),:(error("Error reading attribute"))),
+      (:_nc_get_att_ubyte_c,:nc_get_att_ubyte,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Uint8}),(:ncid,:varid,:name,:valsa),:(error("Error reading attribute"))),
       (:_nc_inq_var_c,:nc_inq_var,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Int32},Ptr{Int32},Ptr{Int32}),(:id,:varid,:namea,:xtypea,:ndimsa,:dimida,:natta),:(error("Error reading variable information"))),
       
       (:_nc_get_vara_double_c,:nc_get_vara_double,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Float64}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),

@@ -3,7 +3,7 @@ include("netcdf_c_wrappers.jl")
 using Base
 import Base.show
 using C
-export show,NcDim,NcVar,NcFile,new,ncread,ncwrite,nccreate,ncsync
+export show,NcDim,NcVar,NcFile,new,ncread,ncwrite,nccreate,ncsync,ncinfo
 #Some constants
 
 
@@ -72,7 +72,7 @@ function readvar(nc::NcFile,varname::String,start::Array,count::Array)
   count=int64(count)
   @assert nc.vars[varname].ndim==length(start)
   @assert nc.vars[varname].ndim==length(count)
-  println(keys(nc.vars))
+  NC_VERBOSE ? println(keys(nc.vars)) : nothing
   for i = 1:length(count)
     count[i]= count[i]>0 ? count[i] : nc.vars[varname].dim[i].dimlen
   end
@@ -189,7 +189,7 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar))
   dim=Dict{String,NcDim}();
   for d in dims
     dima=Array(Int32,1);
-    println("Dimension length ", d.dimlen)
+    NC_VERBOSE? println("Dimension length ", d.dimlen) : nothing
     C._nc_def_dim_c(id,d.name,d.dimlen,dima);
     d.dimid=dima[1];
     dim[d.name]=d;
@@ -211,7 +211,7 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar))
     end
     vara=Array(Int32,1);
     dumids=int32(v.dimids)
-    println(dumids)
+    NC_VERBOSE ? println(dumids) : nothing
     C._nc_def_var_c(id,v.name,v.nctype,v.ndim,int32(dumids),vara);
     v.varid=vara[1];
     vars[v.name]=v;
@@ -238,7 +238,7 @@ function vardef(fid::Integer,v::NcVar)
     end
     vara=Array(Int32,1);
     dumids=int32(v.dimids)
-    println(dumids)
+    NC_VERBOSE? println(dumids) : nothing
     C._nc_def_var_c(id,v.name,v.nctype,v.ndim,int32(dumids),vara);
     v.varid=vara[1];
     vars[v.name]=v;
@@ -247,7 +247,7 @@ end
 function close(nco::NcFile)
   #Close file
   C._nc_close_c(nco.ncid) 
-  println("Successfully closed file ",nco.ncid)
+  NC_VERBOSE? println("Successfully closed file ",nco.ncid) : nothing
   return nco.ncid
 end
 
@@ -260,7 +260,7 @@ function open(fil::String,omode::Uint16)
   (ndim,nvar,ngatt,nunlimdimid)=ncHelpers._ncf_inq(ncid)
   NC_VERBOSE ? println(ndim,nvar,ngatt,nunlimdimid) : nothing
   #Create ncdf object
-  ncf=NcFile(ncid,nvar-ndim,ndim,ngatt,Dict{String,NcVar}(),Dict{String,NcDim}(),Dict{Any,Any}(),nunlimdimid,fil,omode)
+  ncf=NcFile(ncid,nvar-ndim,ndim,ngatt,Dict{String,NcVar}(),Dict{String,NcDim}(),Dict{Any,Any}(),nunlimdimid,realpath(fil),omode)
   #Read global attributes
   ncf.gatts=ncHelpers._nc_getatts_all(ncid,NC_GLOBAL,ngatt)
   #Read dimensions
@@ -306,11 +306,16 @@ function ncread(fil::String,vname::String,ran...)
   return ncread(fil,vname,s,c)  
 end
 function ncread(fil::String,vname::String)
-  println(vname)
+  NC_VERBOSE ? println(vname) : nothing
   nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[vname] : open(fil)
   s=ones(Int,nc.vars[vname].ndim)
   c=s*(-1)
   return ncread(fil,vname,s,c)
+end
+
+function ncinfo(fil::String)
+  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil)
+  return(nc)
 end
 
 #High-level functions for writing data to a file
@@ -406,9 +411,10 @@ function nccreate(fil::String,varname::String,atts::Dict,dims...)
 end
 
 function show(io::IO,nc::NcFile)
-  println(io,"File: ",nc.name)
-  println(io,"Number of variables: ",nc.nvar)
-  println(io,"Number of Dimensions: ",nc.ndim)
+  println(io,"")
+  println(io,"##### NetCDF File #####")
+  println(io,"")
+  println(io,nc.name)
   println(io,"")
   println(io,"##### Dimensions #####")
   println(io,"")
@@ -417,6 +423,40 @@ function show(io::IO,nc::NcFile)
   for d in nc.dim
     @printf(io,"%15s %8d\n",d[2].name,d[2].dimlen)
   end
+  println(io,"")
+  println(io,"##### Variables #####")
+  println(io,"")
+  @printf(io,"%20s    %s","Name","Dimensions\n")
+  println("---------------------------------------------------------------")
+  for v in nc.vars
+    @printf(io,"%20s    ",v[2].name)
+    for d in v[2].dim
+      @printf(io,"%s, ",d.name)
+    end
+    @printf(io,"\n")
+  end
+  println(io,"")
+  println(io,"##### Attributes #####")
+  println(io,"")
+  @printf(io,"%20s %20s %20s\n","Variable","Name","Value")
+  println("---------------------------------------------------------------")
+  for a in nc.gatts
+    an=string(a[1])
+    av=string(a[2])
+    an=an[1:min(length(an),38)]
+    av=av[1:min(length(av),38)]
+    @printf(io,"%20s %20s %40s\n","global",an,av)
+  end
+  for v in nc.vars
+    for a in v[2].atts
+      an=string(a[1])
+      av=string(a[2])
+      an=an[1:min(length(an),38)]
+      av=av[1:min(length(av),38)]
+      @printf(io,"%20s %20s %40s\n",v[2].name,an,av)
+    end
+  end
+
 end
 
 end # Module
