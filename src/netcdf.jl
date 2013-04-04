@@ -3,7 +3,7 @@ include("netcdf_c_wrappers.jl")
 using Base
 import Base.show
 using C
-export show,NcDim,NcVar,NcFile,new,ncread,ncwrite,nccreate,ncsync,ncinfo
+export show,NcDim,NcVar,NcFile,new,ncread,ncwrite,nccreate,ncsync,ncinfo,ncclose
 #Some constants
 
 
@@ -81,7 +81,7 @@ function readvar(nc::NcFile,varname::String,start::Array,count::Array)
   for i in count
     p=p*i
   end
-  NC_VERBOSE ? println("$ncid $varid $p $count ${nc.vars[varname].nctype}") : nothing
+  NC_VERBOSE ? println("$ncid $varid $p $count $nc.vars[varname].nctype") : nothing
   if nc.vars[varname].nctype==NC_DOUBLE
     retvalsa=Array(Float64,p)
     C._nc_get_vara_double_c(ncid,varid,start,count,retvalsa)
@@ -161,9 +161,14 @@ end
 #Function to close netcdf files
 function ncclose(fil::String)
   if (has(currentNcFiles,realpath(fil)))
-    close(currentNcFiles[fil])
+    close(currentNcFiles[realpath(fil)])
+    delete!(currentNcFiles,realpath(fil))
   end
-  
+end
+function ncclose()
+  for f in keys(currentNcFiles)
+    ncclose(f)
+  end
 end
 
 function create(name::String,varlist::Union(Array{NcVar},NcVar))
@@ -403,6 +408,7 @@ function nccreate(fil::String,varname::String,atts::Dict,dims...)
       i=i+1
     end
   else
+    println(v.dim)
     nc=create(fil,v)
     for d in dim
       ncwrite(d.vals,fil,d.name)
