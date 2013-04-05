@@ -81,6 +81,7 @@ function readvar(nc::NcFile,varname::String,start::Array,count::Array)
   for i in count
     p=p*i
   end
+  count=count[length(count):-1:1]
   NC_VERBOSE ? println("$ncid $varid $p $count $nc.vars[varname].nctype") : nothing
   if nc.vars[varname].nctype==NC_DOUBLE
     retvalsa=Array(Float64,p)
@@ -100,7 +101,7 @@ function readvar(nc::NcFile,varname::String,start::Array,count::Array)
   end
   NC_VERBOSE ? println("Successfully read from file ",ncid) : nothing
   if length(count)>1 
-    return reshape(retvalsa,ntuple(length(count),x->count[x]))
+    return reshape(retvalsa,ntuple(length(count),x->count[length(count)-x+1]))
   else
     return retvalsa
   end
@@ -127,6 +128,7 @@ function putvar(nc::NcFile,varname::String,start::Array,vals::Array)
     p=p*coun[i]
     count[i]=coun[i]
   end
+  count=count[length(count):-1:1]
   NC_VERBOSE ? println("$ncid $varname $p $count ",nc.vars[varname].nctype) : nothing
   #x=reshape(vals,p)
   x=vals
@@ -217,7 +219,7 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar))
     vara=Array(Int32,1);
     dumids=int32(v.dimids)
     NC_VERBOSE ? println(dumids) : nothing
-    C._nc_def_var_c(id,v.name,v.nctype,v.ndim,int32(dumids),vara);
+    C._nc_def_var_c(id,v.name,v.nctype,v.ndim,int32(dumids[v.ndim:-1:1]),vara);
     v.varid=vara[1];
     vars[v.name]=v;
   end
@@ -244,7 +246,7 @@ function vardef(fid::Integer,v::NcVar)
     vara=Array(Int32,1);
     dumids=int32(v.dimids)
     NC_VERBOSE? println(dumids) : nothing
-    C._nc_def_var_c(id,v.name,v.nctype,v.ndim,int32(dumids),vara);
+    C._nc_def_var_c(id,v.name,v.nctype,v.ndim,int32(dumids[v.ndim:-1:1]),vara);
     v.varid=vara[1];
     vars[v.name]=v;
 end
@@ -286,7 +288,7 @@ function open(fil::String,omode::Uint16)
       vdim[i]=ncf.dim[ncHelpers.getdimnamebyid(ncf,did)]
       i=i+1
     end
-    ncf.vars[name]=NcVar(ncid,varid,vndim,natts,nctype,name,int(dimids),vdim,atts)
+    ncf.vars[name]=NcVar(ncid,varid,vndim,natts,nctype,name,int(dimids[vndim:-1:1]),vdim[vndim:-1:1],atts)
   end
   currentNcFiles[realpath(ncf.name)]=ncf
   return ncf
@@ -365,6 +367,7 @@ function nccreate(fil::String,varname::String,atts::Dict,dims...)
       println("reopening file in WRITE mode")
       open(fil,C.NC_WRITE)
     end
+    has(nc.vars,varname) ? error("Variable $varname already exists in file fil") : nothing
     # Check if dimensions exist, if not, create
     i=1
     # Remember if dimension was created
@@ -393,7 +396,7 @@ function nccreate(fil::String,varname::String,atts::Dict,dims...)
           C._nc_redef_c(nc.ncid)
           nc.in_def_mode=true
     end
-    C._nc_def_var_c(nc.ncid,v.name,v.nctype,v.ndim,int32(dumids),vara);
+    C._nc_def_var_c(nc.ncid,v.name,v.nctype,v.ndim,int32(dumids[v.ndim:-1:1]),vara);
     v.varid=vara[1];
     nc.vars[v.name]=v;
     if (nc.in_def_mode) 

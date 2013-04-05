@@ -18,11 +18,9 @@ decl=decl_rad*180/pi
 lat_rad=latitude*pi/180
 long_rad=longitude*pi/180
 
-x1=sin(decl_rad)*sin(lat_rad)+cos(decl_rad)*cos(lat_rad)
-x2=cos(omega*pi/180)
-xt=x1*x2
 
-theta_rad=acos(xt)
+theta_rad=acos(sin(decl_rad)*sin(lat_rad)+cos(decl_rad)*cos(lat_rad)*cos(omega*pi/180.))
+
 theta=theta_rad/pi*180
 beta=90-theta
 beta_rad=beta*pi/180

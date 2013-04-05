@@ -6,13 +6,13 @@ using netcdf
 include("toa.jl")
 
 # Define longitudes and latitudes, day and timesteps
-lat=[-89:10:89]
-lon=[0:30:359]
+lat=[-89:89]
+lon=[0:359]
 day=1
-tim=[0:0]
+tim=[0:23]
 
 # Create radiation array
-rad = float64([g_pot(x2,x1,day,0) for x1=lon, x2=lat, x3=tim])
+rad = float64([g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim])
 
 # Define some attributes of the variable (optionlal)
 varatts = {"longname" => "Radiation at the top of the atmosphere",
