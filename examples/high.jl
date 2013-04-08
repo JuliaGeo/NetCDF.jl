@@ -35,3 +35,28 @@ ncwrite(rad,"radiation.nc","rad")
 # And close the file
 
 ncclose("radiation.nc")
+
+# Reading the whole dataset is done by:
+
+x=ncread("radiation.nc","rad");
+println("Successfully read an array of size ",size(x))
+
+# Additional
+# Reading parts of a file, for example reading only time steps 5 and 6 can be done with:
+
+x=ncread("radiation.nc","rad",[1,1,5],[-1,-1,2])
+println("Successfully read an array of size ",size(x))
+
+#here the first array [1,1,5] gives the starting position for reading while the second array [1,1,2] gives the number of blocks to be read along each dimension. 
+# If the count is set to -1 the whole dimension is read. 
+
+#The same can be done for ncwrite
+
+x=ones(Float64,1,360,1)
+#ncwrite(x,"radiation.nc","rad",[60,1,4])
+# This would set all values at 60deg longitude at the 4th time step to 1. 
+
+
+
+
+

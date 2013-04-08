@@ -263,7 +263,7 @@ function finalizedim(dimlen,dimvals,dimatts,name)
     dimvals=float64([1:dimlen])
   end
   if (dimatts==nothing)
-    dimatts=Dict{Any,Any}()
+    dimatts={"missval"=>-9999}
   end
   return(NcDim(name,dimvals,dimatts))
 end
