@@ -22,7 +22,6 @@ type NcDim
   vals::AbstractArray
   atts::Dict{Any,Any}
 end
-
 NcDim(name::String,vals::Union(AbstractArray,Number),atts::Dict{Any,Any})=NcDim(-1,-1,-1,name,length(vals),vals,atts)
 NcDim(name::String,vals::Union(AbstractArray,Number))=NcDim(name,vals,{"units"=>"unknown"})
 
@@ -82,7 +81,8 @@ function readvar(nc::NcFile,varname::String,start::Array,count::Array)
     p=p*i
   end
   count=count[length(count):-1:1]
-  NC_VERBOSE ? println("$ncid $varid $p $count $nc.vars[varname].nctype") : nothing
+  start=start[length(start):-1:1]
+  NC_VERBOSE ? println("$ncid $varid $p $start $count") : nothing
   if nc.vars[varname].nctype==NC_DOUBLE
     retvalsa=Array(Float64,p)
     C._nc_get_vara_double_c(ncid,varid,start,count,retvalsa)
@@ -129,6 +129,7 @@ function putvar(nc::NcFile,varname::String,start::Array,vals::Array)
     count[i]=coun[i]
   end
   count=count[length(count):-1:1]
+  start=start[length(start):-1:1]
   NC_VERBOSE ? println("$ncid $varname $p $count ",nc.vars[varname].nctype) : nothing
   #x=reshape(vals,p)
   x=vals
@@ -146,11 +147,10 @@ function putvar(nc::NcFile,varname::String,start::Array,vals::Array)
   end
   NC_VERBOSE ? println("Successfully wrote to file ",ncid) : nothing
 end
-#function putvar(nc::NcFile,varid::String,start,vals) 
-#  va=ncHelpers._getvarindexbyname(nc,varid)
-#  va == nothing ? error("Error: Variable $varid not found in $(nc.name)") : return putvar(nc,va.varid,start,vals)
-#end
-
+function putvar(nc::NcFile,varname::String,vals::Array)
+  start=ones(length(size(vals)))
+  putvar(nc,varname,start,vals)
+end
 
 # Function to synchronize all files with disk
 function ncsync()
@@ -158,6 +158,11 @@ function ncsync()
     id=ncf[2].ncid
     C._nc_sync_c(int32(id))
   end
+end
+
+sync(nc::NcFile)
+  id=nc.ncid
+  C._nc_sync_c(int32(id))
 end
 
 #Function to close netcdf files
@@ -314,7 +319,7 @@ function ncread(fil::String,vname::String,ran...)
 end
 function ncread(fil::String,vname::String)
   NC_VERBOSE ? println(vname) : nothing
-  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[vname] : open(fil)
+  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil)
   s=ones(Int,nc.vars[vname].ndim)
   c=s*(-1)
   return ncread(fil,vname,s,c)
@@ -327,6 +332,7 @@ end
 
 #High-level functions for writing data to a file
 function ncwrite(x,fil::String,vname::String,start::Array)
+  
   nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil,C.NC_WRITE)
   if (nc.omode==C.NC_NOWRITE)
     close(nc)

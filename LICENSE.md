@@ -1,7 +1,7 @@
 This package is licensed under the MIT License:
 
-> Copyright (c) 2009-2012: Fabian Gans
-> and other contributors:
+> Copyright (c) 2012-2013: Fabian Gans, Max-Planck-Institut fuer Biogeochemie, Jena, Germany
+> 
 > 
 > Permission is hereby granted, free of charge, to any person obtaining
 > a copy of this software and associated documentation files (the

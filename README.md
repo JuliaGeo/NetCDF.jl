@@ -34,3 +34,5 @@ Now we can write data to the file:
     ncwrite (d, filename, varname)
     
 To learn more, have a look at the readme and the examples. 
+
+For further questions contact the package author Fabian Gans (fgans@bgc-jena.mpg.de)
