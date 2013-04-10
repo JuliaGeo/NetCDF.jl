@@ -160,7 +160,7 @@ function ncsync()
   end
 end
 
-sync(nc::NcFile)
+function sync(nc::NcFile)
   id=nc.ncid
   C._nc_sync_c(int32(id))
 end
