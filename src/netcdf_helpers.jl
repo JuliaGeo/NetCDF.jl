@@ -1,7 +1,7 @@
 module ncHelpers
 using Base
 using netcdf
-using C
+using netcdf_C
 
 jltype2nctype={Int16=>NC_SHORT,
                Int32=>NC_INT,
@@ -25,7 +25,7 @@ end
 function _nc_op(fname::String,omode::Uint16)
   # Open netcdf file
   ida=Array(Int32,1)
-  netcdf.C._nc_open_c(fname,omode,ida)
+  netcdf.netcdf_C._nc_open_c(fname,omode,ida)
   id=ida[1]
   NC_VERBOSE ? println("Successfully opened ",fname," dimid=",id) : nothing
   return id
@@ -33,7 +33,7 @@ end
 
 function _nc_inq_dim(id::Integer,idim::Integer)
   namea=Array(Uint8,NC_MAX_NAME+1);lengtha=Array(Int32,1)
-  netcdf.C._nc_inq_dim_c(id,idim,namea,lengtha)
+  netcdf.netcdf_C._nc_inq_dim_c(id,idim,namea,lengtha)
   name=_cchartostring(namea)
   dimlen=lengtha[1]
   NC_VERBOSE ? println("Successfully read from file") : nothing
@@ -44,7 +44,7 @@ end
 function _nc_inq_dimid(id::Integer,name::String)
   dimida=Array(Int32,1)
   try
-    netcdf.C._nc_inq_dimid_c(id,name,dimida)
+    netcdf.netcdf_C._nc_inq_dimid_c(id,name,dimida)
   catch
     dimida[1]=-1
   end
@@ -56,7 +56,7 @@ end
 function _ncf_inq(id::Integer)
   # Inquire number of codes in netCDF file
   ndima=Array(Int32,1);nvara=Array(Int32,1);ngatta=Array(Int32,1);nunlimdimida=Array(Int32,1)
-  C._nc_inq_c(id,ndima,nvara,ngatta,nunlimdimida)
+  netcdf_C._nc_inq_c(id,ndima,nvara,ngatta,nunlimdimida)
   ndim=ndima[1]
   nvar=nvara[1]
   ngatt=ngatta[1]
@@ -69,7 +69,7 @@ end
 function _nc_inq_attname(ncid::Integer,varid::Integer,attnum::Integer)
   # Get attribute name from attribute number
   namea=Array(Uint8,NC_MAX_NAME+1)
-  C._nc_inq_attname_c(ncid,varid,attnum,namea)
+  netcdf_C._nc_inq_attname_c(ncid,varid,attnum,namea)
   name=_cchartostring(namea)
   NC_VERBOSE ? println("Successfully read attribute name") : nothing
   NC_VERBOSE ? println("name=",name) : nothing
@@ -83,7 +83,7 @@ function _nc_inq_att(ncid::Integer,varid::Integer,attnum::Integer)
   NC_VERBOSE ? println(name) : nothing
   #Then find out about attribute
   typea=Array(Int32,1);nvals=Array(Int32,1)
-  C._nc_inq_att_c(ncid,varid,name,typea,nvals)
+  netcdf_C._nc_inq_att_c(ncid,varid,name,typea,nvals)
   attype=typea[1]
   NC_VERBOSE ? println("Successfully read attribute type and number of vals") : nothing
   NC_VERBOSE ? println("atttype=",attype," nvals=",nvals[1]) : nothing
@@ -94,23 +94,23 @@ end
 function _nc_get_att(ncid::Integer,varid::Integer,name,attype::Integer,attlen::Integer)
   if (attype==NC_CHAR)
     valsa=Array(Uint8,attlen+5)
-    C._nc_get_att_text_c(ncid,varid,name,valsa)
+    netcdf_C._nc_get_att_text_c(ncid,varid,name,valsa)
     valsa=string(_cchartostring(valsa))
   elseif (attype==NC_SHORT)
     valsa=Array(Int16,attlen)
-    C._nc_get_att_short_c(ncid,varid,name,valsa)
+    netcdf_C._nc_get_att_short_c(ncid,varid,name,valsa)
   elseif (attype==NC_INT)
     valsa=Array(Int32,attlen)
-    C._nc_get_att_int_c(ncid,varid,name,valsa)
+    netcdf_C._nc_get_att_int_c(ncid,varid,name,valsa)
   elseif (attype==NC_FLOAT)
     valsa=Array(Float32,attlen)
-    C._nc_get_att_float_c(ncid,varid,name,valsa)
+    netcdf_C._nc_get_att_float_c(ncid,varid,name,valsa)
   elseif (attype==NC_DOUBLE)
     valsa=Array(Float64,attlen)
-    C._nc_get_att_double_c(ncid,varid,name,valsa)
+    netcdf_C._nc_get_att_double_c(ncid,varid,name,valsa)
   elseif (attype==NC_BYTE)
     valsa=Array(Uint8,attlen)
-    C._nc_get_att_ubyte_c(ncid,varid,name,valsa)
+    netcdf_C._nc_get_att_ubyte_c(ncid,varid,name,valsa)
   else
     valsa="Could not read attribute, currently unsupported datatype by the netcdf package"  
   end
@@ -122,7 +122,7 @@ function _ncv_inq(nc::NcFile,varid::Integer)
   ndim=length(nc.dim)
   # Inquire variables in the file
   namea=Array(Uint8,NC_MAX_NAME+1);xtypea=Array(Int32,1);ndimsa=Array(Int32,1);dimida=Array(Int32,ndim);natta=Array(Int32,1)
-  C._nc_inq_var_c(id,varid,namea,xtypea,ndimsa,dimida,natta)
+  netcdf_C._nc_inq_var_c(id,varid,namea,xtypea,ndimsa,dimida,natta)
   NC_VERBOSE ? println("dimida=",dimida," ndimsa=",ndimsa) : nothing
   nctype=xtypea[1]
   vndim=ndimsa[1]
