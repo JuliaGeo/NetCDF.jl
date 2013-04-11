@@ -1,7 +1,7 @@
 module ncHelpers
 using Base
 using netcdf
-using netcdf_C
+using netcdf.netcdf_C
 
 jltype2nctype={Int16=>NC_SHORT,
                Int32=>NC_INT,

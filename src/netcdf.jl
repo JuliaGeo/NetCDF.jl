@@ -1,8 +1,8 @@
 module netcdf
-include("netcdf_c_wrappers.jl")
 using Base
+include("netcdf_c_wrappers.jl")
+using netcdf.netcdf_C
 import Base.show
-using netcdf_C
 export show,NcDim,NcVar,NcFile,new,ncread,ncwrite,nccreate,ncsync,ncinfo,ncclose
 #Some constants
 
@@ -60,7 +60,7 @@ NcFile(ncid::Integer,nvar::Integer,ndim::Integer,ngatts::Integer,vars::Dict{Stri
 
 
 include("netcdf_helpers.jl")
-using ncHelpers
+using netcdf.ncHelpers
 global currentNcFiles=Dict{String,NcFile}()  
 
 # Read block of data from file
