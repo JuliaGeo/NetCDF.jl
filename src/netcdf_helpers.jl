@@ -5,6 +5,7 @@ using netcdf.netcdf_C
 
 jltype2nctype={Int16=>NC_SHORT,
                Int32=>NC_INT,
+               Int64=>NC_LONG,
                Float32=>NC_FLOAT,
                Float64=>NC_DOUBLE}
 
@@ -91,6 +92,43 @@ function _nc_inq_att(ncid::Integer,varid::Integer,attnum::Integer)
   return (name,text)
 end
 
+function _nc_put_att(ncid::Integer,varid::Integer,name,val)
+  if (start(val)>0)
+    if (typeof(val[1])<:Char)
+      attlen=length(val)+1
+      attype=NC_CHAR
+    else
+      attlen=length(val)
+      attype=jltype2nctype[typeof(val[1])]
+    end
+  else
+    if (typeof(val)<:Char)
+      attlen=2
+      attype=NC_CHAR
+    else
+      attlen=1
+      attype=jltype2nctype[typeof(val)]
+      val=[val]
+    end
+  end
+  NC_VERBOSE ? println(ncid, varid, name, attype, attlen, val) : nothing
+  if (attype==NC_CHAR)
+    netcdf_C._nc_put_att_text_c(ncid,varid,name,attlen,val)
+  elseif (attype==NC_SHORT)
+    netcdf_C._nc_put_att_short_c(ncid,varid,name,attype,attlen,val)
+  elseif (attype==NC_INT)
+    netcdf_C._nc_put_att_int_c(ncid,varid,name,attype,attlen,int32(val))
+  elseif (attype==NC_FLOAT)
+    netcdf_C._nc_put_att_float_c(ncid,varid,name,attype,attlen,val)
+  elseif (attype==NC_DOUBLE)
+    netcdf_C._nc_put_att_float_c(ncid,varid,name,NC_FLOAT,attlen,float32(val))
+  elseif (attype==NC_BYTE)
+    netcdf_C._nc_put_att_ubyte_c(ncid,varid,name,attype,attlen,val)
+  else
+    valsa="Could not read attribute, currently unsupported datatype by the netcdf package"  
+  end
+end
+
 function _nc_get_att(ncid::Integer,varid::Integer,name,attype::Integer,attlen::Integer)
   if (attype==NC_CHAR)
     valsa=Array(Uint8,attlen+5)
@@ -102,6 +140,9 @@ function _nc_get_att(ncid::Integer,varid::Integer,name,attype::Integer,attlen::I
   elseif (attype==NC_INT)
     valsa=Array(Int32,attlen)
     netcdf_C._nc_get_att_int_c(ncid,varid,name,valsa)
+  elseif (attype==NC_LONG)
+    valsa=Array(Int64,attlen)
+    netcdf_C._nc_get_att_long_c(ncid,varid,name,valsa)
   elseif (attype==NC_FLOAT)
     valsa=Array(Float32,attlen)
     netcdf_C._nc_get_att_float_c(ncid,varid,name,valsa)

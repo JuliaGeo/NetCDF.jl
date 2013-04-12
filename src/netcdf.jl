@@ -3,7 +3,7 @@ using Base
 include("netcdf_c_wrappers.jl")
 using netcdf.netcdf_C
 import Base.show
-export show,NcDim,NcVar,NcFile,new,ncread,ncwrite,nccreate,ncsync,ncinfo,ncclose
+export show,NcDim,NcVar,NcFile,new,ncread,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt
 #Some constants
 
 
@@ -115,6 +115,35 @@ function readvar(nc::NcFile,varid::NcVar,start,count)
 end
 
 
+function putatt(ncid::Integer,varid::Integer,atts::Dict)
+  for a in atts
+    name=a[1]
+    val=a[2]
+    ncHelpers._nc_put_att(ncid,varid,name,val)
+  end
+end
+
+function putatt(nc::NcFile,varname::String,atts::Dict)
+  varid = has(nc.vars,varname) ? nc.vars[varname].varid : NC_GLOBAL
+  chdef=false
+  if (!nc.in_def_mode)
+    chdef=true
+    netcdf_C._nc_redef_c(nc.ncid)
+  end
+  putatt(nc.ncid,varid,atts)
+  chdef ? netcdf_C._nc_enddef_c(nc.ncid) : nothing
+end
+function ncputatt(nc::String,varname::String,atts::Dict)
+  nc= has(currentNcFiles,realpath(nc)) ? currentNcFiles[realpath(nc)] : open(nc,NC_WRITE)
+  if (nc.omode==netcdf_C.NC_NOWRITE)
+    close(nc)
+    println("reopening file in WRITE mode")
+    open(fil,netcdf_C.NC_WRITE)
+  end
+  putatt(nc,varname,atts)
+end
+
+
 function putvar(nc::NcFile,varname::String,start::Array,vals::Array)
   ncid=nc.ncid
   has(nc.vars,varname) ? nothing : error("No variable $varname in file $nc.name")
@@ -209,6 +238,7 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar))
     varida=Array(Int32,1)
     dumids=[copy(d.dimid)]
     netcdf_C._nc_def_var_c(id,d.name,NC_DOUBLE,1,dumids,varida)
+    putatt(id,d.dimid,d.atts)
     d.varid=varida[1]
     dd=Array(NcDim,1)
     dd[1]=d
@@ -225,6 +255,7 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar))
     dumids=int32(v.dimids)
     NC_VERBOSE ? println(dumids) : nothing
     netcdf_C._nc_def_var_c(id,v.name,v.nctype,v.ndim,int32(dumids[v.ndim:-1:1]),vara);
+    putatt(id,v.varid,v.atts)
     v.varid=vara[1];
     vars[v.name]=v;
   end
@@ -242,7 +273,7 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar))
 end
 
 function vardef(fid::Integer,v::NcVar)
-    netcdf_C.redef(ncid)
+    netcdf_C._nc_redef(ncid)
     i=1
     for d in v.dim
       v.dimids[i]=d.dimid
