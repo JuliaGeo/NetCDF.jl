@@ -35,4 +35,7 @@ Now we can write data to the file:
     
 To learn more, have a look at the readme and the examples. 
 
-For further questions contact the package author Fabian Gans (fgans@bgc-jena.mpg.de)
+Contact info:
+Fabian Gans (fgans@bgc-jena.mpg.de)
+Max-Planck-Institute for Biogeochemistry
+Jena, Germany
