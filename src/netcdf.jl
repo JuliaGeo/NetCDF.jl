@@ -134,7 +134,7 @@ function putatt(nc::NcFile,varname::String,atts::Dict)
   chdef ? netcdf_C._nc_enddef_c(nc.ncid) : nothing
 end
 function ncputatt(nc::String,varname::String,atts::Dict)
-  nc= has(currentNcFiles,realpath(nc)) ? currentNcFiles[realpath(nc)] : open(nc,NC_WRITE)
+  nc= has(currentNcFiles,abspath(nc)) ? currentNcFiles[abspath(nc)] : open(nc,NC_WRITE)
   if (nc.omode==netcdf_C.NC_NOWRITE)
     close(nc)
     println("reopening file in WRITE mode")
@@ -196,9 +196,9 @@ end
 
 #Function to close netcdf files
 function ncclose(fil::String)
-  if (has(currentNcFiles,realpath(fil)))
-    close(currentNcFiles[realpath(fil)])
-    delete!(currentNcFiles,realpath(fil))
+  if (has(currentNcFiles,abspath(fil)))
+    close(currentNcFiles[abspath(fil)])
+    delete!(currentNcFiles,abspath(fil))
   end
 end
 function ncclose()
@@ -303,7 +303,7 @@ function open(fil::String,omode::Uint16)
   (ndim,nvar,ngatt,nunlimdimid)=ncHelpers._ncf_inq(ncid)
   NC_VERBOSE ? println(ndim,nvar,ngatt,nunlimdimid) : nothing
   #Create ncdf object
-  ncf=NcFile(ncid,nvar-ndim,ndim,ngatt,Dict{String,NcVar}(),Dict{String,NcDim}(),Dict{Any,Any}(),nunlimdimid,realpath(fil),omode)
+  ncf=NcFile(ncid,nvar-ndim,ndim,ngatt,Dict{String,NcVar}(),Dict{String,NcDim}(),Dict{Any,Any}(),nunlimdimid,abspath(fil),omode)
   #Read global attributes
   ncf.gatts=ncHelpers._nc_getatts_all(ncid,NC_GLOBAL,ngatt)
   #Read dimensions
@@ -326,7 +326,7 @@ function open(fil::String,omode::Uint16)
     end
     ncf.vars[name]=NcVar(ncid,varid,vndim,natts,nctype,name,int(dimids[vndim:-1:1]),vdim[vndim:-1:1],atts)
   end
-  currentNcFiles[realpath(ncf.name)]=ncf
+  currentNcFiles[abspath(ncf.name)]=ncf
   return ncf
 end
 open(fil::String) = open(fil,netcdf_C.NC_NOWRITE)
@@ -334,7 +334,7 @@ open(fil::String) = open(fil,netcdf_C.NC_NOWRITE)
 # Define some high-level functions
 # High-level functions for writing data to files
 function ncread(fil::String,vname::String,start::Array,count::Array)
-  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil)
+  nc= has(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
   x=readvar(nc,vname,start,count)
   return x
 end
@@ -350,21 +350,21 @@ function ncread(fil::String,vname::String,ran...)
 end
 function ncread(fil::String,vname::String)
   NC_VERBOSE ? println(vname) : nothing
-  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil)
+  nc= has(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
   s=ones(Int,nc.vars[vname].ndim)
   c=s*(-1)
   return ncread(fil,vname,s,c)
 end
 
 function ncinfo(fil::String)
-  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil)
+  nc= has(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
   return(nc)
 end
 
 #High-level functions for writing data to a file
 function ncwrite(x,fil::String,vname::String,start::Array)
   
-  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil,netcdf_C.NC_WRITE)
+  nc= has(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,netcdf_C.NC_WRITE)
   if (nc.omode==netcdf_C.NC_NOWRITE)
     close(nc)
     println("reopening file in WRITE mode")
@@ -374,7 +374,7 @@ function ncwrite(x,fil::String,vname::String,start::Array)
 end
 
 function ncwrite(x,fil::String,vname::String)
-  nc= has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil,netcdf_C.NC_WRITE)
+  nc= has(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,netcdf_C.NC_WRITE)
   if (nc.omode==netcdf_C.NC_NOWRITE)
     close(nc)
     println("reopening file in WRITE mode")
@@ -398,7 +398,7 @@ function nccreate(fil::String,varname::String,atts::Dict,dims...)
   v=NcVar(varname,dim,atts,Float64)
   # Test if the file already exists
   if (isfile(fil)) 
-    nc=has(currentNcFiles,realpath(fil)) ? currentNcFiles[realpath(fil)] : open(fil,netcdf_C.NC_WRITE)
+    nc=has(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,netcdf_C.NC_WRITE)
     if (nc.omode==netcdf_C.NC_NOWRITE)
       close(nc)
       println("reopening file in WRITE mode")
