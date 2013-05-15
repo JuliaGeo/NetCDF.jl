@@ -9,7 +9,7 @@ export NC_NOERR,NC_MAX_NAME,NC_VERBOSE,NC_CHAR,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,
 const NC_NOERR=0
 
 const NC_MAX_NAME=256
-const NC_VERBOSE=true
+const NC_VERBOSE=false
 const NC_BYTE=1
 const NC_CHAR =2
 const NC_SHORT =3

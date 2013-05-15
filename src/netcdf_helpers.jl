@@ -1,7 +1,7 @@
 module ncHelpers
 using Base
-using netcdf
-using netcdf.netcdf_C
+using netcdf_C
+using NetCDF
 
 jltype2nctype={Int16=>NC_SHORT,
                Int32=>NC_INT,
@@ -26,7 +26,7 @@ end
 function _nc_op(fname::String,omode::Uint16)
   # Open netcdf file
   ida=Array(Int32,1)
-  netcdf.netcdf_C._nc_open_c(fname,omode,ida)
+  NetCDF.netcdf_C._nc_open_c(fname,omode,ida)
   id=ida[1]
   NC_VERBOSE ? println("Successfully opened ",fname," dimid=",id) : nothing
   return id
@@ -34,7 +34,7 @@ end
 
 function _nc_inq_dim(id::Integer,idim::Integer)
   namea=Array(Uint8,NC_MAX_NAME+1);lengtha=Array(Int32,1)
-  netcdf.netcdf_C._nc_inq_dim_c(id,idim,namea,lengtha)
+  NetCDF.netcdf_C._nc_inq_dim_c(id,idim,namea,lengtha)
   name=_cchartostring(namea)
   dimlen=lengtha[1]
   NC_VERBOSE ? println("Successfully read from file") : nothing
@@ -45,7 +45,7 @@ end
 function _nc_inq_dimid(id::Integer,name::String)
   dimida=Array(Int32,1)
   try
-    netcdf.netcdf_C._nc_inq_dimid_c(id,name,dimida)
+    NetCDF.netcdf_C._nc_inq_dimid_c(id,name,dimida)
   catch
     dimida[1]=-1
   end
@@ -62,8 +62,8 @@ function _ncf_inq(id::Integer)
   nvar=nvara[1]
   ngatt=ngatta[1]
   nunlimdimid=nunlimdimida[1]
-  netcdf.NC_VERBOSE ? println("Successfully read from file") : nothing
-  netcdf.NC_VERBOSE ? println("ndim=",ndim," nvar=",nvar," ngatt=",ngatt," numlimdimid=",nunlimdimid) : nothing
+  NetCDF.NC_VERBOSE ? println("Successfully read from file") : nothing
+  NetCDF.NC_VERBOSE ? println("ndim=",ndim," nvar=",nvar," ngatt=",ngatt," numlimdimid=",nunlimdimid) : nothing
   return (ndim,nvar,ngatt,nunlimdimid)
 end
 
