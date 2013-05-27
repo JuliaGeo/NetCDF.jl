@@ -198,7 +198,6 @@ end
 function ncclose(fil::String)
   if (has(currentNcFiles,abspath(fil)))
     close(currentNcFiles[abspath(fil)])
-    delete!(currentNcFiles,abspath(fil))
   end
 end
 function ncclose()
@@ -290,12 +289,13 @@ end
 function close(nco::NcFile)
   #Close file
   netcdf_C._nc_close_c(nco.ncid) 
+  delete!(currentNcFiles,abspath(nco.name))
   NC_VERBOSE? println("Successfully closed file ",nco.ncid) : nothing
   return nco.ncid
 end
 
 
-function open(fil::String,omode::Uint16)
+function open(fil::String,omode::Uint16=netcdf_C.NC_NOWRITE; readdimvar=false)
   # Open netcdf file
   ncid=ncHelpers._nc_op(fil,omode)
   NC_VERBOSE ? println(ncid) : nothing
@@ -326,10 +326,10 @@ function open(fil::String,omode::Uint16)
     end
     ncf.vars[name]=NcVar(ncid,varid,vndim,natts,nctype,name,int(dimids[vndim:-1:1]),vdim[vndim:-1:1],atts)
   end
+  readdimvar==true ? ncHelpers._readdimvars(ncf) : nothing
   currentNcFiles[abspath(ncf.name)]=ncf
   return ncf
 end
-open(fil::String) = open(fil,netcdf_C.NC_NOWRITE)
 
 # Define some high-level functions
 # High-level functions for writing data to files
