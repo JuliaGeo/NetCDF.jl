@@ -2,7 +2,7 @@
 # 
 # First of all we create an array with top-of the atmosphere radiation data
 
-using netcdf
+using NetCDF
 include("toa.jl")
 
 # Define longitudes and latitudes, day and timesteps

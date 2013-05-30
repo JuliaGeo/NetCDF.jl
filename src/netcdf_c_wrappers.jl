@@ -1,6 +1,3 @@
-module netcdf_C
-using Base
-export NC_NOERR,NC_MAX_NAME,NC_VERBOSE,NC_CHAR,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE,NC_GLOBAL,NC_CLOBBER,NC_NOCLOBBER,NC_NOWRITE,NC_WRITE,NC_LONG,netcdf_C
 #
 #  CCall wrapper functions, thanks to TimHoly, copied from the HDF5-package
 #
@@ -124,5 +121,3 @@ for (jlname, h5name, outtype, argtypes, argsyms, ex_error) in
         $ex_func
     end
 end
-
-end #Module C
