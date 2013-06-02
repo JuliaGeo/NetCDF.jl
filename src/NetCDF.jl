@@ -105,7 +105,7 @@ function readvar(nc::NcFile,varname::String,start::Array,count::Array)
 end
 function readvar(nc::NcFile,varid::Integer,start,count) 
   va=getvarbyid(nc,varid)
-  va == nothing ? error("Error: Variable $varid not found in $(nc.name)") : return readvar(nc,va.varname,start,count)
+  va == nothing ? error("Error: Variable $varid not found in $(nc.name)") : return readvar(nc,va.name,start,count)
 end
 function readvar(nc::NcFile,varid::NcVar,start,count) 
   return readvar(nc,varid.varid,start,count)
