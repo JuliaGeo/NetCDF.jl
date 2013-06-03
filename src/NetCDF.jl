@@ -84,8 +84,8 @@ function readvar(nc::NcFile,varname::String,start::Array,count::Array)
     retvalsa=Array(Float64,p)
     _nc_get_vara_double_c(ncid,varid,start,count,retvalsa)
   elseif nc.vars[varname].nctype==NC_FLOAT
-    retvalsa=Array(Float64,p)
-    _nc_get_vara_double_c(ncid,varid,start,count,retvalsa)
+    retvalsa=Array(Float32,p)
+    _nc_get_vara_float_c(ncid,varid,start,count,retvalsa)
   elseif nc.vars[varname].nctype==NC_INT
     retvalsa=Array(Int32,p)
     _nc_get_vara_int_c(ncid,varid,start,count,retvalsa)

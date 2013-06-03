@@ -223,7 +223,11 @@ function _nc_getatts_all(ncid::Integer,varid::Integer,natts::Integer)
   atts=Dict{Any,Any}()
   for attnum=0:natts-1
     gatt=_nc_inq_att(ncid,varid,attnum)
-    atts[gatt[1]]=string(gatt[2])
+    v=gatt[2]
+    if ((length(v)==1) & !(typeof(v)<:String)) 
+      v=v[1]
+    end
+    atts[gatt[1]]=v
   end
   NC_VERBOSE ? println(atts) : nothing
   return atts
