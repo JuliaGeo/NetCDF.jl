@@ -121,7 +121,7 @@ function putatt(ncid::Integer,varid::Integer,atts::Dict)
 end
 
 function putatt(nc::NcFile,varname::String,atts::Dict)
-  varid = has(nc.vars,varname) ? nc.vars[varname].varid : NC_GLOBAL
+  varid = haskey(nc.vars,varname) ? nc.vars[varname].varid : NC_GLOBAL
   chdef=false
   if (!nc.in_def_mode)
     chdef=true
@@ -131,7 +131,7 @@ function putatt(nc::NcFile,varname::String,atts::Dict)
   chdef ? _nc_enddef_c(nc.ncid) : nothing
 end
 function ncputatt(nc::String,varname::String,atts::Dict)
-  nc= has(currentNcFiles,abspath(nc)) ? currentNcFiles[abspath(nc)] : open(nc,NC_WRITE)
+  nc= haskey(currentNcFiles,abspath(nc)) ? currentNcFiles[abspath(nc)] : open(nc,NC_WRITE)
   if (nc.omode==NC_NOWRITE)
     close(nc)
     println("reopening file in WRITE mode")
@@ -143,7 +143,7 @@ end
 
 function putvar(nc::NcFile,varname::String,start::Array,vals::Array)
   ncid=nc.ncid
-  has(nc.vars,varname) ? nothing : error("No variable $varname in file $nc.name")
+  haskey(nc.vars,varname) ? nothing : error("No variable $varname in file $nc.name")
   @assert nc.vars[varname].ndim==length(start)
   coun=size(vals)
   count=Array(Int64,length(coun))
@@ -193,7 +193,7 @@ end
 
 #Function to close netcdf files
 function ncclose(fil::String)
-  if (has(currentNcFiles,abspath(fil)))
+  if (haskey(currentNcFiles,abspath(fil)))
     close(currentNcFiles[abspath(fil)])
   end
 end
@@ -332,7 +332,7 @@ end
 # Define some high-level functions
 # High-level functions for writing data to files
 function ncread(fil::String,vname::String,start::Array,count::Array)
-  nc= has(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
+  nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
   x=readvar(nc,vname,start,count)
   return x
 end
@@ -348,21 +348,21 @@ function ncread(fil::String,vname::String,ran...)
 end
 function ncread(fil::String,vname::String)
   NC_VERBOSE ? println(vname) : nothing
-  nc= has(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
+  nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
   s=ones(Int,nc.vars[vname].ndim)
   c=s*(-1)
   return ncread(fil,vname,s,c)
 end
 
 function ncinfo(fil::String)
-  nc= has(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
+  nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
   return(nc)
 end
 
 #High-level functions for writing data to a file
 function ncwrite(x,fil::String,vname::String,start::Array)
   
-  nc= has(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,NC_WRITE)
+  nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,NC_WRITE)
   if (nc.omode==NC_NOWRITE)
     close(nc)
     println("reopening file in WRITE mode")
@@ -372,7 +372,7 @@ function ncwrite(x,fil::String,vname::String,start::Array)
 end
 
 function ncwrite(x,fil::String,vname::String)
-  nc= has(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,NC_WRITE)
+  nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,NC_WRITE)
   if (nc.omode==NC_NOWRITE)
     close(nc)
     println("reopening file in WRITE mode")
@@ -396,13 +396,13 @@ function nccreate(fil::String,varname::String,atts::Dict,dims...)
   v=NcVar(varname,dim,atts,Float64)
   # Test if the file already exists
   if (isfile(fil)) 
-    nc=has(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,NC_WRITE)
+    nc=haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,NC_WRITE)
     if (nc.omode==NC_NOWRITE)
       close(nc)
       println("reopening file in WRITE mode")
       open(fil,NC_WRITE)
     end
-    has(nc.vars,varname) ? error("Variable $varname already exists in file fil") : nothing
+    haskey(nc.vars,varname) ? error("Variable $varname already exists in file fil") : nothing
     # Check if dimensions exist, if not, create
     i=1
     # Remember if dimension was created

@@ -23,13 +23,13 @@ const NC_WRITE=0x0001
 const libnetcdf = dlopen("libnetcdf")
 
 function ccallexpr(ccallsym::Symbol, outtype, argtypes::Tuple, argsyms::Tuple)
-    ccallargs = Any[expr(:quote, ccallsym), outtype, expr(:tuple, Any[argtypes...])]
+    ccallargs = Any[Expr(:quote, ccallsym), outtype, Expr(:tuple, argtypes...)]
     ccallargs = ccallsyms(ccallargs, length(argtypes), argsyms)
     expr(:ccall, ccallargs)
 end
 
 function ccallexpr(lib::Ptr, ccallsym::Symbol, outtype, argtypes::Tuple, argsyms::Tuple)
-    ccallargs = Any[expr(:call, Any[:dlsym, lib, expr(:quote, ccallsym)]), outtype, expr(:tuple, Any[argtypes...])]
+    ccallargs = Any[Expr(:call, :dlsym, lib, Expr(:quote, ccallsym)), outtype, Expr(:tuple, argtypes...)]
     ccallargs = ccallsyms(ccallargs, length(argtypes), argsyms)
     expr(:ccall, ccallargs)
 end
@@ -52,7 +52,7 @@ end
 
 function funcdecexpr(funcsym, n::Int, argsyms)
     if length(argsyms) == n
-        return expr(:call, Any[funcsym, argsyms...])
+        return Expr(:call, funcsym, argsyms...)
     else
         exargs = Any[funcsym, argsyms[1:end-1]...]
         push(exargs, expr(:..., argsyms[end]))
