@@ -3,6 +3,17 @@ julia_netcdf
 
 NetCDF support for the julia programming language, there is a high-level and a medium-level interface for writing and reading netcdf files. 
 
+# Installation
+
+Before installing the package, make sure that the netcdf librarys are installed on your system. This is done by running from the terminal:
+
+    sudo apt-get install libnetcdf-dev (Ubuntu)
+    sudo port install netcdf (OSX with MacPorts)
+    
+Then start julia and install the package:
+
+    Pkg.install("NetCDF")
+
 # Quickstart
 
 The high-level interface is quite similar to the Matlab NetCDF interface, reading files is done by:

@@ -22,6 +22,12 @@ start and count have the same length as the number of variable dimensions. start
     
 Writes the array data to the file. If no start is supplied, writing starts at index 1 in each dimension. You can supply the argument start, a vector that has the same number as the number of variable dimensions, that provides the indices where to start writing the data. 
 
+## Writing attributes
+
+    ncputatt (filename, varname, attributes)
+    
+Here the filename is a string, varname the name of the variable the attribute is associated with. If varname is not a valid variable name, then a global attribute is created. 
+
 ## Creating files
 
     nccreate (filename, varname, varattributes, dimensions ...)
@@ -53,13 +59,13 @@ to find out the fields of the type NcVar. Most of the other functions of the med
 
 ## Reading data
 
-    netcdf.readvar( nc, varname, start, count )
+    NetCDF.readvar( nc, varname, start, count )
     
 This function returns an array of values read from the file. The first argument is of type NcFile and is the file handler of a previously opened netcdf file. varname is the variable name of the variable to be read. start and count are integer arrays of the same length as the number of variable dimensions, giving the starting indices and the number of steps to be read along each dimension. Setting values in the count vector to -1 will cause the function to read all indices of the respective dimension. 
 
 ## Writing data
 
-    netcdf.putvar( nc, varname, [start], vals)
+    NetCDF.putvar( nc, varname, [start], vals)
     
 This function writes the values from the array vals to a netcdf file. nc is a netcdf file handler of type NcFile, varname the variable name and vals an array with the same dimension as the variable in the netcdf file. The optional parameter start gives the first index in each dimension along which the writing should begin. 
 
@@ -80,7 +86,7 @@ Here varname is the name of the variable, dimlist an array of type NcDim holding
 
 Having defined the variables, the netcdf file can be created:
 
-    netcdf.create ( filename, varlist )
+    NetCDF.create ( filename, varlist )
     
 Here, filename is the name of the file to be created and varlist an array of NcVar holding the variables that should appear in the file. 
 
@@ -88,11 +94,11 @@ Here, filename is the name of the file to be created and varlist an array of NcV
 
 once you have finished reading, writing or editing your files you can close the file with
 
-    netcdf.close ( nc )
+    NetCDF.close ( nc )
 
 If you just want to synchronize your changes to the disk, run
 
-    netcdf.sync ( nc )
+    NetCDF.sync ( nc )
     
 where nc is a netcdf file handler. 
 
