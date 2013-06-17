@@ -25,13 +25,13 @@ const libnetcdf = dlopen("libnetcdf")
 function ccallexpr(ccallsym::Symbol, outtype, argtypes::Tuple, argsyms::Tuple)
     ccallargs = Any[Expr(:quote, ccallsym), outtype, Expr(:tuple, argtypes...)]
     ccallargs = ccallsyms(ccallargs, length(argtypes), argsyms)
-    expr(:ccall, ccallargs)
+    Expr(:ccall, ccallargs...)
 end
 
 function ccallexpr(lib::Ptr, ccallsym::Symbol, outtype, argtypes::Tuple, argsyms::Tuple)
     ccallargs = Any[Expr(:call, :dlsym, lib, Expr(:quote, ccallsym)), outtype, Expr(:tuple, argtypes...)]
     ccallargs = ccallsyms(ccallargs, length(argtypes), argsyms)
-    expr(:ccall, ccallargs)
+    Expr(:ccall, ccallargs...)
 end
 
 function ccallsyms(ccallargs, n, argsyms)
@@ -40,10 +40,10 @@ function ccallsyms(ccallargs, n, argsyms)
             ccallargs = Any[ccallargs..., argsyms...]
         else
             for i = 1:length(argsyms)-1
-                push(ccallargs, argsyms[i])
+                push!(ccallargs, argsyms[i])
             end
             for i = 1:n-length(argsyms)+1
-                push(ccallargs, expr(:ref, argsyms[end], i))
+                push!(ccallargs, Expr(:getindex, argsyms[end], i))
             end
         end
     end
@@ -55,8 +55,8 @@ function funcdecexpr(funcsym, n::Int, argsyms)
         return Expr(:call, funcsym, argsyms...)
     else
         exargs = Any[funcsym, argsyms[1:end-1]...]
-        push(exargs, expr(:..., argsyms[end]))
-        return expr(:call, exargs)
+        push!(exargs, Expr(:..., argsyms[end]))
+        return Expr(:call, exargs...)
     end
 end
 
@@ -117,7 +117,7 @@ for (jlname, h5name, outtype, argtypes, argsyms, ex_error) in
         end
         return ret
     end
-    ex_func = expr(:function, Any[ex_dec, ex_body])
+    ex_func = Expr(:function, ex_dec, ex_body)
     @eval begin
         $ex_func
     end
