@@ -30,7 +30,7 @@ end
 function _nc_inq_dim(id::Integer,idim::Integer)
   namea=Array(Uint8,NC_MAX_NAME+1);lengtha=Array(Int32,1)
   NetCDF._nc_inq_dim_c(id,idim,namea,lengtha)
-  name=_cchartostring(namea)
+  name=bytestring(convert(Ptr{Uint8}, namea))
   dimlen=lengtha[1]
   NC_VERBOSE ? println("Successfully read from file") : nothing
   NC_VERBOSE ? println("name=",name," dimlen=",dimlen) : nothing
@@ -66,7 +66,7 @@ function _nc_inq_attname(ncid::Integer,varid::Integer,attnum::Integer)
   # Get attribute name from attribute number
   namea=Array(Uint8,NC_MAX_NAME+1)
   _nc_inq_attname_c(ncid,varid,attnum,namea)
-  name=_cchartostring(namea)
+  name=bytestring(convert(Ptr{Uint8}, namea))
   NC_VERBOSE ? println("Successfully read attribute name") : nothing
   NC_VERBOSE ? println("name=",name) : nothing
   return name
@@ -128,7 +128,7 @@ function _nc_get_att(ncid::Integer,varid::Integer,name,attype::Integer,attlen::I
   if (attype==NC_CHAR)
     valsa=Array(Uint8,attlen+5)
     _nc_get_att_text_c(ncid,varid,name,valsa)
-    valsa=string(_cchartostring(valsa))
+    valsa=bytestring(convert(Ptr{Uint8}, valsa))
   elseif (attype==NC_SHORT)
     valsa=Array(Int16,attlen)
     _nc_get_att_short_c(ncid,varid,name,valsa)
@@ -165,7 +165,7 @@ function _ncv_inq(nc::NcFile,varid::Integer)
   dimids=vndim>0 ? dimida[1:vndim] : []
   natts=natta[1]
   NC_VERBOSE ? println("Successfully read from file") : nothing
-  name=_cchartostring(namea)
+  name=bytestring(convert(Ptr{Uint8}, namea))
   isdimvar=false
   for n in nc.dim
     if (n[2].name==name)

@@ -133,6 +133,7 @@ end
 function ncputatt(nc::String,varname::String,atts::Dict)
   nc= haskey(currentNcFiles,abspath(nc)) ? currentNcFiles[abspath(nc)] : open(nc,NC_WRITE)
   if (nc.omode==NC_NOWRITE)
+    fil=nc.name
     close(nc)
     println("reopening file in WRITE mode")
     open(fil,NC_WRITE)
