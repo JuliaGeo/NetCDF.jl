@@ -419,7 +419,9 @@ function nccreate(fil::String,varname::String,atts::Dict,dims...)
         _nc_def_dim_c(nc.ncid,d.name,d.dimlen,dima);
         d.dimid=dima[1];
         v.dimids[i]=d.dimid;
+        dcreate[i] = true
       else
+        dcreate[i] = false
         v.dimids[i]=nc.dim[d.name].dimid;
       end
       i=i+1
