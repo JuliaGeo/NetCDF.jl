@@ -95,6 +95,9 @@ function readvar(nc::NcFile,varname::String,start::Array,count::Array)
   elseif nc.vars[varname].nctype==NC_CHAR
     retvalsa=Array(Uint8,p)
     _nc_get_vara_text_c(ncid,varid,start,count,retvalsa)
+  elseif nc.vars[varname].nctype==NC_BYTE
+    retvalsa=Array(Int32,p)
+    _nc_get_vara_int_c(ncid,varid,start,count,retvalsa)  
   end
   NC_VERBOSE ? println("Successfully read from file ",ncid) : nothing
   if length(count)>1 
