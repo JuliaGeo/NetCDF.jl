@@ -1,4 +1,4 @@
-julia_netcdf
+NetCDF.jl
 ============
 
 NetCDF support for the julia programming language, there is a high-level and a medium-level interface for writing and reading netcdf files. 
