@@ -1,4 +1,5 @@
-jltype2nctype={Int16=>NC_SHORT,
+jltype2nctype={Int8=>NC_BYTE,
+	           Int16=>NC_SHORT,
                Int32=>NC_INT,
                Int64=>NC_LONG,
                Float32=>NC_FLOAT,
@@ -118,7 +119,7 @@ function _nc_put_att(ncid::Integer,varid::Integer,name,val)
   elseif (attype==NC_DOUBLE)
     _nc_put_att_float_c(ncid,varid,name,NC_FLOAT,attlen,float32(val))
   elseif (attype==NC_BYTE)
-    _nc_put_att_ubyte_c(ncid,varid,name,attype,attlen,val)
+    _nc_put_att_byte_c(ncid,varid,name,attype,attlen,val)
   else
     valsa="Could not read attribute, currently unsupported datatype by the netcdf package"  
   end
@@ -145,8 +146,8 @@ function _nc_get_att(ncid::Integer,varid::Integer,name,attype::Integer,attlen::I
     valsa=Array(Float64,attlen)
     _nc_get_att_double_c(ncid,varid,name,valsa)
   elseif (attype==NC_BYTE)
-    valsa=Array(Uint8,attlen)
-    _nc_get_att_ubyte_c(ncid,varid,name,valsa)
+    valsa=Array(Int8,attlen)
+    _nc_get_att_byte_c(ncid,varid,name,valsa)
   else
     valsa="Could not read attribute, currently unsupported datatype by the netcdf package"  
   end
