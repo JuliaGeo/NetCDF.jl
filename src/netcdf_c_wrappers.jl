@@ -20,7 +20,18 @@ const NC_NOCLOBBER=0x0004
 const NC_NOWRITE=0x0000	
 const NC_WRITE=0x0001	
 
-const libnetcdf = dlopen("libnetcdf")
+libnc=""
+try
+  libnc = dlopen("libnetcdf")
+catch
+  if haskey(ENV,"LIB_PATH")
+    p=ENV["LIB_PATH"]
+    libnc = dlopen(joinpath(p,"libnetcdf"))
+  else
+    error("NetCDF library not found")
+  end
+end
+const libnetcdf = libnc
 
 function ccallexpr(ccallsym::Symbol, outtype, argtypes::Tuple, argsyms::Tuple)
     ccallargs = Any[Expr(:quote, ccallsym), outtype, Expr(:tuple, argtypes...)]
