@@ -221,7 +221,7 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar))
   dims=Set{NcDim}();
   for v in varlist
     for d in v.dim
-      add!(dims,d);
+      push!(dims,d);
     end
   end
   nunlim=0;
