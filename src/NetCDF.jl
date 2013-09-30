@@ -255,9 +255,9 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar))
     dumids=int32(v.dimids)
     NC_VERBOSE ? println(dumids) : nothing
     _nc_def_var_c(id,v.name,v.nctype,v.ndim,int32(dumids[v.ndim:-1:1]),vara);
-    putatt(id,v.varid,v.atts)
     v.varid=vara[1];
     vars[v.name]=v;
+    putatt(id,v.varid,v.atts)
   end
   # Leave define mode
   _nc_enddef_c(id)
@@ -438,6 +438,7 @@ function nccreate(fil::String,varname::String,atts::Dict,dims...)
     _nc_def_var_c(nc.ncid,v.name,v.nctype,v.ndim,int32(dumids[v.ndim:-1:1]),vara);
     v.varid=vara[1];
     nc.vars[v.name]=v;
+    putatt(nc.ncid,v.varid,atts)
     if (nc.in_def_mode) 
           _nc_enddef_c(nc.ncid)
           nc.in_def_mode=false
@@ -450,7 +451,6 @@ function nccreate(fil::String,varname::String,atts::Dict,dims...)
       i=i+1
     end
   else
-    println(v.dim)
     nc=create(fil,v)
     for d in dim
       ncwrite(d.vals,fil,d.name)
