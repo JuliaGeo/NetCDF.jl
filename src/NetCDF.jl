@@ -5,7 +5,8 @@ export show,NcDim,NcVar,NcFile,new,ncread,ncwrite,nccreate,ncsync,ncinfo,ncclose
 #Some constants
 
 
-jltype2nctype={Int16=>NC_SHORT,
+jltype2nctype={Int8=>NC_BYTE,
+               Int16=>NC_SHORT,
                Int32=>NC_INT,
                Float32=>NC_FLOAT,
                Float64=>NC_DOUBLE}
@@ -96,8 +97,8 @@ function readvar(nc::NcFile,varname::String,start::Array,count::Array)
     retvalsa=Array(Uint8,p)
     _nc_get_vara_text_c(ncid,varid,start,count,retvalsa)
   elseif nc.vars[varname].nctype==NC_BYTE
-    retvalsa=Array(Int32,p)
-    _nc_get_vara_int_c(ncid,varid,start,count,retvalsa)  
+    retvalsa=Array(Int8,p)
+    _nc_get_vara_schar_c(ncid,varid,start,count,retvalsa)  
   end
   NC_VERBOSE ? println("Successfully read from file ",ncid) : nothing
   if length(count)>1 
@@ -174,6 +175,8 @@ function putvar(nc::NcFile,varname::String,start::Array,vals::Array)
     _nc_put_vara_int_c(ncid,varid,start,count,x)
   elseif nc.vars[varname].nctype==NC_CHAR
     _nc_put_vara_text_c(ncid,varid,start,count,x)
+  elseif nc.vars[varname].nctype==NC_BYTE
+    _nc_put_vara_schar_c(ncid,varid,start,count,x)
   end
   NC_VERBOSE ? println("Successfully wrote to file ",ncid) : nothing
 end

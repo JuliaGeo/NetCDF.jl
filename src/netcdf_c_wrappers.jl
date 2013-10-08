@@ -102,7 +102,9 @@ for (jlname, h5name, outtype, argtypes, argsyms, ex_error) in
       (:_nc_get_vara_int_c,:nc_get_vara_int,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Int32}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
       (:_nc_get_vara_short_c,:nc_get_vara_short,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Int16}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
       (:_nc_get_vara_text_c,:nc_get_vara_text,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Uint8}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
+      (:_nc_get_vara_schar_c,:nc_get_vara_schar,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Int8}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
       
+      (:_nc_put_vara_schar_c,:nc_put_vara_schar,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Int8}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
       (:_nc_put_vara_text_c,:nc_put_vara_text,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Uint8}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
       (:_nc_put_vara_double_c,:nc_put_vara_double,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Float64}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
       (:_nc_put_vara_float_c,:nc_put_vara_float,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Float32}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
