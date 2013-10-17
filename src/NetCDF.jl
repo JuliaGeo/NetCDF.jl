@@ -65,8 +65,8 @@ global currentNcFiles=Dict{String,NcFile}()
 function readvar(nc::NcFile,varname::String,start::Array,count::Array)
   ncid=nc.ncid
   varid=nc.vars[varname].varid
-  start=int64(start)-1
-  count=int64(count)
+  start=int(start)-1
+  count=int(count)
   @assert nc.vars[varname].ndim==length(start)
   @assert nc.vars[varname].ndim==length(count)
   NC_VERBOSE ? println(keys(nc.vars)) : nothing
@@ -151,8 +151,8 @@ function putvar(nc::NcFile,varname::String,start::Array,vals::Array)
   haskey(nc.vars,varname) ? nothing : error("No variable $varname in file $nc.name")
   @assert nc.vars[varname].ndim==length(start)
   coun=size(vals)
-  count=Array(Int64,length(coun))
-  start=int64(start)-1
+  count=Array(Int,length(coun))
+  start=int(start)-1
   #Determine size of Array
   p=1
   for i in 1:length(coun)
