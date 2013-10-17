@@ -22,11 +22,11 @@ const NC_WRITE=0x0001
 
 libnc=""
 try
-  libnc = dlopen("libnetcdf")
+  libnc = @windows? dlopen("netcdf") : dlopen("libnetcdf")
 catch
   if haskey(ENV,"LIB_PATH")
     p=ENV["LIB_PATH"]
-    libnc = dlopen(joinpath(p,"libnetcdf"))
+    libnc = dlopen(joinpath(p, @windows? "netcdf" : "libnetcdf"))
   else
     error("NetCDF library not found")
   end
