@@ -1,7 +1,7 @@
 module NetCDF
 include("netcdf_c_wrappers.jl")
 import Base.show
-export show,NcDim,NcVar,NcFile,new,ncread,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt
+export show,NcDim,NcVar,NcFile,new,ncread,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE
 #Some constants
 
 
@@ -21,8 +21,16 @@ type NcDim
   vals::AbstractArray
   atts::Dict{Any,Any}
 end
-NcDim(name::String,vals::Union(AbstractArray,Number),atts::Dict{Any,Any})=NcDim(-1,-1,-1,name,length(vals),vals,atts)
-NcDim(name::String,vals::Union(AbstractArray,Number))=NcDim(name,vals,{"units"=>"unknown"})
+NcDim(name::String,
+      dimlength::Integer;
+      values::Union(AbstractArray,Number)=[],
+      atts::Dict{Any,Any}={"units"=>"unknown"})= 
+      begin
+        (length(values>0 & length(values)!=dimlength)) ? error("Dimension value vector must have the same length as dimlength!") : nothing
+        NcDim(-1,-1,-1,name,dimlength,vals,atts)
+      end
+
+NcDim(name::String,values::AbstractArray;atts::Dict{Any,Any}={"units"=>"unknown"})= NcDim(name,length(values),values=values,atts=atts)
 
 
 type NcVar
@@ -62,7 +70,7 @@ include("netcdf_helpers.jl")
 global currentNcFiles=Dict{String,NcFile}()  
 
 # Read block of data from file
-function readvar(nc::NcFile,varname::String,start::Array,count::Array)
+function readvar{T<:Integer}(nc::NcFile,varname::String,start::Array{T,1},count::Array{T,1})
   ncid=nc.ncid
   varid=nc.vars[varname].varid
   start=int(start)-1
@@ -107,12 +115,18 @@ function readvar(nc::NcFile,varname::String,start::Array,count::Array)
     return retvalsa
   end
 end
-function readvar(nc::NcFile,varid::Integer,start,count) 
+function readvar{T<:Integer}(nc::NcFile,varid::Integer,start::Array{T,1},count::Array{T,1}) 
   va=getvarbyid(nc,varid)
   va == nothing ? error("Error: Variable $varid not found in $(nc.name)") : return readvar(nc,va.name,start,count)
 end
-function readvar(nc::NcFile,varid::NcVar,start,count) 
+function readvar{T<:Integer}(nc::NcFile,varid::NcVar,start::Array{T,1},count::Array{T,1}) 
   return readvar(nc,varid.varid,start,count)
+end
+function readvar(nc::NcFile,vname::String)
+  haskey(nc.vars,vname) ? nothing : error("Variable $vname not found in $(nc.name)")
+  s=ones(Int,nc.vars[vname].ndim)
+  c=s*(-1)
+  return ncread(fil,vname,s,c)
 end
 
 

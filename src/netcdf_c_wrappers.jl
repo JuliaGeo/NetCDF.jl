@@ -21,8 +21,10 @@ const NC_NOWRITE=0x0000
 const NC_WRITE=0x0001	
 
 libnc=""
+using BinDeps
+@BinDeps.load_dependencies
 try
-  libnc = dlopen("libnetcdf")
+  libnc = dlopen(netcdf)
 catch
   if haskey(ENV,"LIB_PATH")
     p=ENV["LIB_PATH"]
@@ -32,6 +34,7 @@ catch
   end
 end
 const libnetcdf = libnc
+
 
 function ccallexpr(ccallsym::Symbol, outtype, argtypes::Tuple, argsyms::Tuple)
     ccallargs = Any[Expr(:quote, ccallsym), outtype, Expr(:tuple, argtypes...)]
