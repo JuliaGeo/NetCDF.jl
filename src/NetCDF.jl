@@ -21,16 +21,14 @@ type NcDim
   vals::AbstractArray
   atts::Dict{Any,Any}
 end
-NcDim(name::String,
-      dimlength::Integer;
-      values::Union(AbstractArray,Number)=[],
-      atts::Dict{Any,Any}={"units"=>"unknown"})= 
-      begin
-        (length(values>0 & length(values)!=dimlength)) ? error("Dimension value vector must have the same length as dimlength!") : nothing
-        NcDim(-1,-1,-1,name,dimlength,vals,atts)
-      end
+NcDim(name::String,dimlength::Integer;values::Union(AbstractArray,Number)=[],atts::Dict{Any,Any}={"units"=>"unknown"})= 
+  begin
+    (length(values>0 & length(values)!=dimlength)) ? error("Dimension value vector must have the same length as dimlength!") : nothing
+    NcDim(-1,-1,-1,name,dimlength,vals,atts)
+  end
 
-NcDim(name::String,values::AbstractArray;atts::Dict{Any,Any}={"units"=>"unknown"})= NcDim(name,length(values),values=values,atts=atts)
+NcDim(name::String,values::AbstractArray;atts::Dict{Any,Any}={"units"=>"unknown"})= 
+  NcDim(name,length(values),values=values,atts=atts)
 
 
 type NcVar
@@ -44,9 +42,10 @@ type NcVar
   dim::Array{NcDim}
   atts::Dict{Any,Any}
 end
-function NcVar(name::String,dimin,atts::Dict{Any,Any},jltype::Type)
-    dim=[dimin]
-    return NcVar(-1,-1,length(dim),length(atts),jltype2nctype[jltype],name,Array(Int,length(dim)),dim,atts)
+
+function NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1});atts::Dict{Any,Any}=Dict{Any,Any}(),jltype::Union(Type,Integer)=Float64)
+  dim=[dimin]
+  return NcVar(-1,-1,length(dim),length(atts), typeof(jltype)==Type ? jltype2nctype[jltype] : jltype,name,Array(Int,length(dim)),dim,atts)
 end
 
 
@@ -224,7 +223,7 @@ function ncclose()
   end
 end
 
-function create(name::String,varlist::Union(Array{NcVar},NcVar))
+function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,Any}=Dict{Any,Any}(),)
   ida=Array(Int32,1)
   vars=Dict{String,NcVar}();
   #Create the file
