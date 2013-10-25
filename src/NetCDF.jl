@@ -1,7 +1,7 @@
 module NetCDF
 include("netcdf_c_wrappers.jl")
 import Base.show
-export show,NcDim,NcVar,NcFile,new,ncread,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE
+export show,NcDim,NcVar,NcFile,new,ncread,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE, ncgetatt,NC_NOWRITE,NC_WRITE
 #Some constants
 
 
@@ -69,8 +69,9 @@ include("netcdf_helpers.jl")
 global currentNcFiles=Dict{String,NcFile}()  
 
 # Read block of data from file
-function readvar{T<:Integer}(nc::NcFile,varname::String,start::Array{T,1},count::Array{T,1})
+function readvar{T<:Integer}(nc::NcFile,varname::String;start::Array{T,1}=ones(Int,nc.vars[varname].ndim),count::Array{T,1}=-ones(Int,nc.vars[varname].ndim))
   ncid=nc.ncid
+  haskey(nc.vars,varname) ? nothing : error("NetCDF file $(nc.name) does not have variable $varname")
   varid=nc.vars[varname].varid
   start=int(start)-1
   count=int(count)
@@ -85,8 +86,8 @@ function readvar{T<:Integer}(nc::NcFile,varname::String,start::Array{T,1},count:
   for i in count
     p=p*i
   end
-  count=count[length(count):-1:1]
-  start=start[length(start):-1:1]
+  count=uint(count[length(count):-1:1])
+  start=uint(start[length(start):-1:1])
   NC_VERBOSE ? println("$ncid $varid $p $start $count") : nothing
   if nc.vars[varname].nctype==NC_DOUBLE
     retvalsa=Array(Float64,p)
@@ -109,23 +110,10 @@ function readvar{T<:Integer}(nc::NcFile,varname::String,start::Array{T,1},count:
   end
   NC_VERBOSE ? println("Successfully read from file ",ncid) : nothing
   if length(count)>1 
-    return reshape(retvalsa,ntuple(length(count),x->count[length(count)-x+1]))
+    return reshape(retvalsa,ntuple(length(count),x->int(count[length(count)-x+1])))
   else
     return retvalsa
   end
-end
-function readvar{T<:Integer}(nc::NcFile,varid::Integer,start::Array{T,1},count::Array{T,1}) 
-  va=getvarbyid(nc,varid)
-  va == nothing ? error("Error: Variable $varid not found in $(nc.name)") : return readvar(nc,va.name,start,count)
-end
-function readvar{T<:Integer}(nc::NcFile,varid::NcVar,start::Array{T,1},count::Array{T,1}) 
-  return readvar(nc,varid.varid,start,count)
-end
-function readvar(nc::NcFile,vname::String)
-  haskey(nc.vars,vname) ? nothing : error("Variable $vname not found in $(nc.name)")
-  s=ones(Int,nc.vars[vname].ndim)
-  c=s*(-1)
-  return ncread(fil,vname,s,c)
 end
 
 
@@ -160,44 +148,38 @@ function ncputatt(nc::String,varname::String,atts::Dict)
 end
 
 
-function putvar(nc::NcFile,varname::String,start::Array,vals::Array)
+function putvar{T<:Integer}(nc::NcFile,varname::String,vals::Array;start::Array{T,1}=ones(Int,length(size(vals))),count::Array{T,1}=[size(vals)...])
   ncid=nc.ncid
   haskey(nc.vars,varname) ? nothing : error("No variable $varname in file $nc.name")
-  @assert nc.vars[varname].ndim==length(start)
-  coun=size(vals)
-  count=Array(Int,length(coun))
+  nc.vars[varname].ndim==length(start) ? nothing : error("Length of start vector does not equal number of NetCDF variable dimensions")
+  nc.vars[varname].ndim==length(count) ? nothing : error("Length of count vector does not equal number of NetCDF variable dimensions")
   start=int(start)-1
-  #Determine size of Array
-  p=1
-  for i in 1:length(coun)
-    p=p*coun[i]
-    count[i]=coun[i]
-  end
-  count=count[length(count):-1:1]
-  start=start[length(start):-1:1]
+  for i=1:length(start)
+    count[i] = count[i] < 0 ? nc.vars[varname].dim[i].dimlen - start[i] : count[i]
+    start[i]+count[i] > nc.vars[varname].dim[i].dimlen ? error("In dimension $(nc.vars[varname].dim[i].name) start+count exceeds dimension bounds: $(start[i])+$(count[i]) > $(nc.vars[varname].dim[i].dimlen)") : nothing
+  end 
+  count=uint(count[length(count):-1:1])
+  start=uint(start[length(start):-1:1])
   NC_VERBOSE ? println("$ncid $varname $p $count ",nc.vars[varname].nctype) : nothing
   #x=reshape(vals,p)
   x=vals
   varid=nc.vars[varname].varid
   if nc.vars[varname].nctype==NC_DOUBLE
-    _nc_put_vara_double_c(ncid,varid,start,count,x)
+    _nc_put_vara_double_c(ncid,varid,start,count,float64(x))
   elseif nc.vars[varname].nctype==NC_FLOAT
-    _nc_put_vara_double_c(ncid,varid,start,count,x)
+    _nc_put_vara_float_c(ncid,varid,start,count,float32(x))
   elseif nc.vars[varname].nctype==NC_INT
-    _nc_put_vara_int_c(ncid,varid,start,count,x)
+    _nc_put_vara_int_c(ncid,varid,start,count,int32(x))
   elseif nc.vars[varname].nctype==NC_SHORT
-    _nc_put_vara_int_c(ncid,varid,start,count,x)
+    _nc_put_vara_short_c(ncid,varid,start,count,int16(x))
   elseif nc.vars[varname].nctype==NC_CHAR
-    _nc_put_vara_text_c(ncid,varid,start,count,x)
+    _nc_put_vara_text_c(ncid,varid,start,count,ascii(x))
   elseif nc.vars[varname].nctype==NC_BYTE
-    _nc_put_vara_schar_c(ncid,varid,start,count,x)
+    _nc_put_vara_schar_c(ncid,varid,start,count,int8(x))
   end
   NC_VERBOSE ? println("Successfully wrote to file ",ncid) : nothing
 end
-function putvar(nc::NcFile,varname::String,vals::Array)
-  start=ones(length(size(vals)))
-  putvar(nc,varname,start,vals)
-end
+
 
 # Function to synchronize all files with disk
 function ncsync()

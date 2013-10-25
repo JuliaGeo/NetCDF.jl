@@ -5,19 +5,6 @@ jltype2nctype={Int8=>NC_BYTE,
                Float32=>NC_FLOAT,
                Float64=>NC_DOUBLE}
 
-function _cchartostring(in)
-  iname=1
-  name=""
-  #println(in)
-  if (length(in)>0)
-    while (char(in[iname])!='\0' && iname<length(in))
-      name=string(name,char(in[iname]))
-      iname=iname+1
-    end
-  end
-  return name
-end
-
 
 function _nc_op(fname::String,omode::Uint16)
   # Open netcdf file

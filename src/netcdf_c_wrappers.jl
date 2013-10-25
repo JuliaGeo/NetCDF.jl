@@ -4,7 +4,6 @@
 #
 #
 const NC_NOERR=0
-
 const NC_MAX_NAME=256
 const NC_VERBOSE=false
 const NC_BYTE=1

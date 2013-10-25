@@ -27,8 +27,6 @@ end
 nc1 = NetCDF.create("nc1.nc",v1);
 nc2 = NetCDF.create("nc2.nc",[v2,v3],gatts={"Some global attributes"=>2010});
 nc3 = NetCDF.create("nc3.nc",vt);
-nct = Array(NcFile,length(tlist));
-
 
 #Test Adding attributes
 NetCDF.putatt(nc1,"v1",{"Additional String attribute"=>"att"})
@@ -44,13 +42,30 @@ NetCDF.putatt(nc1,"v1",    {"Additional Int8 array attribute"=>int8([1:20]),
 							"Additional Float32 array attribute"=>float32([1:20]),
 							"Additional Float64 array attribute"=>float64([1:20])})
 
+
 #Test writing data
+#
+#First generate the data
 x1 = rand(2,10,20)
-x2 = rand(2,10,20) 
-x3 = rand(20)
+x2 = rand(2,10,20)
 xt=Array(Any,length(tlist))
-for t in tlist
-    xt[i]=rand(t,10)
+for i=1:length(tlist)
+    xt[i]=rand(tlist[i],10)
+end
+#
+# And write it
+#
+NetCDF.putvar(nc1,"v1",x1)
+#Test sequential writing along one dimension
+for i=1:10
+  NetCDF.putvar(nc2,"v2",x2[:,i,:],start=[1,i,1],count=[-1,1,-1])
+end
+#Test automatic type conversion
+x4=[1,2]
+NetCDF.putvar(nc2,"v3",x4)
+
+for i=1:length(tlist)
+  NetCDF.putvar(nc3,"vt$i",xt[i])
 end
 
 
@@ -58,5 +73,15 @@ NetCDF.close(nc1)
 NetCDF.close(nc2)
 NetCDF.close(nc3)
 
-  
+##Read the data back and compare
+nc1 = NetCDF.open("nc1.nc",NC_NOWRITE);
+nc2 = NetCDF.open("nc2.nc",NC_NOWRITE);
+nc3 = NetCDF.open("nc3.nc",NC_NOWRITE);
+
+@test x1==NetCDF.readvar(nc1,"v1")
+@test x2==NetCDF.readvar(nc2,"v2")
+@test x4==NetCDF.readvar(nc2,"v3")
+
+
+
   
