@@ -21,13 +21,13 @@ type NcDim
   vals::AbstractArray
   atts::Dict{Any,Any}
 end
-NcDim(name::String,dimlength::Integer;values::Union(AbstractArray,Number)=[],atts::Dict{Any,Any}={"units"=>"unknown"})= 
+NcDim(name::String,dimlength::Integer;values::Union(AbstractArray,Number)=[],atts::Dict{Any,Any}=Dict{Any,Any}())= 
   begin
-    (length(values>0 & length(values)!=dimlength)) ? error("Dimension value vector must have the same length as dimlength!") : nothing
-    NcDim(-1,-1,-1,name,dimlength,vals,atts)
+    (length(values)>0 && length(values)!=dimlength) ? error("Dimension value vector must have the same length as dimlength!") : nothing
+    NcDim(-1,-1,-1,name,dimlength,values,atts)
   end
 
-NcDim(name::String,values::AbstractArray;atts::Dict{Any,Any}={"units"=>"unknown"})= 
+NcDim(name::String,values::AbstractArray;atts::Dict{Any,Any}=Dict{Any,Any}())= 
   NcDim(name,length(values),values=values,atts=atts)
 
 
@@ -43,9 +43,9 @@ type NcVar
   atts::Dict{Any,Any}
 end
 
-function NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1});atts::Dict{Any,Any}=Dict{Any,Any}(),jltype::Union(Type,Integer)=Float64)
+function NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1});atts::Dict{Any,Any}=Dict{Any,Any}(),jltype::Union(DataType,Integer)=Float64)
   dim=[dimin]
-  return NcVar(-1,-1,length(dim),length(atts), typeof(jltype)==Type ? jltype2nctype[jltype] : jltype,name,Array(Int,length(dim)),dim,atts)
+  return NcVar(-1,-1,length(dim),length(atts), typeof(jltype)==DataType ? jltype2nctype[jltype] : jltype,name,Array(Int,length(dim)),dim,atts)
 end
 
 
@@ -147,6 +147,7 @@ function putatt(nc::NcFile,varname::String,atts::Dict)
   putatt(nc.ncid,varid,atts)
   chdef ? _nc_enddef_c(nc.ncid) : nothing
 end
+
 function ncputatt(nc::String,varname::String,atts::Dict)
   nc= haskey(currentNcFiles,abspath(nc)) ? currentNcFiles[abspath(nc)] : open(nc,NC_WRITE)
   if (nc.omode==NC_NOWRITE)
@@ -251,14 +252,16 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,
     d.dimid=dima[1];
     dim[d.name]=d;
     #Create dimension variable
-    varida=Array(Int32,1)
-    dumids=[copy(d.dimid)]
-    _nc_def_var_c(id,d.name,NC_DOUBLE,1,dumids,varida)
-    putatt(id,d.dimid,d.atts)
-    d.varid=varida[1]
-    dd=Array(NcDim,1)
-    dd[1]=d
-    vars[d.name]=NcVar(id,varida[1],1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],dd,d.atts)
+    if length(d.vals)>0
+      varida=Array(Int32,1)
+      dumids=[copy(d.dimid)]
+      _nc_def_var_c(id,d.name,NC_DOUBLE,1,dumids,varida)
+      putatt(id,varida[1],d.atts)
+      d.varid=varida[1]
+      dd=Array(NcDim,1)
+      dd[1]=d
+      vars[d.name]=NcVar(id,varida[1],1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],dd,d.atts)
+    end
   end
   # Create variables in the file
   for v in varlist
@@ -280,9 +283,11 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,
   #Write dimension variables
   for d in dims
     #Write dimension variable
-    y=float64(d.vals)
-    diml=d.dimlen
-    _nc_put_vara_double_c(id,d.varid,[0],[diml],y)
+    if (length(d.vals)>0)
+      y=float64(d.vals)
+      diml=d.dimlen
+      _nc_put_vara_double_c(id,d.varid,[0],[diml],y)
+    end
   end
   #Create the NcFile Object
   nc=NcFile(id,length(vars),ndim,0,vars,dim,Dict{Any,Any}(),0,name,NC_WRITE)
@@ -389,6 +394,11 @@ function ncwrite(x,fil::String,vname::String,start::Array)
     open(fil,NC_WRITE)
   end
   putvar(nc,vname,start,x)
+end
+
+function ncgetatt(fil::String,vname::String,att::String)
+  nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,NC_WRITE)
+  return ( haskey(nc.vars,vname) ? get(nc.vars[vname].atts,att,nothing) : get(nc.gatts,att,nothing) )
 end
 
 function ncwrite(x,fil::String,vname::String)
