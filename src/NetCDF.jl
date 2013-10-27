@@ -69,9 +69,11 @@ include("netcdf_helpers.jl")
 global currentNcFiles=Dict{String,NcFile}()  
 
 # Read block of data from file
-function readvar{T<:Integer}(nc::NcFile,varname::String;start::Array{T,1}=ones(Int,nc.vars[varname].ndim),count::Array{T,1}=-ones(Int,nc.vars[varname].ndim))
+function readvar{T<:Integer}(nc::NcFile,varname::String;start::Array{T,1}=Array(Int,0),count::Array{T,1}=Array(Int,0))
   ncid=nc.ncid
   haskey(nc.vars,varname) ? nothing : error("NetCDF file $(nc.name) does not have variable $varname")
+  if (length(start)==0) start=ones(Int,nc.vars[varname].ndim) end
+  if (length(count)==0) count=-ones(Int,nc.vars[varname].ndim) end
   varid=nc.vars[varname].varid
   start=int(start)-1
   count=int(count)
@@ -198,6 +200,8 @@ end
 function ncclose(fil::String)
   if (haskey(currentNcFiles,abspath(fil)))
     close(currentNcFiles[abspath(fil)])
+  else
+    println("File $fil not currently opened.")
   end
 end
 function ncclose()
@@ -300,7 +304,7 @@ function close(nco::NcFile)
 end
 
 
-function open(fil::String,omode::Uint16=NC_NOWRITE; readdimvar=false)
+function open(fil::String; omode::Uint16=NC_NOWRITE, readdimvar::Bool=false)
   # Open netcdf file
   ncid=_nc_op(fil,omode)
   NC_VERBOSE ? println(ncid) : nothing
@@ -338,27 +342,10 @@ end
 
 # Define some high-level functions
 # High-level functions for writing data to files
-function ncread(fil::String,vname::String,start::Array,count::Array)
-  nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
-  x=readvar(nc,vname,start,count)
+function ncread{T<:Integer}(fil::String,vname::String;start::Array{T,1}=Array(Int,0),count::Array{T,0}=Array(Int,0))
+  nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
+  x  = readvar(nc,vname,start,count)
   return x
-end
-function ncread(fil::String,vname::String,ran...)
-  s=ones(length(ran))
-  c=ones(length(ran))
-  for i in 1:length(ran)
-    typeof(ran[i])<:Range1 ? nothing : error("Expected range as input for reading netcdf variable")
-    s[i]=int(ran[i][1])
-    c[i]=int(length(ran[i]))
-  end
-  return ncread(fil,vname,s,c)  
-end
-function ncread(fil::String,vname::String)
-  NC_VERBOSE ? println(vname) : nothing
-  nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
-  s=ones(Int,nc.vars[vname].ndim)
-  c=s*(-1)
-  return ncread(fil,vname,s,c)
 end
 
 function ncinfo(fil::String)

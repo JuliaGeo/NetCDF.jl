@@ -74,9 +74,9 @@ NetCDF.close(nc2)
 NetCDF.close(nc3)
 
 ##Read the data back and compare
-nc1 = NetCDF.open("nc1.nc",NC_NOWRITE);
-nc2 = NetCDF.open("nc2.nc",NC_NOWRITE);
-nc3 = NetCDF.open("nc3.nc",NC_NOWRITE);
+nc1 = NetCDF.open("nc1.nc",omode=NC_NOWRITE);
+nc2 = NetCDF.open("nc2.nc",omode=NC_NOWRITE);
+nc3 = NetCDF.open("nc3.nc",omode=NC_NOWRITE);
 
 @test x1==NetCDF.readvar(nc1,"v1")
 @test x2==NetCDF.readvar(nc2,"v2")
