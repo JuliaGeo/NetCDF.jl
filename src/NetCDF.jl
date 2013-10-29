@@ -316,15 +316,15 @@ function close(nco::NcFile)
 end
 
 
-function open(fil::String; omode::Uint16=NC_NOWRITE, readdimvar::Bool=false)
+function open(fil::String; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
   # Open netcdf file
-  ncid=_nc_op(fil,omode)
+  ncid=_nc_op(fil,mode)
   NC_VERBOSE ? println(ncid) : nothing
   #Get initial information
   (ndim,nvar,ngatt,nunlimdimid)=_ncf_inq(ncid)
   NC_VERBOSE ? println(ndim,nvar,ngatt,nunlimdimid) : nothing
   #Create ncdf object
-  ncf=NcFile(ncid,nvar-ndim,ndim,ngatt,Dict{String,NcVar}(),Dict{String,NcDim}(),Dict{Any,Any}(),nunlimdimid,abspath(fil),omode)
+  ncf=NcFile(ncid,nvar-ndim,ndim,ngatt,Dict{String,NcVar}(),Dict{String,NcDim}(),Dict{Any,Any}(),nunlimdimid,abspath(fil),mode)
   #Read global attributes
   ncf.gatts=_nc_getatts_all(ncid,NC_GLOBAL,ngatt)
   #Read dimensions
@@ -367,7 +367,7 @@ function ncinfo(fil::String)
 end
 
 #High-level functions for writing data to a file
-function ncwrite{T<:Integer}(x::Array,fil::String,vname::String,;start::Array{T,1}=ones(Int,length(size(vals))),count::Array{T,1}=[size(vals)...])
+function ncwrite{T<:Integer}(x::Array,fil::String,vname::String,;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...])
   nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,NC_WRITE)
   if (nc.omode==NC_NOWRITE)
     close(nc)
@@ -396,7 +396,7 @@ function nccreate(fil::String,varname::String,dims...;atts::Dict=Dict{Any,Any}()
   v=NcVar(varname,dim,atts=atts,compress=compress,t=t)
   # Test if the file already exists
   if (isfile(fil)) 
-    nc=haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,NC_WRITE)
+    nc=haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,mode=NC_WRITE)
     if (nc.omode==NC_NOWRITE)
       close(nc)
       println("reopening file in WRITE mode")

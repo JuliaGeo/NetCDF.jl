@@ -14,19 +14,19 @@ d2 = NcDim("Dim2",[1:10]);
 d3 = NcDim("Dim3",20;atts={"max"=>10});
 
 # Test Variable creation
-v1 = NcVar("v1",[d1,d2,d3]) 						# With several dims in an Array
+v1 = NcVar("v1",[d1,d2,d3],compress=5) 						# With several dims in an Array, and compressed
 v2 = NcVar("v2",[d1,d2,d3],atts={"a1"=>"varatts"})  # with given attributes
 v3 = NcVar("v3",d1) 								# with a single dimension		
 tlist = [Float64, Float32, Int32, Int16, Int8]
 vt = Array(NcVar, length(tlist))
 for i= 1:length(tlist)
-  vt[i]=NcVar("vt$i",d2,jltype = tlist[i])
+  vt[i]=NcVar("vt$i",d2,t = tlist[i])
 end
 
 # Creating Files
-nc1 = NetCDF.create("nc1.nc",v1);
-nc2 = NetCDF.create("nc2.nc",[v2,v3],gatts={"Some global attributes"=>2010});
-nc3 = NetCDF.create("nc3.nc",vt);
+nc1 = NetCDF.create("nc1.nc",v1,mode=NC_NETCDF4);
+nc2 = NetCDF.create("nc2.nc",[v2,v3],gatts={"Some global attributes"=>2010},mode=NC_64BIT_OFFSET);
+nc3 = NetCDF.create("nc3.nc",vt,mode=NC_CLASSIC_MODEL);
 
 #Test Adding attributes
 NetCDF.putatt(nc1,"v1",{"Additional String attribute"=>"att"})
