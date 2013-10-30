@@ -165,8 +165,6 @@ function putvar{T<:Integer}(nc::NcFile,varname::String,vals::Array;start::Array{
   end 
   count=uint(count[length(count):-1:1])
   start=uint(start[length(start):-1:1])
-  NC_VERBOSE ? println("$ncid $varname $p $count ",nc.vars[varname].nctype) : nothing
-  #x=reshape(vals,p)
   x=vals
   varid=nc.vars[varname].varid
   if nc.vars[varname].nctype==NC_DOUBLE
@@ -213,7 +211,7 @@ function ncclose()
   end
 end
 
-function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,Any}=Dict{Any,Any}(),mode::Uint16=NC_CLOBBER,compress::Integer=-1)
+function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,Any}=Dict{Any,Any}(),mode::Uint16=NC_NETCDF4,compress::Integer=-1)
   ida=Array(Int32,1)
   vars=Dict{String,NcVar}();
   #Create the file
@@ -262,7 +260,7 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,
     vara=Array(Int32,1);
     dumids=int32(v.dimids)
     NC_VERBOSE ? println(dumids) : nothing
-    _nc_def_var_c(id,v.name,v.nctype,v.ndim,int32(dumids[v.ndim:-1:1]),vara);
+    _nc_def_var_c(id,v.name,int32(v.nctype),v.ndim,int32(dumids[v.ndim:-1:1]),vara);
     v.varid=vara[1];
     vars[v.name]=v;
     if compress > -1
@@ -278,18 +276,16 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,
   end
   # Leave define mode
   _nc_enddef_c(id)
-  #Write dimension variables
-  for d in dims
-    #Write dimension variable
-    if (length(d.vals)>0)
-      y=float64(d.vals)
-      diml=d.dimlen
-      _nc_put_vara_double_c(id,d.varid,[0],[diml],y)
-    end
-  end
   #Create the NcFile Object
   nc=NcFile(id,length(vars),ndim,0,vars,dim,Dict{Any,Any}(),0,name,NC_WRITE)
   currentNcFiles[abspath(nc.name)]=nc
+  for d in nc.dim
+    #Write dimension variable
+    if (length(d[2].vals)>0)
+      putvar(nc,d[2].name,d[2].vals)
+    end
+  end
+  return(nc)
 end
 
 function vardef(fid::Integer,v::NcVar)
@@ -367,7 +363,7 @@ function ncinfo(fil::String)
 end
 
 #High-level functions for writing data to a file
-function ncwrite{T<:Integer}(x::Array,fil::String,vname::String,;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...])
+function ncwrite{T<:Integer}(x::Array,fil::String,vname::String;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...])
   nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,NC_WRITE)
   if (nc.omode==NC_NOWRITE)
     close(nc)
