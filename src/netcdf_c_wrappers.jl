@@ -26,16 +26,7 @@ const NC_NETCDF4      =0x1000 # Use netCDF-4/HDF5 format. Mode flag for nc_creat
 libnc=""
 using BinDeps
 @BinDeps.load_dependencies
-try
-  libnc = dlopen(netcdf)
-catch
-  if haskey(ENV,"LIB_PATH")
-    p=ENV["LIB_PATH"]
-    libnc = dlopen(joinpath(p,"libnetcdf"))
-  else
-    error("NetCDF library not found")
-  end
-end
+libnc = dlopen(netcdf)
 const libnetcdf = libnc
 
 
