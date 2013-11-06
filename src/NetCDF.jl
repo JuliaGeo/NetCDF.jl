@@ -159,7 +159,14 @@ function putvar{T<:Integer}(nc::NcFile,varname::String,vals::Array;start::Array{
   nc.vars[varname].ndim==length(start) ? nothing : error("Length of start vector does not equal number of NetCDF variable dimensions")
   nc.vars[varname].ndim==length(count) ? nothing : error("Length of count vector does not equal number of NetCDF variable dimensions")
   start=int(start)-1
+  println("Debug start")
+  println("start=$start")
+  println("count=$count")
+  println("varname=$varname")
   for i=1:length(start)
+    println(i)
+    println(nc.vars[varname].dim[i].name)
+    println(nc.vars[varname].dim[i].dimlen)
     count[i] = count[i] < 0 ? nc.vars[varname].dim[i].dimlen - start[i] : count[i]
     start[i]+count[i] > nc.vars[varname].dim[i].dimlen ? error("In dimension $(nc.vars[varname].dim[i].name) start+count exceeds dimension bounds: $(start[i])+$(count[i]) > $(nc.vars[varname].dim[i].dimlen)") : nothing
   end 
@@ -384,7 +391,7 @@ end
 # if the file does not exist, it will be created
 # if the file already exists, the variable will be added to the file
 
-function nccreate(fil::String,varname::String,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Integer=NC_DOUBLE,filetype::Uint16=NC_NETCDF4)
+function nccreate(fil::String,varname::String,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Union(Integer,Type)=NC_DOUBLE,mode::Uint16=NC_NETCDF4)
   # Checking dims argument for correctness
   dim=parsedimargs(dims)
   # open the file
@@ -445,7 +452,7 @@ function nccreate(fil::String,varname::String,dims...;atts::Dict=Dict{Any,Any}()
       i=i+1
     end
   else
-    nc=create(fil,v,gatts=gatts,mode=filetype | NC_NOCLOBBER)
+    nc=create(fil,v,gatts=gatts,mode=mode | NC_NOCLOBBER)
     for d in dim
       ncwrite(d.vals,fil,d.name)
     end
