@@ -23,7 +23,6 @@ const NC_64BIT_OFFSET =0x0200 # Use large (64-bit) file offsets. Mode flag for n
 const NC_SHARE        =0x0800 #	
 const NC_NETCDF4      =0x1000 # Use netCDF-4/HDF5 format. Mode flag for nc_create()
 
-libnc=""
 using BinDeps
 @BinDeps.load_dependencies
 libnc = dlopen(netcdf)
