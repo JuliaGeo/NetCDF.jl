@@ -18,9 +18,19 @@ start and count have the same length as the number of variable dimensions. start
 
 ## Writing data
 
-    ncwrite (data, filename, varname, [start])
+    ncwrite (data, filename, varname, start=start, count=count)
     
-Writes the array data to the file. If no start is supplied, writing starts at index 1 in each dimension. You can supply the argument start, a vector that has the same number as the number of variable dimensions, that provides the indices where to start writing the data. 
+Writes the array data to the file. If no start argument is supplied, writing starts at index 1 in each dimension. 
+You can supply the argument start, a vector that has the same number as the number of variable dimensions, 
+that provides the indices where to start writing the data. As default the number of values written along each dimension
+equals the dimension of the input array. However you can specify the along which dimension the data will be written by
+setting a count argument, an integer vector indicating the number of values written along each dimension.
+
+## Reading attributes
+
+    ncgetatt (filename, varname, attname)
+    
+This reads an attribute from the specified file and variable. To read global attributes, set varname to "Global". 
 
 ## Writing attributes
 
@@ -30,11 +40,20 @@ Here the filename is a string, varname the name of the variable the attribute is
 
 ## Creating files
 
-    nccreate (filename, varname, varattributes, dimensions ...)
+    nccreate (filename, varname, dimensions ..., atts=atts,gatts=gatts,compress=compress,t=t,mode=mode)
 
-This creates a variable in an existing netcdf file or creates a new file. Filename and varname are strings, while varattributes is a Dict consisting of pairs of attribute names and values. 
-After that follows a list of dimensions. Each dimension entry starts with a dimension name (a String), and may be followed by a dimension length, an array with dimension values or a Dict containing dimension attributes. Then the next dimension is entered and so on. Have a look at examples/high.jl for an example use. 
- 
+This creates a variable in an existing netcdf file or creates a new file. Filename and varname are strings.  
+After that follows a list of dimensions. Each dimension entry starts with a dimension name (a String), and 
+may be followed by a dimension length, an array with dimension values or a Dict containing dimension attributes. 
+Then the next dimension is entered and so on. Have a look at examples/high.jl for an example use.
+
+Possible optional arguments are:
+- **atts** Dict of attribute names and values to be assigned to the variable created
+- **gatts** Dict of attribute names and values to be written as global attributes
+- **compress** Integer [0..9] setting the compression level of the file, only valid if mode=NC_NETCDF4
+- **t** variable type, currently supported types are: const NC_BYTE, NC_CHAR, NC_SHORT, NC_INT, NC_FLOAT, NC_LONG, NC_DOUBLE
+- **mode** file creation mode, only valid when new file is created, choose one of: NC_NETCDF4, NC_CLASSIC_MODEL, NC_64BIT_OFFSET
+
 ## Miscellaneous
 
     ncsync( [filename] )
