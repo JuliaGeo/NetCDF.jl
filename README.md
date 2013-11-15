@@ -12,7 +12,7 @@ Before installing the package, make sure that the netcdf librarys are installed 
     
 Then start julia and install the package:
 
-    Pkg.install("NetCDF")
+    Pkg.add("NetCDF")
 
 # Quickstart
 
