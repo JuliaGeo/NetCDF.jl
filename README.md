@@ -1,6 +1,8 @@
 NetCDF.jl
 ============
 
+[![Build Status](https://travis-ci.org/meggart/NetCDF.jl.png)](https://travis-ci.org/meggart/NetCDF.jl)
+
 NetCDF support for the julia programming language, there is a high-level and a medium-level interface for writing and reading netcdf files. 
 
 # Installation
