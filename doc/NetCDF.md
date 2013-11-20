@@ -11,7 +11,7 @@ prints information on the variables, dimension and attributes conatained in the 
 
 ## Reading data
 
-    ncread ( filename, varname, start=start, count=count )
+    ncread ( filename, varname, start=[1,1,...], count=[-1,-1,...] )
     
 reads the values of the variable varname from file filename. If only parts of the variable are to be read, you can provide optionally start and count, which enable you to read blocks of data. 
 start and count have the same length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension. As a special case, setting a value in count to -1 will cause the function to read all values along this dimension. 
