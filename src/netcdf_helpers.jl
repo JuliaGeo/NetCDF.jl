@@ -5,19 +5,6 @@ jltype2nctype={Int8=>NC_BYTE,
                Float32=>NC_FLOAT,
                Float64=>NC_DOUBLE}
 
-function _cchartostring(in)
-  iname=1
-  name=""
-  #println(in)
-  if (length(in)>0)
-    while (char(in[iname])!='\0' && iname<length(in))
-      name=string(name,char(in[iname]))
-      iname=iname+1
-    end
-  end
-  return name
-end
-
 
 function _nc_op(fname::String,omode::Uint16)
   # Open netcdf file
@@ -89,6 +76,7 @@ function _nc_inq_att(ncid::Integer,varid::Integer,attnum::Integer)
 end
 
 function _nc_put_att(ncid::Integer,varid::Integer,name,val)
+  if name=="_FillValue" return(0) end
   if (start(val)>0)
     if (typeof(val[1])<:Char)
       attlen=length(val)+1
@@ -239,7 +227,7 @@ function _readdimvars(nc::NcFile)
     for v in nc.vars
       if (d[2].name==v[2].name)
         NC_VERBOSE ?println(d[2].name," ",v[2].name) : nothing
-        d[2].vals=readvar(nc,v[2].varid,[1],[-1])
+        d[2].vals=readvar(nc,v[2].name)
         d[2].atts=v[2].atts
       end
     end

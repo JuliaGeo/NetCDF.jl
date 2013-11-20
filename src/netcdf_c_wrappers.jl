@@ -4,7 +4,6 @@
 #
 #
 const NC_NOERR=0
-
 const NC_MAX_NAME=256
 const NC_VERBOSE=false
 const NC_BYTE=1
@@ -19,19 +18,16 @@ const NC_CLOBBER=0x0000
 const NC_NOCLOBBER=0x0004
 const NC_NOWRITE=0x0000	
 const NC_WRITE=0x0001	
+const NC_CLASSIC_MODEL=0x0100 # Enforce classic model. Mode flag for nc_create()
+const NC_64BIT_OFFSET =0x0200 # Use large (64-bit) file offsets. Mode flag for nc_create()
+const NC_SHARE        =0x0800 #	
+const NC_NETCDF4      =0x1000 # Use netCDF-4/HDF5 format. Mode flag for nc_create()
 
-libnc=""
-try
-  libnc = @windows? dlopen("netcdf") : dlopen("libnetcdf")
-catch
-  if haskey(ENV,"LIB_PATH")
-    p=ENV["LIB_PATH"]
-    libnc = dlopen(joinpath(p, @windows? "netcdf" : "libnetcdf"))
-  else
-    error("NetCDF library not found")
-  end
-end
+using BinDeps
+@BinDeps.load_dependencies
+libnc = dlopen(netcdf)
 const libnetcdf = libnc
+
 
 function ccallexpr(ccallsym::Symbol, outtype, argtypes::Tuple, argsyms::Tuple)
     ccallargs = Any[Expr(:quote, ccallsym), outtype, Expr(:tuple, argtypes...)]
@@ -117,8 +113,8 @@ for (jlname, h5name, outtype, argtypes, argsyms, ex_error) in
       (:_nc_create_c,:nc_create,Int32,(Ptr{Uint8},Int32,Ptr{Int32}),(:path,:comde,:ncida),:(error("Error creating netcdf file"))),
       (:_nc_def_dim_c,:nc_def_dim,Int32,(Int32,Ptr{Uint8},Int32,Ptr{Int32}),(:ncid,:name,:len,:dimida),:(error("Error creating dimension"))),
       (:_nc_def_var_c,:nc_def_var,Int32,(Int32,Ptr{Uint8},Int32,Int32,Ptr{Int32},Ptr{Int32}),(:ncid,:name,:xtype,:ndims,:dimida,:varida),:(error("Error creating variable"))),
-     )
-     
+     (:_nc_def_var_deflate_c,:nc_def_var_deflate,Int32,(Int32,Int32,Int32,Int32,Int32),(:ncid,:varid,:shuffle,:deflate,:deflate_level),:(error("Error setting compression"))),
+     );
      
     
     ex_dec = funcdecexpr(jlname, length(argtypes), argsyms)

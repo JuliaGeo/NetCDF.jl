@@ -5,13 +5,6 @@ NetCDF support for the julia programming language, there is a high-level and a m
 
 # Installation
 
-Before installing the package, make sure that the netcdf librarys are installed on your system. This is done by running from the terminal:
-
-    sudo apt-get install libnetcdf-dev (Ubuntu)
-    sudo port install netcdf (OSX with MacPorts)
-    
-Then start julia and install the package:
-
     Pkg.add("NetCDF")
 
 # Quickstart
@@ -32,7 +25,7 @@ which gives an overview of the dimensions, variables and attributes stored in th
     			  "data_min" => 0.0,
     			  "data_max" => 87.0}
     
-    nccreate ( filename , varname , attribs , "x1" , 11:20, "t", 20 ,{"units"=>"s"} )
+    nccreate ( filename , varname , "x1" , 11:20, "t", 20 ,{"units"=>"s"}, atts=attribs)
     
 This will create the variable called var1 in the file myfile.nc. The attributes defined in the Dict attribs are written to the file and are associated with the 
 newly created variable. The dimensions "x1" and "t" of the variable are called "x1" and "t" in this example. If the dimensions do not exist yet in the file, 
@@ -44,7 +37,7 @@ Now we can write data to the file:
     d = rand ( 10, 20 )
     ncwrite (d, filename, varname)
     
-To learn more, have a look at the readme and the examples. 
+To learn more, have a look at https://github.com/meggart/NetCDF.jl/blob/master/doc/netcdf.md. 
 
 Contact info:
 Fabian Gans (fgans@bgc-jena.mpg.de)
