@@ -211,7 +211,7 @@ function ncclose()
   end
 end
 
-function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,Any}=Dict{Any,Any}(),mode::Uint16=NC_NETCDF4,compress::Integer=-1)
+function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,Any}=Dict{Any,Any}(),mode::Uint16=NC_NETCDF4)
   ida=Array(Int32,1)
   vars=Dict{String,NcVar}();
   #Create the file
@@ -263,13 +263,15 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,
     _nc_def_var_c(id,v.name,int32(v.nctype),v.ndim,int32(dumids[v.ndim:-1:1]),vara);
     v.varid=vara[1];
     vars[v.name]=v;
-    if compress > -1
+    if v.compress > -1
       if (NC_NETCDF4 & mode)== 0 
         warn("Compression only possible for NetCDF4 file format. Compression will be ingored.")
         v.compress=-1
       else
-        compress=max(compress,9)
-        _nc_def_var_deflate_c(id,v.varid,1,1,int32(compress));
+        v.compress=max(v.compress,9)
+        println("Hallo1")
+        _nc_def_var_deflate_c(int32(id),int32(v.varid),int32(1),int32(1),int32(v.compress));
+        println("Hallo2")
       end
     end
     putatt(id,v.varid,v.atts)
