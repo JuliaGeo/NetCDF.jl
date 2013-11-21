@@ -27,7 +27,7 @@ timatts = {"longname" => "Time",
 # Now we create the file radiation.nc and call the variable rad, define also the dimensions the variables depends on
 
 isfile("radiation.nc") ? rm("radiation.nc") : nothing
-nccreate("radiation.nc","rad","lon",lon,lonatts,"lat",lat,latatts,"time",tim,timatts,atts=atts)
+nccreate("radiation.nc","rad","lon",lon,lonatts,"lat",lat,latatts,"time",tim,timatts,atts=varatts)
 
 # Now we can write values to the file
 
