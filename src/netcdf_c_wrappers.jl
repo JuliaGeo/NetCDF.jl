@@ -25,18 +25,12 @@ const NC_NETCDF4      =0x1000 # Use netCDF-4/HDF5 format. Mode flag for nc_creat
 
 using BinDeps
 @BinDeps.load_dependencies
-libnc = dlopen(netcdf)
-const libnetcdf = libnc
+ncname= @windows ? "netcdf" : "libnetcdf"
 
 
-function ccallexpr(ccallsym::Symbol, outtype, argtypes::Tuple, argsyms::Tuple)
-    ccallargs = Any[Expr(:quote, ccallsym), outtype, Expr(:tuple, argtypes...)]
-    ccallargs = ccallsyms(ccallargs, length(argtypes), argsyms)
-    Expr(:ccall, ccallargs...)
-end
 
-function ccallexpr(lib::Ptr, ccallsym::Symbol, outtype, argtypes::Tuple, argsyms::Tuple)
-    ccallargs = Any[Expr(:call, :dlsym, lib, Expr(:quote, ccallsym)), outtype, Expr(:tuple, argtypes...)]
+function ccallexpr(lib::String, ccallsym::Symbol, outtype, argtypes::Tuple, argsyms::Tuple)
+    ccallargs = Any[Expr(:tuple, Expr(:quote, ccallsym),lib), outtype, Expr(:tuple, argtypes...)]
     ccallargs = ccallsyms(ccallargs, length(argtypes), argsyms)
     Expr(:ccall, ccallargs...)
 end
@@ -69,7 +63,7 @@ end
 
 # Functions returning a single argument, and/or with more complex
 # error messages
-for (jlname, h5name, outtype, argtypes, argsyms, ex_error) in
+for (jlname, fname, outtype, argtypes, argsyms, ex_error) in
     ( (:_nc_open_c, :nc_open, Int32, (Ptr{Uint8}, Int32, Ptr{Int32}), (:fname,:omode,:ida), :(error("Error Opening file ", fname))),
       (:_nc_inq_dim_c,:nc_inq_dim,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Int32}),(:id,:idim,:namea,:lengtha),:(error("Error inquiring dimension information"))),
       (:_nc_inq_dimid_c,:nc_inq_dimid,Int32,(Int32,Ptr{Uint8},Ptr{Int32}),(:id,:namea,:dimida),:(error("Error inquiring dimension id"))),
@@ -118,7 +112,7 @@ for (jlname, h5name, outtype, argtypes, argsyms, ex_error) in
      
     
     ex_dec = funcdecexpr(jlname, length(argtypes), argsyms)
-    ex_ccall = ccallexpr(libnetcdf, h5name, outtype, argtypes, argsyms)
+    ex_ccall = ccallexpr(ncname, fname, outtype, argtypes, argsyms)
     ex_body = quote
         ret = $ex_ccall
         if ret != 0
