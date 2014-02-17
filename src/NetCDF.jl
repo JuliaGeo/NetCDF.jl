@@ -364,11 +364,11 @@ end
 
 #High-level functions for writing data to a file
 function ncwrite{T<:Integer}(x::Array,fil::String,vname::String;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...])
-  nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,NC_WRITE)
+  nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,mode=NC_WRITE)
   if (nc.omode==NC_NOWRITE)
     close(nc)
     println("reopening file in WRITE mode")
-    open(fil,NC_WRITE)
+    open(fil,mode=NC_WRITE)
   end
   putvar(nc,vname,x,start=start,count=count)
 end
