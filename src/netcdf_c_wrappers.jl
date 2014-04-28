@@ -23,8 +23,7 @@ const NC_64BIT_OFFSET =0x0200 # Use large (64-bit) file offsets. Mode flag for n
 const NC_SHARE        =0x0800 #	
 const NC_NETCDF4      =0x1000 # Use netCDF-4/HDF5 format. Mode flag for nc_create()
 
-using BinDeps
-@BinDeps.load_dependencies
+@osx_only import Homebrew # Add Homebrew/lib to the DL_LOAD_PATH
 ncname= @windows ? "netcdf" : "libnetcdf"
 
 
@@ -107,7 +106,7 @@ for (jlname, fname, outtype, argtypes, argsyms, ex_error) in
       (:_nc_create_c,:nc_create,Int32,(Ptr{Uint8},Int32,Ptr{Int32}),(:path,:comde,:ncida),:(error("Error creating netcdf file"))),
       (:_nc_def_dim_c,:nc_def_dim,Int32,(Int32,Ptr{Uint8},Int32,Ptr{Int32}),(:ncid,:name,:len,:dimida),:(error("Error creating dimension"))),
       (:_nc_def_var_c,:nc_def_var,Int32,(Int32,Ptr{Uint8},Int32,Int32,Ptr{Int32},Ptr{Int32}),(:ncid,:name,:xtype,:ndims,:dimida,:varida),:(error("Error creating variable"))),
-     (:_nc_def_var_deflate_c,:nc_def_var_deflate,Int32,(Int32,Int32,Int32,Int32,Int32),(:ncid,:varid,:shuffle,:deflate,:deflate_level),:(error("Error setting compression"))),
+      (:_nc_def_var_deflate_c,:nc_def_var_deflate,Int32,(Int32,Int32,Int32,Int32,Int32),(:ncid,:varid,:shuffle,:deflate,:deflate_level),:(error("Error setting compression"))),
      );
      
     

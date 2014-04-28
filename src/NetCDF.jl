@@ -78,7 +78,7 @@ function readvar{T<:Integer}(nc::NcFile,varname::String;start::Array{T,1}=Array(
   if (length(start)==0) start=ones(Int,nc.vars[varname].ndim) end
   if (length(count)==0) count=-ones(Int,nc.vars[varname].ndim) end
   varid=nc.vars[varname].varid
-  start=int(start)-1
+  start=int(start).-1
   count=int(count)
   @assert nc.vars[varname].ndim==length(start)
   @assert nc.vars[varname].ndim==length(count)
