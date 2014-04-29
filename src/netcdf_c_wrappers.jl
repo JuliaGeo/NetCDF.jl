@@ -76,7 +76,7 @@ for (jlname, fname, outtype, argtypes, argsyms, ex_error) in
       (:_nc_get_att_float_c,:nc_get_att_float,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Float32}),(:ncid,:varid,:name,:valsa),:(error("Error reading attribute"))),
       (:_nc_get_att_double_c,:nc_get_att_double,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Float64}),(:ncid,:varid,:name,:valsa),:(error("Error reading attribute"))),
       (:_nc_get_att_byte_c,:nc_get_att,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Int8}),(:ncid,:varid,:name,:valsa),:(error("Error reading attribute"))),
-      (:_nc_inq_var_c,:nc_inq_var,Int32,(Int32,Int32,Ptr{Int32},Ptr{Int32},Ptr{Int32},Ptr{Int32},Ptr{Int32}),(:id,:varid,:namea,:xtypea,:ndimsa,:dimida,:natta),:(error("Error reading variable information"))),
+      (:_nc_inq_var_c,:nc_inq_var,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Int32},Ptr{Int32},Ptr{Int32},Ptr{Int32}),(:id,:varid,:namea,:xtypea,:ndimsa,:dimida,:natta),:(error("Error reading variable information"))),
       
       (:_nc_put_att_text_c,:nc_put_att_text,Int32,(Int32,Int32,Ptr{Uint8},Int32,Ptr{Uint8}),(:ncid,:varid,:name,:size,:valsa),:(error("Error writing attribute"))),
       (:_nc_put_att_short_c,:nc_put_att_short,Int32,(Int32,Int32,Ptr{Uint8},Int32,Int32,Ptr{Int16}),(:ncid,:varid,:name,:nctype,:size,:valsa),:(error("Error writing attribute"))),

@@ -158,7 +158,7 @@ function putvar{T<:Integer}(nc::NcFile,varname::String,vals::Array;start::Array{
   haskey(nc.vars,varname) ? nothing : error("No variable $varname in file $nc.name")
   nc.vars[varname].ndim==length(start) ? nothing : error("Length of start vector does not equal number of NetCDF variable dimensions")
   nc.vars[varname].ndim==length(count) ? nothing : error("Length of count vector does not equal number of NetCDF variable dimensions")
-  start=int(start)-1
+  start=int(start).-1
   for i=1:length(start)
     count[i] = count[i] < 0 ? nc.vars[varname].dim[i].dimlen - start[i] : count[i]
     start[i]+count[i] > nc.vars[varname].dim[i].dimlen ? error("In dimension $(nc.vars[varname].dim[i].name) start+count exceeds dimension bounds: $(start[i])+$(count[i]) > $(nc.vars[varname].dim[i].dimlen)") : nothing
