@@ -87,10 +87,7 @@ function readvar{T<:Integer}(nc::NcFile,varname::String;start::Array{T,1}=Array(
     count[i]= count[i]>0 ? count[i] : nc.vars[varname].dim[i].dimlen
   end
   #Determine size of Array
-  p=1
-  for i in count
-    p=p*i
-  end
+  p=prod(count)
   count=uint(count[length(count):-1:1])
   start=uint(start[length(start):-1:1])
   NC_VERBOSE ? println("$ncid $varid $p $start $count") : nothing
