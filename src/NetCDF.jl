@@ -72,45 +72,29 @@ include("netcdf_helpers.jl")
 global currentNcFiles=Dict{String,NcFile}()  
 
 # Read block of data from file
-function readvar{T<:Integer}(nc::NcFile,varname::String;start::Array{T,1}=Array(Int,0),count::Array{T,1}=Array(Int,0))
+function readvar!{T<:Integer}(nc::NcFile, varname::String, retvalsa::Vector;start::Array{T,1}=Array(Int,0),count::Array{T,1}=Array(Int,0))
   ncid=nc.ncid
   haskey(nc.vars,varname) ? nothing : error("NetCDF file $(nc.name) does not have variable $varname")
-  if (length(start)==0) start=ones(Int,nc.vars[varname].ndim) end
-  if (length(count)==0) count=-ones(Int,nc.vars[varname].ndim) end
-  varid=nc.vars[varname].varid
-  start=int(start).-1
-  count=int(count)
-  @assert nc.vars[varname].ndim==length(start)
-  @assert nc.vars[varname].ndim==length(count)
-  NC_VERBOSE ? println(keys(nc.vars)) : nothing
+  if length(start) == 0 start=ones(Int,nc.vars[varname].ndim) end
+  if length(count) == 0 count=-ones(Int,nc.vars[varname].ndim) end
+  if length(start) != nc.vars[varname].ndim error("Length of start ($(length(start))) must equal the number of variable dimensions ($(nc.vars[varname].ndim))") end
+  if length(count) != nc.vars[varname].ndim error("Length of start ($(length(count))) must equal the number of variable dimensions ($(nc.vars[varname].ndim))") end
+  
   for i = 1:length(count)
-    count[i]= count[i]>0 ? count[i] : nc.vars[varname].dim[i].dimlen
+    if count[i] <= 0 count[i] = nc.vars[varname].dim[i].dimlen end
   end
-  #Determine size of Array
-  p=prod(count)
-  count=uint(count[length(count):-1:1])
-  start=uint(start[length(start):-1:1])
-  NC_VERBOSE ? println("$ncid $varid $p $start $count") : nothing
-  if nc.vars[varname].nctype==NC_DOUBLE
-    retvalsa=Array(Float64,p)
-    _nc_get_vara_double_c(ncid,varid,start,count,retvalsa)
-  elseif nc.vars[varname].nctype==NC_FLOAT
-    retvalsa=Array(Float32,p)
-    _nc_get_vara_float_c(ncid,varid,start,count,retvalsa)
-  elseif nc.vars[varname].nctype==NC_INT
-    retvalsa=Array(Int32,p)
-    _nc_get_vara_int_c(ncid,varid,start,count,retvalsa)
-  elseif nc.vars[varname].nctype==NC_SHORT
-    retvalsa=Array(Int32,p)
-    _nc_get_vara_int_c(ncid,varid,start,count,retvalsa)
-  elseif nc.vars[varname].nctype==NC_CHAR
-    retvalsa=Array(Uint8,p)
-    _nc_get_vara_text_c(ncid,varid,start,count,retvalsa)
-  elseif nc.vars[varname].nctype==NC_BYTE
-    retvalsa=Array(Int8,p)
-    _nc_get_vara_schar_c(ncid,varid,start,count,retvalsa)  
-  end
-  NC_VERBOSE ? println("Successfully read from file ",ncid) : nothing
+  
+  p=prod(count) #Determine size of Array
+  
+  length(retvalsa) != p && error("Size of output array does not equal number of elements to be read!")
+  
+  count=Uint[count[i] for i in length(count):-1:1]
+  start=Uint[start[i]-1 for i in length(start):-1:1]
+  
+  varid=nc.vars[varname].varid
+  
+  nc_get_vara_x!(ncid,varid,start,count,retvalsa)
+  
   if length(count)>1 
     return reshape(retvalsa,ntuple(length(count),x->int(count[length(count)-x+1])))
   else
@@ -118,6 +102,36 @@ function readvar{T<:Integer}(nc::NcFile,varname::String;start::Array{T,1}=Array(
   end
 end
 readvar{T<:Integer}(nc::NcFile,varname::String,start::Array{T,1},count::Array{T,1})=readvar(nc,varname,start=start,count=count)
+
+function readvar{T<:Integer}(nc::NcFile, varname::String;start::Array{T,1}=Array(Int,0),count::Array{T,1}=Array(Int,0))
+    
+    haskey(nc.vars,varname) || error("NetCDF file $(nc.name) does not have variable $varname")
+    if length(count) == 0 count=-ones(Int,nc.vars[varname].ndim) end
+    for i = 1:length(count)
+        if count[i] <= 0 count[i] = nc.vars[varname].dim[i].dimlen end
+    end
+    p=prod(count) # Determine size of Array
+        
+    retvalsa = nc.vars[varname].nctype==NC_DOUBLE ? Array(Float64,p) :
+               nc.vars[varname].nctype==NC_FLOAT ? Array(Float32,p) :
+               nc.vars[varname].nctype==NC_INT ? Array(Int32,p) :
+               nc.vars[varname].nctype==NC_SHORT ? Array(Int32,p) :
+               nc.vars[varname].nctype==NC_CHAR ? Array(Uint8,p) :
+               nc.vars[varname].nctype==NC_BYTE ? Array(Int8,p) :
+               nothing
+    
+    retvalsa == nothing && error("NetCDF type currently not supported, please file an issue on https://github.com/meggart/NetCDF.jl")
+    
+    readvar!(nc, varname, retvalsa, start=start, count=count)
+end
+
+
+nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Float64})=_nc_get_vara_double_c(ncid,varid,start,count,retvalsa)
+nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Float32})=_nc_get_vara_float_c(ncid,varid,start,count,retvalsa)
+nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Int32})=_nc_get_vara_int_c(ncid,varid,start,count,retvalsa)
+nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Uint8})=_nc_get_vara_text_c(ncid,varid,start,count,retvalsa)
+nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Int8})=_nc_get_vara_schar_c(ncid,varid,start,count,retvalsa)
+
 
 function putatt(ncid::Integer,varid::Integer,atts::Dict)
   for a in atts
