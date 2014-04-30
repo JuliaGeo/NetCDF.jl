@@ -72,7 +72,7 @@ include("netcdf_helpers.jl")
 global currentNcFiles=Dict{String,NcFile}()  
 
 # Read block of data from file
-function readvar!{T<:Integer}(nc::NcFile, varname::String, retvalsa::Vector;start::Array{T,1}=Array(Int,0),count::Array{T,1}=Array(Int,0))
+function readvar!{T<:Integer}(nc::NcFile, varname::String, retvalsa::Array;start::Array{T,1}=ones(Int,ndims(vals)),count::Array{T,1}=Array(Int,size(vals)))
   ncid=nc.ncid
   haskey(nc.vars,varname) ? nothing : error("NetCDF file $(nc.name) does not have variable $varname")
   if length(start) == 0 start=ones(Int,nc.vars[varname].ndim) end
@@ -95,11 +95,7 @@ function readvar!{T<:Integer}(nc::NcFile, varname::String, retvalsa::Vector;star
   
   nc_get_vara_x!(ncid,varid,start,count,retvalsa)
   
-  if length(count)>1 
-    return reshape(retvalsa,ntuple(length(count),x->int(count[length(count)-x+1])))
-  else
-    return retvalsa
-  end
+  retvalsa
 end
 readvar{T<:Integer}(nc::NcFile,varname::String,start::Array{T,1},count::Array{T,1})=readvar(nc,varname,start=start,count=count)
 
@@ -123,6 +119,12 @@ function readvar{T<:Integer}(nc::NcFile, varname::String;start::Array{T,1}=Array
     retvalsa == nothing && error("NetCDF type currently not supported, please file an issue on https://github.com/meggart/NetCDF.jl")
     
     readvar!(nc, varname, retvalsa, start=start, count=count)
+    
+    if length(count)>1 
+      return reshape(retvalsa,ntuple(length(count),x->count[x]))
+    else
+      return retvalsa
+    end
 end
 
 
@@ -367,6 +369,11 @@ function ncread{T<:Integer}(fil::String,vname::String;start::Array{T}=Array(Int,
   return x
 end
 ncread{T<:Integer}(fil::String,vname::String,start::Array{T,1},count::Array{T,1})=ncread(fil,vname,start=start,count=count)
+function ncread!{T<:Integer}(fil::String,vname::String,vals::Array;start::Array{T}=ones(Int,ndims(vals)),count::Array{T}=Array(Int,size(vals)))
+  nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
+  x  = readvar!(nc,vname,vals,start=start,count=count)
+  return x
+end
 
 function ncinfo(fil::String)
   nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
