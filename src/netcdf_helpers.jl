@@ -115,9 +115,9 @@ end
 
 function _nc_get_att(ncid::Integer,varid::Integer,name,attype::Integer,attlen::Integer)
   if (attype==NC_CHAR)
-    valsa=Array(Uint8,attlen+5)
+    valsa=Array(Uint8,attlen)
     _nc_get_att_text_c(ncid,varid,name,valsa)
-    valsa=bytestring(convert(Ptr{Uint8}, valsa))
+    valsa=bytestring(valsa)
   elseif (attype==NC_SHORT)
     valsa=Array(Int16,attlen)
     _nc_get_att_short_c(ncid,varid,name,valsa)
