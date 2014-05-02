@@ -1,15 +1,21 @@
 module NetCDF
 include("netcdf_c_wrappers.jl")
 import Base.show
-export show,NcDim,NcVar,NcFile,new,ncread,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE, ncgetatt,NC_NOWRITE,NC_WRITE,NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4
+export show,NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE, ncgetatt,NC_NOWRITE,NC_WRITE,NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4
 #Some constants
 
 
-jltype2nctype={Int8=>NC_BYTE,
-               Int16=>NC_SHORT,
-               Int32=>NC_INT,
-               Float32=>NC_FLOAT,
-               Float64=>NC_DOUBLE}
+jltype2nctype={ Int8=>NC_BYTE,
+                Int16=>NC_SHORT,
+                Int32=>NC_INT,
+                Float32=>NC_FLOAT,
+                Float64=>NC_DOUBLE}
+
+nctype2string={ NC_BYTE=>"BYTE",
+                NC_SHORT=>"SHORT",
+                NC_INT=>"INT",
+                NC_FLOAT=>"FLOAT",
+                NC_DOUBLE=>"DOUBLE"}
 
 
 type NcDim
@@ -21,6 +27,7 @@ type NcDim
   vals::AbstractArray
   atts::Dict{Any,Any}
 end
+
 NcDim(name::String,dimlength::Integer;values::Union(AbstractArray,Number)=[],atts::Dict{Any,Any}=Dict{Any,Any}())= 
   begin
     (length(values)>0 && length(values)!=dimlength) ? error("Dimension value vector must have the same length as dimlength!") : nothing
@@ -487,10 +494,11 @@ function show(io::IO,nc::NcFile)
   println(io,"")
   println(io,"##### Variables #####")
   println(io,"")
-  @printf(io,"%20s    %s","Name","Dimensions\n")
+  @printf(io,"%20s%20s%20s\n","Name","Type","Dimensions")
   println("---------------------------------------------------------------")
   for v in nc.vars
-    @printf(io,"%20s    ",v[2].name)
+    @printf(io,"%20s",v[2].name)
+    @printf(io,"%20s          ",nctype2string[int(v[2].nctype)])
     for d in v[2].dim
       @printf(io,"%s, ",d.name)
     end
