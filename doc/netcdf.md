@@ -72,7 +72,7 @@ Closes the file and writes changes to the disk. If argument is omitted, all open
 
 ## Getting information
 
-    nc = netcdf.open ( filename, mode=NC_NOWRITE, readdimvar=false )
+    nc = NetCDF.open ( filename, mode=NC_NOWRITE, readdimvar=false )
     
 this function returns an object of type NcVar, which contains all file metainformation and attributes. You can browse it, just type 
 
