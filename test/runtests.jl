@@ -1,4 +1,3 @@
-push!(DL_LOAD_PATH,"/opt/local/lib")
 import Base.Test.@test
 using NetCDF
 #First delete any existing nc-files
