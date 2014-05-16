@@ -39,7 +39,7 @@ Now we can write data to the file:
     d = rand ( 10, 20 )
     ncwrite (d, filename, varname)
     
-To learn more, have a look at https://github.com/meggart/NetCDF.jl/blob/master/doc/netcdf.md. 
+To learn more, have a look at https://github.com/meggart/NetCDF.jl/blob/master/doc/NetCDF.md. 
 
 Contact info:
 Fabian Gans (fgans@bgc-jena.mpg.de)
