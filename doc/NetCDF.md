@@ -16,6 +16,10 @@ prints information on the variables, dimension and attributes conatained in the 
 reads the values of the variable varname from file filename. If only parts of the variable are to be read, you can provide optionally start and count, which enable you to read blocks of data. 
 start and count have the same length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension. As a special case, setting a value in count to -1 will cause the function to read all values along this dimension. 
 
+    ncread! ( filename, varname, d, start=[1,1,...], count=[-1,-1,...] )
+    
+is the mutating form of `ncread` which expects a pre-allocated array d, where the data are written to. In performance-critical situations you should always use this function for two reasons: First you can avoid unnecessary memory allocation if you read and process data in a loop and can reuse memory. The second point is that the mutating version is type-safe is contrast to the non-mutating version. `ncread` will return an array with a type depending on the data type of your NetCDF variable, which means that type-inference can not work correctly and further operations on that array might be slow. `ncread!` will always try to convert the data to the array-type provided by the user and never change the type of `d`, so that the element type of the returned array is predictable and operations on the returned array run fast. 
+
 ## Writing data
 
     ncwrite (data, filename, varname, start=start, count=count)
@@ -68,7 +72,7 @@ Closes the file and writes changes to the disk. If argument is omitted, all open
 
 ## Getting information
 
-    nc = netcdf.open ( filename, mode=NC_NOWRITE, readdimvar=false )
+    nc = NetCDF.open ( filename, mode=NC_NOWRITE, readdimvar=false )
     
 this function returns an object of type NcVar, which contains all file metainformation and attributes. You can browse it, just type 
 
