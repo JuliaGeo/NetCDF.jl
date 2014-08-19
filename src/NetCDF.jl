@@ -294,6 +294,10 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,
     end
     putatt(id,v.varid,v.atts)
   end
+  # Put global attributes
+  if !isempty(gatts)
+    putatt(id,NC_GLOBAL,gatts)
+  end
   # Leave define mode
   _nc_enddef_c(id)
   #Create the NcFile Object
