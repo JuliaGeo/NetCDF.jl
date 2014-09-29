@@ -248,29 +248,29 @@ typealias nclong Cint
 @c Cint nc_inq_vlen (Cint, nc_type, Ptr{Uint8}, Ptr{size_t}, Ptr{nc_type}) libnetcdf
 @c Cint nc_free_vlen (Ptr{nc_vlen_t},) libnetcdf
 @c Cint nc_free_vlens (size_t, Ptr{nc_vlen_t}) libnetcdf
-@c Cint nc_put_vlen_element (Cint, Cint, Ptr{None}, size_t, Ptr{None}) libnetcdf
-@c Cint nc_get_vlen_element (Cint, Cint, Ptr{None}, Ptr{size_t}, Ptr{None}) libnetcdf
+@c Cint nc_put_vlen_element (Cint, Cint, Ptr{Void}, size_t, Ptr{Void}) libnetcdf
+@c Cint nc_get_vlen_element (Cint, Cint, Ptr{Void}, Ptr{size_t}, Ptr{Void}) libnetcdf
 @c Cint nc_free_string (size_t, Ptr{Ptr{Uint8}}) libnetcdf
 @c Cint nc_inq_user_type (Cint, nc_type, Ptr{Uint8}, Ptr{size_t}, Ptr{nc_type}, Ptr{size_t}, Ptr{Cint}) libnetcdf
-@c Cint nc_put_att (Cint, Cint, Ptr{Uint8}, nc_type, size_t, Ptr{None}) libnetcdf
-@c Cint nc_get_att (Cint, Cint, Ptr{Uint8}, Ptr{None}) libnetcdf
+@c Cint nc_put_att (Cint, Cint, Ptr{Uint8}, nc_type, size_t, Ptr{Void}) libnetcdf
+@c Cint nc_get_att (Cint, Cint, Ptr{Uint8}, Ptr{Void}) libnetcdf
 @c Cint nc_def_enum (Cint, nc_type, Ptr{Uint8}, Ptr{nc_type}) libnetcdf
-@c Cint nc_insert_enum (Cint, nc_type, Ptr{Uint8}, Ptr{None}) libnetcdf
+@c Cint nc_insert_enum (Cint, nc_type, Ptr{Uint8}, Ptr{Void}) libnetcdf
 @c Cint nc_inq_enum (Cint, nc_type, Ptr{Uint8}, Ptr{nc_type}, Ptr{size_t}, Ptr{size_t}) libnetcdf
-@c Cint nc_inq_enum_member (Cint, nc_type, Cint, Ptr{Uint8}, Ptr{None}) libnetcdf
+@c Cint nc_inq_enum_member (Cint, nc_type, Cint, Ptr{Uint8}, Ptr{Void}) libnetcdf
 @c Cint nc_inq_enum_ident (Cint, nc_type, Clonglong, Ptr{Uint8}) libnetcdf
 @c Cint nc_def_opaque (Cint, size_t, Ptr{Uint8}, Ptr{nc_type}) libnetcdf
 @c Cint nc_inq_opaque (Cint, nc_type, Ptr{Uint8}, Ptr{size_t}) libnetcdf
-@c Cint nc_put_var (Cint, Cint, Ptr{None}) libnetcdf
-@c Cint nc_get_var (Cint, Cint, Ptr{None}) libnetcdf
-@c Cint nc_put_var1 (Cint, Cint, Ptr{size_t}, Ptr{None}) libnetcdf
-@c Cint nc_get_var1 (Cint, Cint, Ptr{size_t}, Ptr{None}) libnetcdf
-@c Cint nc_put_vara (Cint, Cint, Ptr{size_t}, Ptr{size_t}, Ptr{None}) libnetcdf
-@c Cint nc_get_vara (Cint, Cint, Ptr{size_t}, Ptr{size_t}, Ptr{None}) libnetcdf
-@c Cint nc_put_vars (Cint, Cint, Ptr{size_t}, Ptr{size_t}, Ptr{ptrdiff_t}, Ptr{None}) libnetcdf
-@c Cint nc_get_vars (Cint, Cint, Ptr{size_t}, Ptr{size_t}, Ptr{ptrdiff_t}, Ptr{None}) libnetcdf
-@c Cint nc_put_varm (Cint, Cint, Ptr{size_t}, Ptr{size_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{None}) libnetcdf
-@c Cint nc_get_varm (Cint, Cint, Ptr{size_t}, Ptr{size_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{None}) libnetcdf
+@c Cint nc_put_var (Cint, Cint, Ptr{Void}) libnetcdf
+@c Cint nc_get_var (Cint, Cint, Ptr{Void}) libnetcdf
+@c Cint nc_put_var1 (Cint, Cint, Ptr{size_t}, Ptr{Void}) libnetcdf
+@c Cint nc_get_var1 (Cint, Cint, Ptr{size_t}, Ptr{Void}) libnetcdf
+@c Cint nc_put_vara (Cint, Cint, Ptr{size_t}, Ptr{size_t}, Ptr{Void}) libnetcdf
+@c Cint nc_get_vara (Cint, Cint, Ptr{size_t}, Ptr{size_t}, Ptr{Void}) libnetcdf
+@c Cint nc_put_vars (Cint, Cint, Ptr{size_t}, Ptr{size_t}, Ptr{ptrdiff_t}, Ptr{Void}) libnetcdf
+@c Cint nc_get_vars (Cint, Cint, Ptr{size_t}, Ptr{size_t}, Ptr{ptrdiff_t}, Ptr{Void}) libnetcdf
+@c Cint nc_put_varm (Cint, Cint, Ptr{size_t}, Ptr{size_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Void}) libnetcdf
+@c Cint nc_get_varm (Cint, Cint, Ptr{size_t}, Ptr{size_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Void}) libnetcdf
 @c Cint nc_def_var_deflate (Cint, Cint, Cint, Cint, Cint) libnetcdf
 @c Cint nc_inq_var_deflate (Cint, Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}) libnetcdf
 @c Cint nc_inq_var_szip (Cint, Cint, Ptr{Cint}, Ptr{Cint}) libnetcdf
@@ -278,8 +278,8 @@ typealias nclong Cint
 @c Cint nc_inq_var_fletcher32 (Cint, Cint, Ptr{Cint}) libnetcdf
 @c Cint nc_def_var_chunking (Cint, Cint, Cint, Ptr{size_t}) libnetcdf
 @c Cint nc_inq_var_chunking (Cint, Cint, Ptr{Cint}, Ptr{size_t}) libnetcdf
-@c Cint nc_def_var_fill (Cint, Cint, Cint, Ptr{None}) libnetcdf
-@c Cint nc_inq_var_fill (Cint, Cint, Ptr{Cint}, Ptr{None}) libnetcdf
+@c Cint nc_def_var_fill (Cint, Cint, Cint, Ptr{Void}) libnetcdf
+@c Cint nc_inq_var_fill (Cint, Cint, Ptr{Cint}, Ptr{Void}) libnetcdf
 @c Cint nc_def_var_endian (Cint, Cint, Cint) libnetcdf
 @c Cint nc_inq_var_endian (Cint, Cint, Ptr{Cint}) libnetcdf
 @c Cint nc_set_fill (Cint, Cint, Ptr{Cint}) libnetcdf
@@ -515,9 +515,9 @@ typealias nclong Cint
 @c Cint ncdimid (Cint, Ptr{Uint8}) libnetcdf
 @c Cint ncdiminq (Cint, Cint, Ptr{Uint8}, Ptr{Clong}) libnetcdf
 @c Cint ncdimrename (Cint, Cint, Ptr{Uint8}) libnetcdf
-@c Cint ncattput (Cint, Cint, Ptr{Uint8}, nc_type, Cint, Ptr{None}) libnetcdf
+@c Cint ncattput (Cint, Cint, Ptr{Uint8}, nc_type, Cint, Ptr{Void}) libnetcdf
 @c Cint ncattinq (Cint, Cint, Ptr{Uint8}, Ptr{nc_type}, Ptr{Cint}) libnetcdf
-@c Cint ncattget (Cint, Cint, Ptr{Uint8}, Ptr{None}) libnetcdf
+@c Cint ncattget (Cint, Cint, Ptr{Uint8}, Ptr{Void}) libnetcdf
 @c Cint ncattcopy (Cint, Cint, Ptr{Uint8}, Cint, Cint) libnetcdf
 @c Cint ncattname (Cint, Cint, Cint, Ptr{Uint8}) libnetcdf
 @c Cint ncattrename (Cint, Cint, Ptr{Uint8}, Ptr{Uint8}) libnetcdf
@@ -525,16 +525,16 @@ typealias nclong Cint
 @c Cint ncvardef (Cint, Ptr{Uint8}, nc_type, Cint, Ptr{Cint}) libnetcdf
 @c Cint ncvarid (Cint, Ptr{Uint8}) libnetcdf
 @c Cint ncvarinq (Cint, Cint, Ptr{Uint8}, Ptr{nc_type}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}) libnetcdf
-@c Cint ncvarput1 (Cint, Cint, Ptr{Clong}, Ptr{None}) libnetcdf
-@c Cint ncvarget1 (Cint, Cint, Ptr{Clong}, Ptr{None}) libnetcdf
-@c Cint ncvarput (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{None}) libnetcdf
-@c Cint ncvarget (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{None}) libnetcdf
-@c Cint ncvarputs (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{None}) libnetcdf
-@c Cint ncvargets (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{None}) libnetcdf
-@c Cint ncvarputg (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{None}) libnetcdf
-@c Cint ncvargetg (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{None}) libnetcdf
+@c Cint ncvarput1 (Cint, Cint, Ptr{Clong}, Ptr{Void}) libnetcdf
+@c Cint ncvarget1 (Cint, Cint, Ptr{Clong}, Ptr{Void}) libnetcdf
+@c Cint ncvarput (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Void}) libnetcdf
+@c Cint ncvarget (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Void}) libnetcdf
+@c Cint ncvarputs (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Void}) libnetcdf
+@c Cint ncvargets (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Void}) libnetcdf
+@c Cint ncvarputg (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Void}) libnetcdf
+@c Cint ncvargetg (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Void}) libnetcdf
 @c Cint ncvarrename (Cint, Cint, Ptr{Uint8}) libnetcdf
 @c Cint ncrecinq (Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Clong}) libnetcdf
-@c Cint ncrecget (Cint, Clong, Ptr{Ptr{None}}) libnetcdf
-@c Cint ncrecput (Cint, Clong, Ptr{Ptr{None}}) libnetcdf
+@c Cint ncrecget (Cint, Clong, Ptr{Ptr{Void}}) libnetcdf
+@c Cint ncrecput (Cint, Clong, Ptr{Ptr{Void}}) libnetcdf
 
