@@ -1,9 +1,9 @@
-jltype2nctype={Int8=>NC_BYTE,
-	           Int16=>NC_SHORT,
-               Int32=>NC_INT,
-               Int64=>NC_LONG,
-               Float32=>NC_FLOAT,
-               Float64=>NC_DOUBLE}
+jltype2nctype=Dict(Int8=>NC_BYTE,
+	               Int16=>NC_SHORT,
+                   Int32=>NC_INT,
+                   Int64=>NC_LONG,
+                   Float32=>NC_FLOAT,
+                   Float64=>NC_DOUBLE)
 
 
 function _nc_op(fname::String,omode::Uint16)
@@ -292,7 +292,7 @@ function finalizedim(dimlen,dimvals,dimatts,name)
     dimvals=float64([1:dimlen])
   end
   if (dimatts==nothing)
-    dimatts={"missval"=>-9999}
+    dimatts=Dict("missval"=>-9999)
   end
   return(NcDim(name,dimvals,dimatts))
 end

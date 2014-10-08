@@ -5,17 +5,17 @@ export show,NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncc
 #Some constants
 
 
-jltype2nctype={ Int8=>NC_BYTE,
-                Int16=>NC_SHORT,
-                Int32=>NC_INT,
-                Float32=>NC_FLOAT,
-                Float64=>NC_DOUBLE}
+jltype2nctype=Dict(Int8=>NC_BYTE,
+                   Int16=>NC_SHORT,
+                   Int32=>NC_INT,
+                   Float32=>NC_FLOAT,
+                   Float64=>NC_DOUBLE)
 
-nctype2string={ NC_BYTE=>"BYTE",
-                NC_SHORT=>"SHORT",
-                NC_INT=>"INT",
-                NC_FLOAT=>"FLOAT",
-                NC_DOUBLE=>"DOUBLE"}
+nctype2string=Dict(NC_BYTE=>"BYTE",
+                   NC_SHORT=>"SHORT",
+                   NC_INT=>"INT",
+                   NC_FLOAT=>"FLOAT",
+                   NC_DOUBLE=>"DOUBLE")
 
 
 type NcDim
