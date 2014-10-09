@@ -11,8 +11,8 @@ end
 
 @linux_only begin
     netcdf = library_dependency("libnetcdf", aliases = ["libnetcdf-7"])
-    provides(AptGet, {"libnetcdf-dev"=>netcdf})
-    provides(Yum, {"netcdf-devel"=>netcdf})
+    provides(AptGet, Dict("libnetcdf-dev"=>netcdf))
+    provides(Yum, Dict("netcdf-devel"=>netcdf))
 end
 
 @windows_only begin
