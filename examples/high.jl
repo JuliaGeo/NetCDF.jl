@@ -15,13 +15,13 @@ tim=[0:23]
 rad = float64([g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim])
 
 # Define some attributes of the variable (optionlal)
-varatts = Dict("longname" => "Radiation at the top of the atmosphere",
+varatts = @Compat.Dict("longname" => "Radiation at the top of the atmosphere",
            "units"    => "W/m^2")
-lonatts = Dict("longname" => "Longitude",
+lonatts = @Compat.Dict("longname" => "Longitude",
            "units"    => "degrees east")
-latatts = Dict("longname" => "Latitude",
+latatts = @Compat.Dict("longname" => "Latitude",
            "units"    => "degrees north")
-timatts = Dict("longname" => "Time",
+timatts = @Compat.Dict("longname" => "Time",
            "units"    => "hours since 01-01-2000 00:00:00")
 
 # Now we create the file radiation.nc and call the variable rad, define also the dimensions the variables depends on

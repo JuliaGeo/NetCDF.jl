@@ -1,4 +1,4 @@
-jltype2nctype=Dict(Int8=>NC_BYTE,
+jltype2nctype=@Compat.Dict(Int8=>NC_BYTE,
 	               Int16=>NC_SHORT,
                    Int32=>NC_INT,
                    Int64=>NC_LONG,
@@ -292,7 +292,7 @@ function finalizedim(dimlen,dimvals,dimatts,name)
     dimvals=float64([1:dimlen])
   end
   if (dimatts==nothing)
-    dimatts=Dict("missval"=>-9999)
+    dimatts=@Compat.Dict("missval"=>-9999)
   end
   return(NcDim(name,dimvals,dimatts))
 end
