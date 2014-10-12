@@ -9,13 +9,13 @@ end
 
 # Test Medium level Interface
 # Test Dimension Creation
-d1 = NcDim("Dim1",2;values=[5.0,10.0],atts=@Compat.Dict("units"=>"deg C"));
+d1 = NcDim("Dim1",2;values=[5.0,10.0],atts=@Compat.AnyDict("units"=>"deg C"));
 d2 = NcDim("Dim2",[1:10]);
-d3 = NcDim("Dim3",20;atts=@Compat.Dict("max"=>10));
+d3 = NcDim("Dim3",20;atts=@Compat.AnyDict("max"=>10));
 
 # Test Variable creation
 v1 = NcVar("v1",[d1,d2,d3],compress=5) 						# With several dims in an Array, and compressed
-v2 = NcVar("v2",[d1,d2,d3],atts=@Compat.Dict("a1"=>"varatts"))  # with given attributes
+v2 = NcVar("v2",[d1,d2,d3],atts=@Compat.AnyDict("a1"=>"varatts"))  # with given attributes
 v3 = NcVar("v3",d1) 								# with a single dimension
 tlist = [Float64, Float32, Int32, Int16, Int8]
 vt = Array(NcVar, length(tlist))
@@ -25,7 +25,7 @@ end
 
 # Creating Files
 nc1 = NetCDF.create("nc1.nc",v1,mode=NC_NETCDF4);
-nc2 = NetCDF.create("nc2.nc",[v2,v3],gatts=@Compat.Dict("Some global attributes"=>2010),mode=NC_64BIT_OFFSET);
+nc2 = NetCDF.create("nc2.nc",[v2,v3],gatts=@Compat.AnyDict("Some global attributes"=>2010),mode=NC_64BIT_OFFSET);
 nc3 = NetCDF.create("nc3.nc",vt,mode=NC_CLASSIC_MODEL);
 
 #Test Adding attributes
@@ -90,10 +90,10 @@ for fn in ("nc1.nc","nc2.nc","nc3.nc")
   end
 end
 
-nccreate("nc1.nc","v1","Dim1",[1,2,3],@Compat.Dict("units"=>"deg C"),"Dim2",[1:10],"Dim3",20,@Compat.Dict("max"=>10),
+nccreate("nc1.nc","v1","Dim1",[1,2,3],@Compat.AnyDict("units"=>"deg C"),"Dim2",[1:10],"Dim3",20,@Compat.AnyDict("max"=>10),
 mode=NC_NETCDF4)
-nccreate("nc2.nc","v2","Dim1",[1,2,3],@Compat.Dict("units"=>"deg C"),"Dim2",[1:10],"Dim3",20,@Compat.Dict("max"=>10),
-atts=@Compat.Dict("a1"=>"varatts"),gatts=@Compat.Dict("Some global attributes"=>2010),mode=NC_64BIT_OFFSET)
+nccreate("nc2.nc","v2","Dim1",[1,2,3],@Compat.AnyDict("units"=>"deg C"),"Dim2",[1:10],"Dim3",20,@Compat.AnyDict("max"=>10),
+atts=@Compat.AnyDict("a1"=>"varatts"),gatts=@Compat.AnyDict("Some global attributes"=>2010),mode=NC_64BIT_OFFSET)
 nccreate("nc2.nc","v3","Dim1",mode=NC_CLASSIC_MODEL)
 tlist = [Float64, Float32, Int32, Int16, Int8]
 for i = 1:length(tlist)
