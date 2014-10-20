@@ -1,9 +1,9 @@
-jltype2nctype={Int8=>NC_BYTE,
-	           Int16=>NC_SHORT,
-               Int32=>NC_INT,
-               Int64=>NC_LONG,
-               Float32=>NC_FLOAT,
-               Float64=>NC_DOUBLE}
+jltype2nctype=@Compat.Dict(Int8=>NC_BYTE,
+	               Int16=>NC_SHORT,
+                   Int32=>NC_INT,
+                   Int64=>NC_LONG,
+                   Float32=>NC_FLOAT,
+                   Float64=>NC_DOUBLE)
 
 
 function _nc_op(fname::String,omode::Uint16)
@@ -109,7 +109,7 @@ function _nc_put_att(ncid::Integer,varid::Integer,name,val)
   elseif (attype==NC_BYTE)
     _nc_put_att_byte_c(ncid,varid,name,attype,attlen,val)
   else
-    valsa="Could not read attribute, currently unsupported datatype by the netcdf package"  
+    valsa="Could not read attribute, currently unsupported datatype by the netcdf package"
   end
 end
 
@@ -137,7 +137,7 @@ function _nc_get_att(ncid::Integer,varid::Integer,name,attype::Integer,attlen::I
     valsa=Array(Int8,attlen)
     _nc_get_att_byte_c(ncid,varid,name,valsa)
   else
-    valsa="Could not read attribute, currently unsupported datatype by the netcdf package"  
+    valsa="Could not read attribute, currently unsupported datatype by the netcdf package"
   end
   return valsa
 end
@@ -207,13 +207,13 @@ function _readdimdvar(ncid::Integer,dim::NcDim)
   NC_VERBOSE ? println("Successfully read dimension from file ",dim.name) : nothing
   dim.vals=retvalsa
   end
-  
+
 function _nc_getatts_all(ncid::Integer,varid::Integer,natts::Integer)
   atts=Dict{Any,Any}()
   for attnum=0:natts-1
     gatt=_nc_inq_att(ncid,varid,attnum)
     v=gatt[2]
-    if ((length(v)==1) & !(typeof(v)<:String)) 
+    if ((length(v)==1) & !(typeof(v)<:String))
       v=v[1]
     end
     atts[gatt[1]]=v
@@ -269,10 +269,10 @@ function parsedimargs(dim)
       dimlen=a
     elseif (typeof(a)<:AbstractArray)
       #Assume dimension values are given
-      if dimvals==nothing 
+      if dimvals==nothing
         dimvals=float64(a)
         dimlen=length(dimvals)
-      else 
+      else
         error ("Dimension values of $name defined more than once")
       end
     elseif (typeof(a)<:Dict)
@@ -292,7 +292,7 @@ function finalizedim(dimlen,dimvals,dimatts,name)
     dimvals=float64([1:dimlen])
   end
   if (dimatts==nothing)
-    dimatts={"missval"=>-9999}
+    dimatts=@Compat.AnyDict("missval"=>-9999)
   end
   return(NcDim(name,dimvals,dimatts))
 end
