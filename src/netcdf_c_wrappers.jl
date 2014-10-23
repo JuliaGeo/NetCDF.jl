@@ -23,7 +23,12 @@ const NC_64BIT_OFFSET =0x0200 # Use large (64-bit) file offsets. Mode flag for n
 const NC_SHARE        =0x0800 #
 const NC_NETCDF4      =0x1000 # Use netCDF-4/HDF5 format. Mode flag for nc_create()
 
-@osx_only import Homebrew # Add Homebrew/lib to the DL_LOAD_PATH
+
+@osx_only begin
+    # Add Homebrew/lib to the DL_LOAD_PATH
+    const brew_prefix = Pkg.dir("Homebrew", "deps", "usr")
+    push!(DL_LOAD_PATH, joinpath(brew_prefix, "lib"))
+end
 ncname= @windows ? "netcdf" : "libnetcdf"
 
 
