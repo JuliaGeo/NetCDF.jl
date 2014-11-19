@@ -16,14 +16,19 @@ const NC_DOUBLE =6
 const NC_GLOBAL=-1
 const NC_CLOBBER=0x0000
 const NC_NOCLOBBER=0x0004
-const NC_NOWRITE=0x0000	
-const NC_WRITE=0x0001	
+const NC_NOWRITE=0x0000
+const NC_WRITE=0x0001
 const NC_CLASSIC_MODEL=0x0100 # Enforce classic model. Mode flag for nc_create()
 const NC_64BIT_OFFSET =0x0200 # Use large (64-bit) file offsets. Mode flag for nc_create()
-const NC_SHARE        =0x0800 #	
+const NC_SHARE        =0x0800 #
 const NC_NETCDF4      =0x1000 # Use netCDF-4/HDF5 format. Mode flag for nc_create()
 
-@osx_only import Homebrew # Add Homebrew/lib to the DL_LOAD_PATH
+
+@osx_only begin
+    # Add Homebrew/lib to the DL_LOAD_PATH
+    const brew_prefix = Pkg.dir("Homebrew", "deps", "usr")
+    push!(DL_LOAD_PATH, joinpath(brew_prefix, "lib"))
+end
 ncname= @windows ? "netcdf" : "libnetcdf"
 
 
@@ -69,7 +74,7 @@ for (jlname, fname, outtype, argtypes, argsyms, ex_error) in
       (:_nc_inq_c,:nc_inq,Int32,(Int32,Ptr{Int32},Ptr{Int32},Ptr{Int32},Ptr{Int32}),(:id,:ndima,:nvara,:ngatta,:nunlimdimida),:(error("Error inquiring file information"))),
       (:_nc_inq_attname_c,:nc_inq_attname,Int32,(Int32,Int32,Int32,Ptr{Uint8}),(:ncid,:varid,:attnum,:namea),:(error("Error inquiring attribute name"))),
       (:_nc_inq_att_c,:nc_inq_att,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Int32},Ptr{Int32}),(:ncid,:varid,:name,:typea,:nvals),:(error("Error inquiring attribute properties"))),
-      
+
       (:_nc_get_att_text_c,:nc_get_att_text,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Uint8}),(:ncid,:varid,:name,:valsa),:(error("Error reading attribute"))),
       (:_nc_get_att_short_c,:nc_get_att_short,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Int16}),(:ncid,:varid,:name,:valsa),:(error("Error reading attribute"))),
       (:_nc_get_att_int_c,:nc_get_att_int,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Int32}),(:ncid,:varid,:name,:valsa),:(error("Error reading attribute"))),
@@ -77,7 +82,7 @@ for (jlname, fname, outtype, argtypes, argsyms, ex_error) in
       (:_nc_get_att_double_c,:nc_get_att_double,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Float64}),(:ncid,:varid,:name,:valsa),:(error("Error reading attribute"))),
       (:_nc_get_att_byte_c,:nc_get_att,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Int8}),(:ncid,:varid,:name,:valsa),:(error("Error reading attribute"))),
       (:_nc_inq_var_c,:nc_inq_var,Int32,(Int32,Int32,Ptr{Uint8},Ptr{Int32},Ptr{Int32},Ptr{Int32},Ptr{Int32}),(:id,:varid,:namea,:xtypea,:ndimsa,:dimida,:natta),:(error("Error reading variable information"))),
-      
+
       (:_nc_put_att_text_c,:nc_put_att_text,Int32,(Int32,Int32,Ptr{Uint8},Int32,Ptr{Uint8}),(:ncid,:varid,:name,:size,:valsa),:(error("Error writing attribute"))),
       (:_nc_put_att_short_c,:nc_put_att_short,Int32,(Int32,Int32,Ptr{Uint8},Int32,Int32,Ptr{Int16}),(:ncid,:varid,:name,:nctype,:size,:valsa),:(error("Error writing attribute"))),
       (:_nc_put_att_int_c,:nc_put_att_int,Int32,(Int32,Int32,Ptr{Uint8},Int32,Int32,Ptr{Int32}),(:ncid,:varid,:name,:nctype,:size,:valsa),:(error("Error writing attribute"))),
@@ -85,14 +90,14 @@ for (jlname, fname, outtype, argtypes, argsyms, ex_error) in
       (:_nc_put_att_float_c,:nc_put_att_float,Int32,(Int32,Int32,Ptr{Uint8},Int32,Int32,Ptr{Float32}),(:ncid,:varid,:nctype,:size,:name,:valsa),:(error("Error writing attribute"))),
       (:_nc_put_att_double_c,:nc_put_att_int,Int32,(Int32,Int32,Ptr{Uint8},Int32,Int32,Ptr{Float64}),(:ncid,:varid,:name,:nctype,:size,:valsa),:(error("Error writing attribute"))),
       (:_nc_put_att_byte_c,:nc_put_att,Int32,(Int32,Int32,Ptr{Uint8},Int32,Int32,Ptr{Int8}),(:ncid,:varid,:name,:nctype,:size,:valsa),:(error("Error writing attribute"))),
-      
+
       (:_nc_get_vara_double_c,:nc_get_vara_double,Int32,(Int32,Int32,Ptr{Uint},Ptr{Uint},Ptr{Float64}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
       (:_nc_get_vara_float_c,:nc_get_vara_float,Int32,(Int32,Int32,Ptr{Uint},Ptr{Uint},Ptr{Float32}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
       (:_nc_get_vara_int_c,:nc_get_vara_int,Int32,(Int32,Int32,Ptr{Uint},Ptr{Uint},Ptr{Int32}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
       (:_nc_get_vara_short_c,:nc_get_vara_short,Int32,(Int32,Int32,Ptr{Uint},Ptr{Uint},Ptr{Int16}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
       (:_nc_get_vara_text_c,:nc_get_vara_text,Int32,(Int32,Int32,Ptr{Uint},Ptr{Uint},Ptr{Uint8}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
       (:_nc_get_vara_schar_c,:nc_get_vara_schar,Int32,(Int32,Int32,Ptr{Uint},Ptr{Uint},Ptr{Int8}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error reading variable"))),
-      
+
       (:_nc_put_vara_schar_c,:nc_put_vara_schar,Int32,(Int32,Int32,Ptr{Uint},Ptr{Uint},Ptr{Int8}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
       (:_nc_put_vara_text_c,:nc_put_vara_text,Int32,(Int32,Int32,Ptr{Uint},Ptr{Uint},Ptr{Uint8}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
       (:_nc_put_vara_double_c,:nc_put_vara_double,Int32,(Int32,Int32,Ptr{Uint},Ptr{Uint},Ptr{Float64}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
@@ -108,8 +113,8 @@ for (jlname, fname, outtype, argtypes, argsyms, ex_error) in
       (:_nc_def_var_c,:nc_def_var,Int32,(Int32,Ptr{Uint8},Int32,Int32,Ptr{Int32},Ptr{Int32}),(:ncid,:name,:xtype,:ndims,:dimida,:varida),:(error("Error creating variable"))),
       (:_nc_def_var_deflate_c,:nc_def_var_deflate,Int32,(Int32,Int32,Int32,Int32,Int32),(:ncid,:varid,:shuffle,:deflate,:deflate_level),:(error("Error setting compression"))),
      );
-     
-    
+
+
     ex_dec = funcdecexpr(jlname, length(argtypes), argsyms)
     ex_ccall = ccallexpr(ncname, fname, outtype, argtypes, argsyms)
     ex_body = quote
