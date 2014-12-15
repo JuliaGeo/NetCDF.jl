@@ -6,112 +6,137 @@ jltype2nctype=@Compat.Dict(Int8=>NC_BYTE,
                    Float64=>NC_DOUBLE)
 
 
-function _nc_op(fname::String,omode::Uint16)
-  # Open netcdf file
-  ida=Array(Int32,1)
-  NetCDF._nc_open_c(fname,omode,ida)
-  id=ida[1]
-  NC_VERBOSE ? println("Successfully opened ",fname," dimid=",id) : nothing
-  return id
+
+# These are some helper functions that automatically 
+# First we define some constant arrays that are placeholders for pointers in ccall functions
+const error_description=
+     [int32(-33)=> "Not a netcdf id",
+     int32(-34)=> "Too many netcdfs open",
+     int32(-35)=> "netcdf file exists && NC_NOCLOBBER",
+     int32(-36)=> "Invalid Argument",
+     int32(-37)=> "Write to read only",
+     int32(-38)=> "Operation not allowed in data mode",
+     int32(-39)=> "Operation not allowed in define mode",
+     int32(-40)=> "Index exceeds dimension bound",
+     int32(-41)=> "NC_MAX_DIMS exceeded",
+     int32(-42)=> "String match to name in use",
+     int32(-43)=> "Attribute not found",
+     int32(-44)=> "NC_MAX_ATTRS exceeded",
+     int32(-45)=> "Not a netcdf data type",
+     int32(-46)=> "Invalid dimension id or name",
+     int32(-47)=> "NC_UNLIMITED in the wrong index",
+     int32(-48)=> "NC_MAX_VARS exceeded",
+     int32(-49)=> "Variable not found",
+     int32(-50)=> "Action prohibited on NC_GLOBAL varid",
+     int32(-51)=> "Not a netcdf file",
+     int32(-52)=> "In Fortran, string too short",
+     int32(-53)=> "NC_MAX_NAME exceeded",
+     int32(-54)=> "NC_UNLIMITED size already in use",
+     int32(-55)=> "nc_rec op when there are no record vars",
+     int32(-56)=> "Attempt to convert between text & numbers",
+     int32(-57)=> "Edge+start exceeds dimension bound",
+     int32(-58)=> "Illegal stride",
+     int32(-59)=> "Attribute or variable name contains illegal characters",
+     int32(-60)=> "Math result not representable",
+     int32(-61)=> "Memory allocation (malloc) failure",
+     int32(-62)=> "One or more variable sizes violate format constraints",
+     int32(-63)=> "Invalid dimension size",
+     int32(-64)=> "File likely truncated or possibly corrupted"]
+
+const ida          = zeros(Int32,1)
+const namea        = zeros(Uint8,NC_MAX_NAME+1)
+const lengtha      = zeros(Int32,1)
+const dimida       = zeros(Int32,1)
+const ndima        = zeros(Int32,1)
+const nvara        = zeros(Int32,1)
+const ngatta       = zeros(Int32,1)
+const nunlimdimida = zeros(Int32,1)
+const typea        = zeros(Int32,1)
+const nvals        = zeros(Int32,1)
+const int8a        = zeros(Int8,1)
+const int16a       = zeros(Int16,1)
+const int32a       = zeros(Int32,1)
+const int64a       = zeros(Int64,1)
+const float32a     = zeros(Float32,1)
+const float64a     = zeros(Float64,1)
+
+function nc_open(fname::String,omode::Uint16)
+    # Function to open file fname, returns a NetCDF file ID
+    ret=nc_open(fname,omode,ida)
+    ret!=0 && error("NetCDF error when opening file $fname: $(error_description[ret])")
+    NC_VERBOSE ? println("Successfully opened ",fname," dimid=",id) : nothing
+    return ida[1]
 end
 
-function _nc_inq_dim(id::Integer,idim::Integer)
-  namea=Array(Uint8,NC_MAX_NAME+1);lengtha=Array(Int32,1)
-  NetCDF._nc_inq_dim_c(id,idim,namea,lengtha)
-  name=bytestring(convert(Ptr{Uint8}, namea))
-  dimlen=lengtha[1]
-  NC_VERBOSE ? println("Successfully read from file") : nothing
-  NC_VERBOSE ? println("name=",name," dimlen=",dimlen) : nothing
-  return (name,dimlen)
+function nc_inq_dim(id::Integer,idim::Integer)
+    # File to inquire dimension idimm returns dimension name and length
+    nc_inq_dim(id,idim,namea,lengtha)
+    name=bytestring(convert(Ptr{Uint8}, namea))
+    dimlen=lengtha[1]
+    NC_VERBOSE ? println("name=",name," dimlen=",dimlen) : nothing
+    return (name,dimlen)
 end
 
-function _nc_inq_dimid(id::Integer,name::String)
-  dimida=Array(Int32,1)
-  try
-    NetCDF._nc_inq_dimid_c(id,name,dimida)
-  catch
-    dimida[1]=-1
-  end
-  NC_VERBOSE ? println("Successfully read from file") : nothing
-  return dimida[1]
+function nc_inq_dimid(id::Integer,name::String)
+    # Function to read dimension id for a given function name, returns -1 if no such dimension exists 
+    # TODO: this should be changed  
+    ret = NetCDF.nc_inq_dimid(id,name,dimida)
+    if ret<0
+        dimida[1]=-1
+    end
+    NC_VERBOSE ? println("Successfully read from file") : nothing
+    return dimida[1]
 end
 
 
-function _ncf_inq(id::Integer)
-  # Inquire number of codes in netCDF file
-  ndima=Array(Int32,1);nvara=Array(Int32,1);ngatta=Array(Int32,1);nunlimdimida=Array(Int32,1)
-  _nc_inq_c(id,ndima,nvara,ngatta,nunlimdimida)
-  ndim=ndima[1]
-  nvar=nvara[1]
-  ngatt=ngatta[1]
-  nunlimdimid=nunlimdimida[1]
+function nc_inq(id::Integer)
+  # Inquire NetCDF file, return number of dims, number of variables, number of global attributes and number of unlimited dimensions
+  nc_inq(id,ndima,nvara,ngatta,nunlimdimida)
   NetCDF.NC_VERBOSE ? println("Successfully read from file") : nothing
   NetCDF.NC_VERBOSE ? println("ndim=",ndim," nvar=",nvar," ngatt=",ngatt," numlimdimid=",nunlimdimid) : nothing
-  return (ndim,nvar,ngatt,nunlimdimid)
+  return (ndima[1],nvara[1],ngatta[1],nunlimdimida[1])
 end
 
-function _nc_inq_attname(ncid::Integer,varid::Integer,attnum::Integer)
+
+function nc_inq_attname(ncid::Integer,varid::Integer,attnum::Integer)
   # Get attribute name from attribute number
-  namea=Array(Uint8,NC_MAX_NAME+1)
-  _nc_inq_attname_c(ncid,varid,attnum,namea)
+  nc_inq_attname(ncid,varid,attnum,namea)
   name=bytestring(convert(Ptr{Uint8}, namea))
-  NC_VERBOSE ? println("Successfully read attribute name") : nothing
-  NC_VERBOSE ? println("name=",name) : nothing
+  NC_VERBOSE ? println("Successfully read attribute name $name") : nothing
   return name
 end
 
-
-function _nc_inq_att(ncid::Integer,varid::Integer,attnum::Integer)
-  # First get attribute name
-  name=_nc_inq_attname(ncid,varid,attnum)
-  NC_VERBOSE ? println(name) : nothing
-  #Then find out about attribute
-  typea=Array(Int32,1);nvals=Array(Int32,1)
-  _nc_inq_att_c(ncid,varid,name,typea,nvals)
-  attype=typea[1]
-  NC_VERBOSE ? println("Successfully read attribute type and number of vals") : nothing
-  NC_VERBOSE ? println("atttype=",attype," nvals=",nvals[1]) : nothing
-  text=_nc_get_att(ncid,varid,name,attype,nvals[1])
-  return (name,text)
+function nc_inq_att(ncid::Integer,varid::Integer,attnum::Integer)
+    #Reads attribute name, type and number of values
+    name=nc_inq_attname(ncid,varid,attnum)
+    nc_inq_att(ncid,varid,name,typea,nvals)
+    attype=typea[1]
+    NC_VERBOSE ? println("Successfully read attribute type and number of vals") : nothing
+    NC_VERBOSE ? println("atttype=",typea[1]," nvals=",nvals[1]) : nothing
+    text=_nc_get_att(ncid,varid,name,typea[1],nvals[1])
+    return (name,text)
 end
 
-function _nc_put_att(ncid::Integer,varid::Integer,name,val)
-  if name=="_FillValue" return(0) end
-  if (start(val)>0)
-    if (typeof(val[1])<:Char)
-      attlen=length(val)+1
-      attype=NC_CHAR
-    else
-      attlen=length(val)
-      attype=jltype2nctype[typeof(val[1])]
-    end
-  else
-    if (typeof(val)<:Char)
-      attlen=2
-      attype=NC_CHAR
-    else
-      attlen=1
-      attype=jltype2nctype[typeof(val)]
-      val=[val]
-    end
-  end
-  NC_VERBOSE ? println(ncid, varid, name, attype, attlen, val) : nothing
-  if (attype==NC_CHAR)
-    _nc_put_att_text_c(ncid,varid,name,attlen,val)
-  elseif (attype==NC_SHORT)
-    _nc_put_att_short_c(ncid,varid,name,attype,attlen,val)
-  elseif (attype==NC_INT)
-    _nc_put_att_int_c(ncid,varid,name,attype,attlen,int32(val))
-  elseif (attype==NC_FLOAT)
-    _nc_put_att_float_c(ncid,varid,name,attype,attlen,val)
-  elseif (attype==NC_DOUBLE)
-    _nc_put_att_float_c(ncid,varid,name,NC_FLOAT,attlen,float32(val))
-  elseif (attype==NC_BYTE)
-    _nc_put_att_byte_c(ncid,varid,name,attype,attlen,val)
-  else
-    valsa="Could not read attribute, currently unsupported datatype by the netcdf package"
-  end
-end
+#Define methods for different input array types
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Int8})    = nc_put_att_byte(ncid,varid,name,NC_BYTE,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Int16})   = nc_put_att_short(ncid,varid,name,NC_SHORT,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Int32})   = nc_put_att_int(ncid,varid,name,NC_INT,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Int64})   = nc_put_att_long(ncid,varid,name,NC_LONG,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Float32}) = nc_put_att_float(ncid,varid,name,NC_FLOAT,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Float64}) = nc_put_att_double(ncid,varid,name,NC_DOUBLE,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::String)         = nc_put_att_text(ncid,varid,name,NC_CHAR,length(val)+1,val)
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Any})     = error("Writing attribute array of type Any is not possible") 
+
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::Int8) = begin int8a[1] = val; nc_put_att(ncid,varid,name,int8a) end
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::Int16) = begin int16a[1] = val; nc_put_att(ncid,varid,name,int16a) end
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::Int32) = begin int32a[1] = val; nc_put_att(ncid,varid,name,int32a) end
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::Int64) = begin int64a[1] = val; nc_put_att(ncid,varid,name,int64a) end
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::Float32) = begin float32a[1] = val; nc_put_att(ncid,varid,name,float32a) end
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::Float64) = begin float64a[1] = val; nc_put_att(ncid,varid,name,float64a) end
+nc_put_att(ncid::Integer,varid::Integer,name::String,val) = error("Writing attribute of type $(typeof(val)) is currently not possible.") 
+
+
+
 
 function _nc_get_att(ncid::Integer,varid::Integer,name,attype::Integer,attlen::Integer)
   if (attype==NC_CHAR)
