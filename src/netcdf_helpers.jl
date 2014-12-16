@@ -1,9 +1,3 @@
-jltype2nctype=@Compat.Dict(Int8=>NC_BYTE,
-	               Int16=>NC_SHORT,
-                   Int32=>NC_INT,
-                   Int64=>NC_LONG,
-                   Float32=>NC_FLOAT,
-                   Float64=>NC_DOUBLE)
 
 
 
@@ -52,6 +46,7 @@ const nvara        = zeros(Int32,1)
 const ngatta       = zeros(Int32,1)
 const nunlimdimida = zeros(Int32,1)
 const typea        = zeros(Int32,1)
+const natta        = zeros(Int32,1)
 const nvals        = zeros(Int32,1)
 const int8a        = zeros(Int8,1)
 const int16a       = zeros(Int16,1)
@@ -72,9 +67,8 @@ function nc_inq_dim(id::Integer,idim::Integer)
     # File to inquire dimension idimm returns dimension name and length
     nc_inq_dim(id,idim,namea,lengtha)
     name=bytestring(convert(Ptr{Uint8}, namea))
-    dimlen=lengtha[1]
     NC_VERBOSE ? println("name=",name," dimlen=",dimlen) : nothing
-    return (name,dimlen)
+    return (name,lengtha[1])
 end
 
 function nc_inq_dimid(id::Integer,name::String)
@@ -106,25 +100,22 @@ function nc_inq_attname(ncid::Integer,varid::Integer,attnum::Integer)
   return name
 end
 
-function nc_inq_att(ncid::Integer,varid::Integer,attnum::Integer)
+function nc_get_att(ncid::Integer,varid::Integer,attnum::Integer)
     #Reads attribute name, type and number of values
     name=nc_inq_attname(ncid,varid,attnum)
     nc_inq_att(ncid,varid,name,typea,nvals)
-    attype=typea[1]
-    NC_VERBOSE ? println("Successfully read attribute type and number of vals") : nothing
-    NC_VERBOSE ? println("atttype=",typea[1]," nvals=",nvals[1]) : nothing
-    text=_nc_get_att(ncid,varid,name,typea[1],nvals[1])
+    text=nc_get_att(ncid,varid,name,typea[1],nvals[1])
     return (name,text)
 end
 
-#Define methods for different input array types
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Int8})    = nc_put_att_byte(ncid,varid,name,NC_BYTE,length(val),val)
+#Define methods for writing attributes
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Int8})    = nc_put_att_schar(ncid,varid,name,NC_BYTE,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Int16})   = nc_put_att_short(ncid,varid,name,NC_SHORT,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Int32})   = nc_put_att_int(ncid,varid,name,NC_INT,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Int64})   = nc_put_att_long(ncid,varid,name,NC_LONG,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Float32}) = nc_put_att_float(ncid,varid,name,NC_FLOAT,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Float64}) = nc_put_att_double(ncid,varid,name,NC_DOUBLE,length(val),val)
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::String)         = nc_put_att_text(ncid,varid,name,NC_CHAR,length(val)+1,val)
+nc_put_att(ncid::Integer,varid::Integer,name::String,val::String)         = nc_put_att_text(ncid,varid,name,length(val)+1,val)
 nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Any})     = error("Writing attribute array of type Any is not possible") 
 
 nc_put_att(ncid::Integer,varid::Integer,name::String,val::Int8) = begin int8a[1] = val; nc_put_att(ncid,varid,name,int8a) end
@@ -137,126 +128,64 @@ nc_put_att(ncid::Integer,varid::Integer,name::String,val) = error("Writing attri
 
 
 
-
-function _nc_get_att(ncid::Integer,varid::Integer,name,attype::Integer,attlen::Integer)
-  if (attype==NC_CHAR)
-    valsa=Array(Uint8,attlen)
-    _nc_get_att_text_c(ncid,varid,name,valsa)
-    valsa=bytestring(valsa)
-  elseif (attype==NC_SHORT)
-    valsa=Array(Int16,attlen)
-    _nc_get_att_short_c(ncid,varid,name,valsa)
-  elseif (attype==NC_INT)
-    valsa=Array(Int32,attlen)
-    _nc_get_att_int_c(ncid,varid,name,valsa)
-  elseif (attype==NC_LONG)
-    valsa=Array(Int64,attlen)
-    _nc_get_att_long_c(ncid,varid,name,valsa)
-  elseif (attype==NC_FLOAT)
-    valsa=Array(Float32,attlen)
-    _nc_get_att_float_c(ncid,varid,name,valsa)
-  elseif (attype==NC_DOUBLE)
-    valsa=Array(Float64,attlen)
-    _nc_get_att_double_c(ncid,varid,name,valsa)
-  elseif (attype==NC_BYTE)
-    valsa=Array(Int8,attlen)
-    _nc_get_att_byte_c(ncid,varid,name,valsa)
-  else
-    valsa="Could not read attribute, currently unsupported datatype by the netcdf package"
-  end
-  return valsa
+function nc_get_att(ncid::Integer,varid::Integer,name::String,attype::Integer,attlen::Integer)
+    valsa=Array(nctype2jltype[attype],attlen)
+    nc_get_att!(ncid,varid,name,valsa)
+    valsa
 end
 
-function _ncv_inq(nc::NcFile,varid::Integer)
-  id=nc.ncid
-  ndim=length(nc.dim)
+nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Uint8}) = begin nc_get_att_text(ncid,varid,name,valsa); bytestring(valsa) end
+nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Int8})  = begin nc_get_att_schar(ncid,varid,name,valsa); valsa end
+nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Int16})  = begin nc_get_att_short(ncid,varid,name,valsa); valsa end
+nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Int32})  = begin nc_get_att_int(ncid,varid,name,valsa); valsa end
+nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Int64})  = begin nc_get_att_long(ncid,varid,name,valsa); valsa end
+nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Float32})  = begin nc_get_att_float(ncid,varid,name,valsa); valsa end
+nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Float64})  = begin nc_get_att_double(ncid,varid,name,valsa); valsa end
+
+
+function nc_inq_var(nc::NcFile,varid::Integer)
   # Inquire variables in the file
-  namea=Array(Uint8,NC_MAX_NAME+1);xtypea=Array(Int32,1);ndimsa=Array(Int32,1);dimida=Array(Int32,ndim);natta=Array(Int32,1)
-  _nc_inq_var_c(id,varid,namea,xtypea,ndimsa,dimida,natta)
-  NC_VERBOSE ? println("dimida=",dimida," ndimsa=",ndimsa) : nothing
-  nctype=xtypea[1]
-  vndim=ndimsa[1]
-  dimids=vndim>0 ? dimida[1:vndim] : []
-  natts=natta[1]
-  NC_VERBOSE ? println("Successfully read from file") : nothing
+  nc_inq_var(nc.ncid,varid,namea,typea,ndima,dimida,natta)
+  NC_VERBOSE ? println("dimida=",dimida," ndimsa=",ndima) : nothing
+  dimids=ndima[1]>0 ? dimida[1:ndima[1]] : Int32[]
   name=bytestring(convert(Ptr{Uint8}, namea))
-  isdimvar=false
-  for n in nc.dim
-    if (n[2].name==name)
-      isdimvar=true
-      break
-    end
-  end
-  NC_VERBOSE ? println("name=",name," nctype=",nctype," dimids=",dimids," natts=",natts," vndim=",vndim) : nothing
-  return (name,nctype,dimids,natts,vndim,isdimvar)
+  return (name,typea[1],dimids,natta[1],ndima[1],isdimvar(nc,name))
 end
 
-function _getvarindexbyname(nc::NcFile,varname::String)
-  va=nothing
-  for v in nc.vars
-    va = v[2].name==varname ? v[2] : va
-  end
-  return va
-end
+#Test if a variable name is also a dimension name
+isdimvar(v::NcVar) = v.name==v.dim[1].name ? true : false
+isdimvar(nc::NcFile)
 
-function getvarbyid(nc::NcFile,varid::Integer)
-  va=nothing
-  for v in nc.vars
-    va = v[2].varid==varid ? v[2] : va
-  end
-  return va
-end
-
-function getdimidbyname(nc::NcFile,dimname::String)
-  da=nothing
-  for d in nc.dim
-    da = d.name==dimname ? d : da
-  end
-  return da.dimid
-end
 
 function getdimnamebyid(nc::NcFile,dimid::Integer)
-  da=nothing
-  for d in nc.dim
-    da = d[2].dimid==dimid ? d[2] : da
-  end
-  return da.name
+    da=""
+    for d in nc.dim
+        da = d[2].dimid==dimid ? d[2].name : da
+    end
+    return da
 end
 
-function _readdimdvar(ncid::Integer,dim::NcDim)
-  start=0
-  p=dim.dimlen
-  #Determine size of Array
-  retvalsa=Array(Float64,p)
-  _nc_get_vara_double_c(ncid,varid,start,count,retvalsa)
-  NC_VERBOSE ? println("Successfully read dimension from file ",dim.name) : nothing
-  dim.vals=retvalsa
-  end
 
-function _nc_getatts_all(ncid::Integer,varid::Integer,natts::Integer)
+function getatts_all(ncid::Integer,varid::Integer,natts::Integer)
   atts=Dict{Any,Any}()
   for attnum=0:natts-1
-    gatt=_nc_inq_att(ncid,varid,attnum)
-    v=gatt[2]
-    if ((length(v)==1) & !(typeof(v)<:String))
-      v=v[1]
+    attname,attval=nc_get_att(ncid,varid,attnum)
+    if ((length(attval)==1) & !(typeof(attval)<:String))
+      attval=attval[1]
     end
-    atts[gatt[1]]=v
+    atts[attname]=attval
   end
   NC_VERBOSE ? println(atts) : nothing
   return atts
 end
 
-function _readdimvars(nc::NcFile)
-  for d in nc.dim
+function readdimvars(nc::NcFile)
     for v in nc.vars
-      if (d[2].name==v[2].name)
-        NC_VERBOSE ?println(d[2].name," ",v[2].name) : nothing
-        d[2].vals=readvar(nc,v[2].name)
-        d[2].atts=v[2].atts
-      end
+        if isdimvar(v[2])
+            v[2].dim[1].vals=readvar(nc,v[1])
+            d[2].atts=v[2].atts
+        end
     end
-  end
 end
 
 function parsedimargs(dim)

@@ -1,8 +1,9 @@
 module NetCDF
 using Compat
-include("netcdf_c_wrappers.jl")
+include("netcdf_c.jl")
 import Base.show
 export show,NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE, ncgetatt,NC_NOWRITE,NC_WRITE,NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4
+NC_VERBOSE=false
 #Some constants
 
 
@@ -10,7 +11,16 @@ jltype2nctype=@Compat.Dict(Int8=>NC_BYTE,
                    Int16=>NC_SHORT,
                    Int32=>NC_INT,
                    Float32=>NC_FLOAT,
-                   Float64=>NC_DOUBLE)
+                   Float64=>NC_DOUBLE,
+                   Uint8=>NC_CHAR)
+
+nctype2jltype=@Compat.Dict(NC_BYTE=>Int8,
+                    NC_SHORT=>Int16, 
+                    NC_INT=>Int32,
+                    NC_LONG=>Int64,
+                    NC_FLOAT=>Float32,
+                    NC_DOUBLE=>Float64,
+                    NC_CHAR=>Uint8)
 
 nctype2string=@Compat.Dict(NC_BYTE=>"BYTE",
                    NC_SHORT=>"SHORT",
@@ -20,11 +30,11 @@ nctype2string=@Compat.Dict(NC_BYTE=>"BYTE",
 
 
 type NcDim
-  ncid::Integer
-  dimid::Integer
-  varid::Integer
-  name::String
-  dimlen::Integer
+  ncid::Int32
+  dimid::Int32
+  varid::Int32
+  name::ASCIIString
+  dimlen::Uint
   vals::AbstractArray
   atts::Dict{Any,Any}
 end
@@ -42,16 +52,16 @@ NcDim(name::String,values::AbstractArray,atts::Dict{Any,Any})=
 
 
 type NcVar
-  ncid::Integer
-  varid::Integer
-  ndim::Integer
-  natts::Integer
-  nctype::Integer
-  name::String
-  dimids::Array{}
+  ncid::Int32
+  varid::Int32
+  ndim::Int32
+  natts::Int32
+  nctype::Int32
+  name::ASCIIString
+  dimids::Array{Int32}
   dim::Array{NcDim}
-  atts::Dict{Any,Any}
-  compress::Integer
+  atts::Dict
+  compress::Int32
 end
 
 function NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1});atts::Dict{Any,Any}=Dict{Any,Any}(),t::Union(DataType,Integer)=Float64,compress::Integer=-1)
@@ -61,23 +71,22 @@ end
 NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1}),atts::Dict{Any,Any},t::Union(DataType,Integer)=Float64)=NcVar(-1,-1,length(dimin),length(atts), typeof(t)==DataType ? jltype2nctype[t] : t,name,Array(Int,length(dimin)),dimin,atts,-1)
 
 type NcFile
-  ncid::Integer
-  nvar::Integer
-  ndim::Integer
-  ngatts::Integer
-  vars::Dict{String,NcVar}
-  dim::Dict{String,NcDim}
-  gatts::Dict{Any,Any}
-  nunlimdimid::Integer
-  name::String
+  ncid::Int32
+  nvar::Int32
+  ndim::Int32
+  ngatts::Int32
+  vars::Dict{ASCIIString,NcVar}
+  dim::Dict{ASCIIString,NcDim}
+  gatts::Dict
+  nunlimdimid::Int32
+  name::ASCIIString
   omode::Uint16
   in_def_mode::Bool
 end
-NcFile(ncid::Integer,nvar::Integer,ndim::Integer,ngatts::Integer,vars::Dict{String,NcVar},dim::Dict{String,NcDim},gatts::Dict{Any,Any},nunlimdimid::Integer,name::String,omode::Uint16)=NcFile(ncid,nvar,ndim,ngatts,vars,dim,gatts,nunlimdimid,name,omode,false)
 
 include("netcdf_helpers.jl")
 
-global currentNcFiles=Dict{String,NcFile}()
+const currentNcFiles=Dict{String,NcFile}()
 
 # Read block of data from file
 function readvar!{T<:Integer}(nc::NcFile, varname::String, retvalsa::Array;start::Array{T,1}=ones(Int,ndims(vals)),count::Array{T,1}=Array(Int,size(vals)))
@@ -147,7 +156,7 @@ function putatt(ncid::Integer,varid::Integer,atts::Dict)
   for a in atts
     name=a[1]
     val=a[2]
-    _nc_put_att(ncid,varid,name,val)
+    nc_put_att(ncid,varid,name,val)
   end
 end
 
@@ -156,10 +165,10 @@ function putatt(nc::NcFile,varname::String,atts::Dict)
   chdef=false
   if (!nc.in_def_mode)
     chdef=true
-    _nc_redef_c(nc.ncid)
+    nc_redef(nc.ncid)
   end
   putatt(nc.ncid,varid,atts)
-  chdef ? _nc_enddef_c(nc.ncid) : nothing
+  chdef ? nc_enddef(nc.ncid) : nothing
 end
 
 function ncputatt(nc::String,varname::String,atts::Dict)
@@ -189,17 +198,17 @@ function putvar{T<:Integer}(nc::NcFile,varname::String,vals::Array;start::Array{
   x=vals
   varid=nc.vars[varname].varid
   if nc.vars[varname].nctype==NC_DOUBLE
-    _nc_put_vara_double_c(ncid,varid,start,count,float64(x))
+    nc_put_vara_double(ncid,varid,start,count,float64(x))
   elseif nc.vars[varname].nctype==NC_FLOAT
-    _nc_put_vara_float_c(ncid,varid,start,count,float32(x))
+    nc_put_vara_float(ncid,varid,start,count,float32(x))
   elseif nc.vars[varname].nctype==NC_INT
-    _nc_put_vara_int_c(ncid,varid,start,count,int32(x))
+    nc_put_vara_int(ncid,varid,start,count,int32(x))
   elseif nc.vars[varname].nctype==NC_SHORT
-    _nc_put_vara_short_c(ncid,varid,start,count,int16(x))
+    nc_put_vara_short(ncid,varid,start,count,int16(x))
   elseif nc.vars[varname].nctype==NC_CHAR
-    _nc_put_vara_text_c(ncid,varid,start,count,ascii(x))
+    nc_put_vara_text(ncid,varid,start,count,ascii(x))
   elseif nc.vars[varname].nctype==NC_BYTE
-    _nc_put_vara_schar_c(ncid,varid,start,count,int8(x))
+    nc_put_vara_schar(ncid,varid,start,count,int8(x))
   end
   NC_VERBOSE ? println("Successfully wrote to file ",ncid) : nothing
 end
@@ -234,9 +243,9 @@ end
 
 function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,Any}=Dict{Any,Any}(),mode::Uint16=NC_NETCDF4)
   ida=Array(Int32,1)
-  vars=Dict{String,NcVar}();
+  vars=Dict{ASCIIString,NcVar}();
   #Create the file
-  _nc_create_c(name,mode,ida);
+  nc_create(name,mode,ida);
   id=ida[1];
   # Unify types
   if (typeof(varlist)==NcVar)
@@ -252,18 +261,18 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,
   nunlim=0;
   ndim=int32(length(dims));
   #Create Dimensions in the file
-  dim=Dict{String,NcDim}();
+  dim=Dict{ASCIIString,NcDim}();
   for d in dims
     dima=Array(Int32,1);
     NC_VERBOSE? println("Dimension length ", d.dimlen) : nothing
-    _nc_def_dim_c(id,d.name,d.dimlen,dima);
+    nc_def_dim(id,d.name,d.dimlen,dima);
     d.dimid=dima[1];
     dim[d.name]=d;
     #Create dimension variable
     if length(d.vals)>0
       varida=Array(Int32,1)
       dumids=[copy(d.dimid)]
-      _nc_def_var_c(id,d.name,NC_DOUBLE,1,dumids,varida)
+      nc_def_var(id,d.name,NC_DOUBLE,1,dumids,varida)
       putatt(id,varida[1],d.atts)
       d.varid=varida[1]
       dd=Array(NcDim,1)
@@ -281,7 +290,7 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,
     vara=Array(Int32,1);
     dumids=int32(v.dimids)
     NC_VERBOSE ? println(dumids) : nothing
-    _nc_def_var_c(id,v.name,int32(v.nctype),v.ndim,int32(dumids[v.ndim:-1:1]),vara);
+    nc_def_var(id,v.name,int32(v.nctype),v.ndim,int32(dumids[v.ndim:-1:1]),vara);
     v.varid=vara[1];
     vars[v.name]=v;
     if v.compress > -1
@@ -290,7 +299,7 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,
         v.compress=-1
       else
         v.compress=max(v.compress,9)
-        _nc_def_var_deflate_c(int32(id),int32(v.varid),int32(1),int32(1),int32(v.compress));
+        nc_def_var_deflate(int32(id),int32(v.varid),int32(1),int32(1),int32(v.compress));
       end
     end
     putatt(id,v.varid,v.atts)
@@ -300,9 +309,9 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,
     putatt(id,NC_GLOBAL,gatts)
   end
   # Leave define mode
-  _nc_enddef_c(id)
+  nc_enddef(id)
   #Create the NcFile Object
-  nc=NcFile(id,length(vars),ndim,0,vars,dim,Dict{Any,Any}(),0,name,NC_WRITE)
+  nc=NcFile(id,int32(length(vars)),ndim,zero(Int32),vars,dim,Dict{Any,Any}(),zero(Int32),name,NC_WRITE,false)
   currentNcFiles[abspath(nc.name)]=nc
   for d in nc.dim
     #Write dimension variable
@@ -330,7 +339,7 @@ end
 
 function close(nco::NcFile)
   #Close file
-  _nc_close_c(nco.ncid)
+  nc_close(nco.ncid)
   delete!(currentNcFiles,abspath(nco.name))
   NC_VERBOSE? println("Successfully closed file ",nco.ncid) : nothing
   return nco.ncid
@@ -339,23 +348,23 @@ end
 
 function open(fil::String; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
   # Open netcdf file
-  ncid=_nc_op(fil,mode)
+  ncid=nc_open(fil,mode)
   NC_VERBOSE ? println(ncid) : nothing
   #Get initial information
-  (ndim,nvar,ngatt,nunlimdimid)=_ncf_inq(ncid)
+  ndim,nvar,ngatt,nunlimdimid = nc_inq(ncid)
   NC_VERBOSE ? println(ndim,nvar,ngatt,nunlimdimid) : nothing
   #Create ncdf object
-  ncf=NcFile(ncid,nvar-ndim,ndim,ngatt,Dict{String,NcVar}(),Dict{String,NcDim}(),Dict{Any,Any}(),nunlimdimid,abspath(fil),mode)
+  ncf=NcFile(ncid,int32(nvar-ndim),ndim,ngatt,Dict{ASCIIString,NcVar}(),Dict{ASCIIString,NcDim}(),Dict{Any,Any}(),nunlimdimid,abspath(fil),mode,false)
   #Read global attributes
-  ncf.gatts=_nc_getatts_all(ncid,NC_GLOBAL,ngatt)
+  ncf.gatts=getatts_all(ncid,NC_GLOBAL,ngatt)
   #Read dimensions
   for dimid = 0:ndim-1
-    (name,dimlen)=_nc_inq_dim(ncid,dimid)
+    (name,dimlen)=nc_inq_dim(ncid,dimid)
     ncf.dim[name]=NcDim(ncid,dimid,-1,name,dimlen,[1:dimlen],Dict{Any,Any}())
   end
   #Read variable information
   for varid = 0:nvar-1
-    (name,nctype,dimids,natts,vndim,isdimvar)=_ncv_inq(ncf,varid)
+    (name,nctype,dimids,natts,vndim,isdimvar)=nc_inq_var(ncf,varid)
     if (isdimvar)
       ncf.dim[name].varid=varid
     end
