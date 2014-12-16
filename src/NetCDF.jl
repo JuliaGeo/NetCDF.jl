@@ -145,11 +145,11 @@ function readvar{T<:Integer}(nc::NcFile, varname::String;start::Array{T,1}=Array
 end
 
 
-nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Float64})=_nc_get_vara_double_c(ncid,varid,start,count,retvalsa)
-nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Float32})=_nc_get_vara_float_c(ncid,varid,start,count,retvalsa)
-nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Int32})=_nc_get_vara_int_c(ncid,varid,start,count,retvalsa)
-nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Uint8})=_nc_get_vara_text_c(ncid,varid,start,count,retvalsa)
-nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Int8})=_nc_get_vara_schar_c(ncid,varid,start,count,retvalsa)
+nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Float64})=nc_get_vara_double(ncid,varid,start,count,retvalsa)
+nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Float32})=nc_get_vara_float(ncid,varid,start,count,retvalsa)
+nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Int32})=nc_get_vara_int(ncid,varid,start,count,retvalsa)
+nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Uint8})=nc_get_vara_text(ncid,varid,start,count,retvalsa)
+nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Int8})=nc_get_vara_schar(ncid,varid,start,count,retvalsa)
 
 
 function putatt(ncid::Integer,varid::Integer,atts::Dict)
@@ -368,7 +368,7 @@ function open(fil::String; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
     if (isdimvar)
       ncf.dim[name].varid=varid
     end
-    atts=_nc_getatts_all(ncid,varid,natts)
+    atts=getatts_all(ncid,varid,natts)
     vdim=Array(NcDim,length(dimids))
     i=1;
     for did in dimids
@@ -443,15 +443,15 @@ function nccreate(fil::String,varname::String,dims...;atts::Dict=Dict{Any,Any}()
     # Remember if dimension was created
     dcreate=Array(Bool,length(dim))
     for d in dim
-      did=_nc_inq_dimid(nc.ncid,d.name)
+      did=nc_inq_dimid(nc.ncid,d.name)
       if (did==-1)
         dima=Array(Int32,1);
         #_nc_redef_c(nc.ncid)
         if (!nc.in_def_mode)
-          _nc_redef_c(nc.ncid)
+          nc_redef(nc.ncid)
           nc.in_def_mode=true
         end
-        _nc_def_dim_c(nc.ncid,d.name,d.dimlen,dima);
+        nc_def_dim(nc.ncid,d.name,d.dimlen,dima);
         d.dimid=dima[1];
         v.dimids[i]=d.dimid;
         dcreate[i] = true
@@ -466,15 +466,15 @@ function nccreate(fil::String,varname::String,dims...;atts::Dict=Dict{Any,Any}()
     vara=Array(Int32,1);
     dumids=int32(v.dimids)
     if (!nc.in_def_mode)
-          _nc_redef_c(nc.ncid)
+          nc_redef(nc.ncid)
           nc.in_def_mode=true
     end
-    _nc_def_var_c(nc.ncid,v.name,v.nctype,v.ndim,int32(dumids[v.ndim:-1:1]),vara);
+    nc_def_var(nc.ncid,v.name,v.nctype,v.ndim,int32(dumids[v.ndim:-1:1]),vara);
     v.varid=vara[1];
     nc.vars[v.name]=v;
     putatt(nc.ncid,v.varid,atts)
     if (nc.in_def_mode)
-          _nc_enddef_c(nc.ncid)
+          nc_enddef(nc.ncid)
           nc.in_def_mode=false
     end
     i=1

@@ -39,15 +39,15 @@ const error_description=
 
 const ida          = zeros(Int32,1)
 const namea        = zeros(Uint8,NC_MAX_NAME+1)
-const lengtha      = zeros(Int32,1)
-const dimida       = zeros(Int32,1)
+const lengtha      = zeros(Csize_t,1)
+const dimida       = zeros(Int32,NC_MAX_VAR_DIMS)
 const ndima        = zeros(Int32,1)
 const nvara        = zeros(Int32,1)
 const ngatta       = zeros(Int32,1)
 const nunlimdimida = zeros(Int32,1)
 const typea        = zeros(Int32,1)
 const natta        = zeros(Int32,1)
-const nvals        = zeros(Int32,1)
+const nvals        = zeros(Csize_t,1)
 const int8a        = zeros(Int8,1)
 const int16a       = zeros(Int16,1)
 const int32a       = zeros(Int32,1)
@@ -58,7 +58,6 @@ const float64a     = zeros(Float64,1)
 function nc_open(fname::String,omode::Uint16)
     # Function to open file fname, returns a NetCDF file ID
     ret=nc_open(fname,omode,ida)
-    ret!=0 && error("NetCDF error when opening file $fname: $(error_description[ret])")
     NC_VERBOSE ? println("Successfully opened ",fname," dimid=",id) : nothing
     return ida[1]
 end
@@ -154,7 +153,15 @@ end
 
 #Test if a variable name is also a dimension name
 isdimvar(v::NcVar) = v.name==v.dim[1].name ? true : false
-isdimvar(nc::NcFile)
+
+function isdimvar(nc::NcFile,name::ASCIIString)
+    for n in nc.dim
+        if (n[2].name==name)
+            return true
+        end
+    end
+    return false
+end
 
 
 function getdimnamebyid(nc::NcFile,dimid::Integer)

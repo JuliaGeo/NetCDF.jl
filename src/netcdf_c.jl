@@ -3,7 +3,12 @@
 macro c(ret_type, func, arg_types, lib)
     local args_in = Any[ symbol(string('a',x)) for x in 1:length(arg_types.args) ]
     quote
-        $(esc(func))($(args_in...)) = ccall( ($(string(func)), $(Expr(:quote, lib)) ), $ret_type, $arg_types, $(args_in...) )
+        function $(esc(func))($(args_in...))  
+            retval=ccall( ($(string(func)), $(Expr(:quote, lib)) ), $ret_type, $arg_types, $(args_in...) )
+            if retval!=NC_NOERR 
+                haskey(error_description,retval) ? error("NetCDF library error: $(error_description[retval])") : error("NetCDF library error: $(retval)")
+            end
+        end
     end
 end
 
@@ -278,8 +283,8 @@ typealias nclong Cint
 @c Cint nc_get_att_text (Cint, Cint, Ptr{Uint8}, Ptr{Uint8}) libnetcdf
 @c Cint nc_put_att_uchar (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Cuchar}) libnetcdf
 @c Cint nc_get_att_uchar (Cint, Cint, Ptr{Uint8}, Ptr{Cuchar}) libnetcdf
-@c Cint nc_put_att_schar (Cint, Cint, Ptr{Int8}, nc_type, Csize_t, Ptr{Uint8}) libnetcdf
-@c Cint nc_get_att_schar (Cint, Cint, Ptr{Int8}, Ptr{Uint8}) libnetcdf
+@c Cint nc_put_att_schar (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Int8}) libnetcdf
+@c Cint nc_get_att_schar (Cint, Cint, Ptr{Uint8}, Ptr{Int8}) libnetcdf
 @c Cint nc_put_att_short (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Int16}) libnetcdf
 @c Cint nc_get_att_short (Cint, Cint, Ptr{Uint8}, Ptr{Int16}) libnetcdf
 @c Cint nc_put_att_int (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Cint}) libnetcdf

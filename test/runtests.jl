@@ -90,7 +90,7 @@ for fn in ("nc1.nc","nc2.nc","nc3.nc")
   end
 end
 
-nccreate("nc1.nc","v1","Dim1",[1,2,3],@Compat.AnyDict("units"=>"deg C"),"Dim2",[1:10],"Dim3",20,@Compat.AnyDict("max"=>10),
+nccreate("nc1.nc","v1","Dim1",[1,2],@Compat.AnyDict("units"=>"deg C"),"Dim2",[1:10],"Dim3",20,@Compat.AnyDict("max"=>10),
 mode=NC_NETCDF4)
 nccreate("nc2.nc","v2","Dim1",[1,2,3],@Compat.AnyDict("units"=>"deg C"),"Dim2",[1:10],"Dim3",20,@Compat.AnyDict("max"=>10),
 atts=@Compat.AnyDict("a1"=>"varatts"),gatts=@Compat.AnyDict("Some global attributes"=>2010),mode=NC_64BIT_OFFSET)
