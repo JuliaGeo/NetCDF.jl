@@ -54,11 +54,19 @@ const int32a       = zeros(Int32,1)
 const int64a       = zeros(Int64,1)
 const float32a     = zeros(Float32,1)
 const float64a     = zeros(Float64,1)
+const dima         = zeros(Int32,1)
+const varida       = zeros(Int32,1)
+const vara         = zeros(Int32,1);
+const dumids       = zeros(Int32,NC_MAX_DIMS)
 
 function nc_open(fname::String,omode::Uint16)
     # Function to open file fname, returns a NetCDF file ID
-    ret=nc_open(fname,omode,ida)
-    NC_VERBOSE ? println("Successfully opened ",fname," dimid=",id) : nothing
+    nc_open(fname,omode,ida)
+    return ida[1]
+end
+
+function nc_create(name,mode)
+    nc_create(name,mode,ida);
     return ida[1]
 end
 
@@ -71,12 +79,8 @@ function nc_inq_dim(id::Integer,idim::Integer)
 end
 
 function nc_inq_dimid(id::Integer,name::String)
-    # Function to read dimension id for a given function name, returns -1 if no such dimension exists 
-    # TODO: this should be changed  
-    ret = NetCDF.nc_inq_dimid(id,name,dimida)
-    if ret<0
-        dimida[1]=-1
-    end
+    # Function to read dimension id for a given function name
+    NetCDF.nc_inq_dimid(id,name,dimida)
     NC_VERBOSE ? println("Successfully read from file") : nothing
     return dimida[1]
 end
@@ -194,6 +198,27 @@ function readdimvars(nc::NcFile)
         end
     end
 end
+
+function preparestartcount(start,count,v::NcVar)
+    
+    length(start) == v.ndim || error("Length of start ($(length(start))) must equal the number of variable dimensions ($(nc.vars[varname].ndim))")
+    length(count) == v.ndim || error("Length of start ($(length(count))) must equal the number of variable dimensions ($(nc.vars[varname].ndim))")
+    
+    p=one(eltype(count))
+    
+    for i=1:length(start)
+        start[i] = start[i] - 1
+        count[i] = count[i] < 0 ? v.dim[i].dimlen - start[i] : count[i]
+        start[i] < 0 && error("Start index must not be smaller than 1")
+        start[i] + count[i] > v.dim[i].dimlen && error("Start + Count exceeds dimension length in dimension $(nc.vars[varname].dim[i].name)")
+        p=p*count[i]
+    end
+    countout=Uint[count[i] for i in length(count):-1:1]
+    startout=Uint[start[i] for i in length(start):-1:1]
+    
+    return startout,countout,p
+end
+    
 
 function parsedimargs(dim)
   idim=0

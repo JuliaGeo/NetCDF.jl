@@ -2,7 +2,7 @@ module NetCDF
 using Compat
 include("netcdf_c.jl")
 import Base.show
-export show,NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE, ncgetatt,NC_NOWRITE,NC_WRITE,NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4
+export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE, ncgetatt,NC_NOWRITE,NC_WRITE,NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4
 NC_VERBOSE=false
 #Some constants
 
@@ -39,6 +39,7 @@ type NcDim
   atts::Dict{Any,Any}
 end
 
+
 NcDim(name::String,dimlength::Integer;values::Union(AbstractArray,Number)=[],atts::Dict{Any,Any}=Dict{Any,Any}())=
   begin
     (length(values)>0 && length(values)!=dimlength) ? error("Dimension value vector must have the same length as dimlength!") : nothing
@@ -51,7 +52,7 @@ NcDim(name::String,values::AbstractArray,atts::Dict{Any,Any})=
   NcDim(name,length(values),values=values,atts=atts)
 
 
-type NcVar
+type NcVar{T,N} #<: AbstractArray{T,N}
   ncid::Int32
   varid::Int32
   ndim::Int32
@@ -63,12 +64,16 @@ type NcVar
   atts::Dict
   compress::Int32
 end
-
+#Some additional constructors
 function NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1});atts::Dict{Any,Any}=Dict{Any,Any}(),t::Union(DataType,Integer)=Float64,compress::Integer=-1)
   dim=[dimin]
-  return NcVar(-1,-1,length(dim),length(atts), typeof(t)==DataType ? jltype2nctype[t] : t,name,Array(Int,length(dim)),dim,atts,compress)
+  return NcVar{typeof(t)==DataType ? t : nctype2jltype[t],length(dim)}(-1,-1,length(dim),length(atts), typeof(t)==DataType ? jltype2nctype[t] : t,name,Array(Int,length(dim)),dim,atts,compress)
 end
-NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1}),atts::Dict{Any,Any},t::Union(DataType,Integer)=Float64)=NcVar(-1,-1,length(dimin),length(atts), typeof(t)==DataType ? jltype2nctype[t] : t,name,Array(Int,length(dimin)),dimin,atts,-1)
+NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1}),atts::Dict{Any,Any},t::Union(DataType,Integer)=Float64)=NcVar{typeof(t)==DataType ? t : nctype2jltype[t],length(dimin)}(-1,-1,length(dimin),length(atts), typeof(t)==DataType ? jltype2nctype[t] : t,name,Array(Int,length(dimin)),dimin,atts,-1)
+#Array methods
+Base.size(a::NcVar)=[d.dimlen for d in a.dim]
+
+
 
 type NcFile
   ncid::Int32
@@ -84,61 +89,55 @@ type NcFile
   in_def_mode::Bool
 end
 
+
 include("netcdf_helpers.jl")
 
 const currentNcFiles=Dict{String,NcFile}()
 
 # Read block of data from file
-function readvar!{T<:Integer}(nc::NcFile, varname::String, retvalsa::Array;start::Array{T,1}=ones(Int,ndims(vals)),count::Array{T,1}=Array(Int,size(vals)))
-  ncid=nc.ncid
-  haskey(nc.vars,varname) ? nothing : error("NetCDF file $(nc.name) does not have variable $varname")
-  if length(start) == 0 start=ones(Int,nc.vars[varname].ndim) end
-  if length(count) == 0 count=-ones(Int,nc.vars[varname].ndim) end
-  if length(start) != nc.vars[varname].ndim error("Length of start ($(length(start))) must equal the number of variable dimensions ($(nc.vars[varname].ndim))") end
-  if length(count) != nc.vars[varname].ndim error("Length of start ($(length(count))) must equal the number of variable dimensions ($(nc.vars[varname].ndim))") end
+function readvar!(nc::NcFile, varname::String, retvalsa::Array;start::Vector=ones(Uint,ndims(retvalsa)),count::Vector=size(retvalsa))
+    haskey(nc.vars,varname) || error("NetCDF file $(nc.name) does not have variable $varname")
+    readvar!(nc.vars[varname],retvalsa,start=start,count=count)
+end
 
-  for i = 1:length(count)
-    if count[i] <= 0 count[i] = nc.vars[varname].dim[i].dimlen end
-  end
+function readvar!(v::NcVar, retvalsa::Array;start::Vector=ones(Uint,ndims(retvalsa)),count::Vector=size(retvalsa))
 
-  p=prod(count) #Determine size of Array
+  length(start) == v.ndim || error("Length of start ($(length(start))) must equal the number of variable dimensions ($(nc.vars[varname].ndim))")
+  length(count) == v.ndim || error("Length of start ($(length(count))) must equal the number of variable dimensions ($(nc.vars[varname].ndim))")
+
+  start,count,p=preparestartcount(start,count,v)
 
   length(retvalsa) != p && error("Size of output array does not equal number of elements to be read!")
 
-  count=Uint[count[i] for i in length(count):-1:1]
-  start=Uint[start[i]-1 for i in length(start):-1:1]
-
-  varid=nc.vars[varname].varid
-
-  nc_get_vara_x!(ncid,varid,start,count,retvalsa)
+  nc_get_vara_x!(v.ncid,v.varid,start,count,retvalsa)
 
   retvalsa
 end
 readvar{T<:Integer}(nc::NcFile,varname::String,start::Array{T,1},count::Array{T,1})=readvar(nc,varname,start=start,count=count)
 
-function readvar{T<:Integer}(nc::NcFile, varname::String;start::Array{T,1}=Array(Int,0),count::Array{T,1}=Array(Int,0))
-
+function readvar(nc::NcFile, varname::String;start::Vector=Array(Int,0),count::Vector=Array(Int,0))
     haskey(nc.vars,varname) || error("NetCDF file $(nc.name) does not have variable $varname")
-    if length(count) == 0 count=-ones(Int,nc.vars[varname].ndim) end
+    v=nc.vars[varname]
+    start = length(start)==0 ? ones(Uint,v.ndim) : start
+    count = length(count)==0 ? zeros(Uint,v.ndim) : count
+    readvar(v,start=start,count=count)
+end
+
+function readvar{T,N}(v::NcVar{T,N};start::Vector=ones(Int,v.ndim),count::Vector=zeros(Int,v.ndim))
+
     for i = 1:length(count)
-        if count[i] <= 0 count[i] = nc.vars[varname].dim[i].dimlen end
+        if count[i] <= 0 count[i] = v.dim[i].dimlen end
     end
     p=prod(count) # Determine size of Array
 
-    retvalsa = nc.vars[varname].nctype==NC_DOUBLE ? Array(Float64,p) :
-               nc.vars[varname].nctype==NC_FLOAT ? Array(Float32,p) :
-               nc.vars[varname].nctype==NC_INT ? Array(Int32,p) :
-               nc.vars[varname].nctype==NC_SHORT ? Array(Int32,p) :
-               nc.vars[varname].nctype==NC_CHAR ? Array(Uint8,p) :
-               nc.vars[varname].nctype==NC_BYTE ? Array(Int8,p) :
-               nothing
+    retvalsa = Array(T,count...) 
 
     retvalsa == nothing && error("NetCDF type currently not supported, please file an issue on https://github.com/meggart/NetCDF.jl")
 
-    readvar!(nc, varname, retvalsa, start=start, count=count)
+    readvar!(v, retvalsa, start=start, count=count)
 
     if length(count)>1
-      return reshape(retvalsa,ntuple(length(count),x->count[x]))
+      return reshape(retvalsa,ntuple(length(count),x->int(count[x])))
     else
       return retvalsa
     end
@@ -172,7 +171,7 @@ function putatt(nc::NcFile,varname::String,atts::Dict)
 end
 
 function ncputatt(nc::String,varname::String,atts::Dict)
-  nc= haskey(currentNcFiles,abspath(nc)) ? currentNcFiles[abspath(nc)] : open(nc,mode=NC_WRITE)
+  nc = haskey(currentNcFiles,abspath(nc)) ? currentNcFiles[abspath(nc)] : open(nc,mode=NC_WRITE)
   if (nc.omode==NC_NOWRITE)
     fil=nc.name
     close(nc)
@@ -182,49 +181,37 @@ function ncputatt(nc::String,varname::String,atts::Dict)
   putatt(nc,varname,atts)
 end
 
-
-function putvar{T<:Integer}(nc::NcFile,varname::String,vals::Array;start::Array{T,1}=ones(Int,length(size(vals))),count::Array{T,1}=[size(vals)...])
-  ncid=nc.ncid
-  haskey(nc.vars,varname) ? nothing : error("No variable $varname in file $nc.name")
-  nc.vars[varname].ndim==length(start) ? nothing : error("Length of start vector does not equal number of NetCDF variable dimensions")
-  nc.vars[varname].ndim==length(count) ? nothing : error("Length of count vector does not equal number of NetCDF variable dimensions")
-  start=int(start).-1
-  for i=1:length(start)
-    count[i] = count[i] < 0 ? nc.vars[varname].dim[i].dimlen - start[i] : count[i]
-    start[i]+count[i] > nc.vars[varname].dim[i].dimlen ? error("In dimension $(nc.vars[varname].dim[i].name) start+count exceeds dimension bounds: $(start[i])+$(count[i]) > $(nc.vars[varname].dim[i].dimlen)") : nothing
-  end
-  count=uint(count[length(count):-1:1])
-  start=uint(start[length(start):-1:1])
-  x=vals
-  varid=nc.vars[varname].varid
-  if nc.vars[varname].nctype==NC_DOUBLE
-    nc_put_vara_double(ncid,varid,start,count,float64(x))
-  elseif nc.vars[varname].nctype==NC_FLOAT
-    nc_put_vara_float(ncid,varid,start,count,float32(x))
-  elseif nc.vars[varname].nctype==NC_INT
-    nc_put_vara_int(ncid,varid,start,count,int32(x))
-  elseif nc.vars[varname].nctype==NC_SHORT
-    nc_put_vara_short(ncid,varid,start,count,int16(x))
-  elseif nc.vars[varname].nctype==NC_CHAR
-    nc_put_vara_text(ncid,varid,start,count,ascii(x))
-  elseif nc.vars[varname].nctype==NC_BYTE
-    nc_put_vara_schar(ncid,varid,start,count,int8(x))
-  end
-  NC_VERBOSE ? println("Successfully wrote to file ",ncid) : nothing
+function putvar(nc::NcFile,varname::String,vals::Array;start=ones(Int,length(size(vals))),count=[size(vals)...])
+    haskey(nc.vars,varname) ? nothing : error("No variable $varname in file $nc.name")
+    putvar(nc.vars[varname],vals, start=start, count=count)
 end
+
+function putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
+
+  start,count,p=preparestartcount(start,count,v)
+  
+  nc_put_vara_x(v.ncid,v.varid,start,count,vals)
+end
+
+nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{Float64})=nc_put_vara_double(ncid,varid,start,count,vals)
+nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{Float32})=nc_put_vara_float(ncid,varid,start,count,vals)
+nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{Int8})=nc_put_vara_schar(ncid,varid,start,count,vals)
+nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{Int16})=nc_put_vara_short(ncid,varid,start,count,vals)
+nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{Int32})=nc_put_vara_int(ncid,varid,start,count,vals)
+nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{Int64})=nc_put_vara_long(ncid,varid,start,count,vals)
+nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::ASCIIString)=nc_put_vara_text(ncid,varid,start,count,vals)
+
 
 
 # Function to synchronize all files with disk
 function ncsync()
   for ncf in currentNcFiles
-    id=ncf[2].ncid
-    _nc_sync_c(int32(id))
+    _nc_sync_c(ncf[2].ncid)
   end
 end
 
 function sync(nc::NcFile)
-  id=nc.ncid
-  _nc_sync_c(int32(id))
+  _nc_sync_c(nc.ncid)
 end
 
 #Function to close netcdf files
@@ -235,113 +222,100 @@ function ncclose(fil::String)
     println("File $fil not currently opened.")
   end
 end
+
 function ncclose()
   for f in keys(currentNcFiles)
     ncclose(f)
   end
 end
 
-function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict{Any,Any}=Dict{Any,Any}(),mode::Uint16=NC_NETCDF4)
-  ida=Array(Int32,1)
-  vars=Dict{ASCIIString,NcVar}();
+function setcompression(v::NcVar,mode)
+    if v.compress > -1
+        if (NC_NETCDF4 & mode)== 0
+            warn("Compression only possible for NetCDF4 file format. Compression will be ingored.")
+            v.compress=-1
+        else
+            v.compress=max(v.compress,9)
+            nc_def_var_deflate(int32(v.ncid),int32(v.varid),int32(1),int32(1),int32(v.compress));
+        end
+    end
+end
+
+
+function create(name::String,varlist::Array{NcVar};gatts::Dict{Any,Any}=Dict{Any,Any}(),mode::Uint16=NC_NETCDF4)
+  
   #Create the file
-  nc_create(name,mode,ida);
-  id=ida[1];
-  # Unify types
-  if (typeof(varlist)==NcVar)
-    varlist=[varlist]
-  end
-  # Collect Dimensions
+  id = nc_create(name,mode)
+  
+  # Collect Dimensions and set NetCDF ID
+  vars=Dict{ASCIIString,NcVar}();
   dims=Set{NcDim}();
   for v in varlist
-    for d in v.dim
-      push!(dims,d);
-    end
+      v.ncid=id
+      for d in v.dim
+          push!(dims,d);
+      end
   end
   nunlim=0;
   ndim=int32(length(dims));
   #Create Dimensions in the file
   dim=Dict{ASCIIString,NcDim}();
   for d in dims
-    dima=Array(Int32,1);
-    NC_VERBOSE? println("Dimension length ", d.dimlen) : nothing
+
     nc_def_dim(id,d.name,d.dimlen,dima);
     d.dimid=dima[1];
     dim[d.name]=d;
-    #Create dimension variable
-    if length(d.vals)>0
-      varida=Array(Int32,1)
-      dumids=[copy(d.dimid)]
-      nc_def_var(id,d.name,NC_DOUBLE,1,dumids,varida)
+    
+    #Create dimension variable, if necessary
+    if (length(d.vals)>0) & (!haskey(vars,d.name))
+      nc_def_var(id,d.name,NC_DOUBLE,1,[d.dimid],varida)
       putatt(id,varida[1],d.atts)
       d.varid=varida[1]
-      dd=Array(NcDim,1)
-      dd[1]=d
-      vars[d.name]=NcVar(id,varida[1],1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],dd,d.atts,-1)
+      vars[d.name]=NcVar{Float64,1}(id,varida[1],1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1)
     end
+    
   end
   # Create variables in the file
   for v in varlist
-    i=1
-    for d in v.dim
-      v.dimids[i]=d.dimid
-      i=i+1
-    end
-    vara=Array(Int32,1);
-    dumids=int32(v.dimids)
-    NC_VERBOSE ? println(dumids) : nothing
-    nc_def_var(id,v.name,int32(v.nctype),v.ndim,int32(dumids[v.ndim:-1:1]),vara);
-    v.varid=vara[1];
-    vars[v.name]=v;
-    if v.compress > -1
-      if (NC_NETCDF4 & mode)== 0
-        warn("Compression only possible for NetCDF4 file format. Compression will be ingored.")
-        v.compress=-1
-      else
-        v.compress=max(v.compress,9)
-        nc_def_var_deflate(int32(id),int32(v.varid),int32(1),int32(1),int32(v.compress));
-      end
-    end
+    
+    v.dimids=Int32[v.dim[i].dimid for i=1:length(v.dim)]
+    for i=1:v.ndim dumids[i]=v.dimids[v.ndim+1-i] end
+    
+    nc_def_var(id,v.name,v.nctype,v.ndim,dumids,vara)
+    v.varid=vara[1]
+    vars[v.name]=v
+    setcompression(v,mode)
     putatt(id,v.varid,v.atts)
   end
+  
   # Put global attributes
   if !isempty(gatts)
     putatt(id,NC_GLOBAL,gatts)
   end
+  
   # Leave define mode
   nc_enddef(id)
+  
   #Create the NcFile Object
   nc=NcFile(id,int32(length(vars)),ndim,zero(Int32),vars,dim,Dict{Any,Any}(),zero(Int32),name,NC_WRITE,false)
   currentNcFiles[abspath(nc.name)]=nc
+  
   for d in nc.dim
     #Write dimension variable
     if (length(d[2].vals)>0)
       putvar(nc,d[2].name,d[2].vals)
     end
   end
+  
   return(nc)
 end
 
-function vardef(fid::Integer,v::NcVar)
-    _nc_redef(ncid)
-    i=1
-    for d in v.dim
-      v.dimids[i]=d.dimid
-      i=i+1
-    end
-    vara=Array(Int32,1);
-    dumids=int32(v.dimids)
-    NC_VERBOSE? println(dumids) : nothing
-    _nc_def_var_c(id,v.name,v.nctype,v.ndim,int32(dumids[v.ndim:-1:1]),vara);
-    v.varid=vara[1];
-    vars[v.name]=v;
-end
+create(name::String,varlist::NcVar;gatts::Dict{Any,Any}=Dict{Any,Any}(),mode::Uint16=NC_NETCDF4)=create(name,NcVar[varlist];gatts=gatts,mode=mode)
 
 function close(nco::NcFile)
   #Close file
   nc_close(nco.ncid)
   delete!(currentNcFiles,abspath(nco.name))
-  NC_VERBOSE? println("Successfully closed file ",nco.ncid) : nothing
   return nco.ncid
 end
 
@@ -363,7 +337,7 @@ function open(fil::String; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
     ncf.dim[name]=NcDim(ncid,dimid,-1,name,dimlen,[1:dimlen],Dict{Any,Any}())
   end
   #Read variable information
-  for varid = 0:nvar-1
+  for varid = 0:(nvar-1)
     (name,nctype,dimids,natts,vndim,isdimvar)=nc_inq_var(ncf,varid)
     if (isdimvar)
       ncf.dim[name].varid=varid
@@ -375,7 +349,7 @@ function open(fil::String; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
       vdim[i]=ncf.dim[getdimnamebyid(ncf,did)]
       i=i+1
     end
-    ncf.vars[name]=NcVar(ncid,varid,vndim,natts,nctype,name,int(dimids[vndim:-1:1]),vdim[vndim:-1:1],atts,0)
+    ncf.vars[name]=NcVar{nctype2jltype[nctype],int(vndim)}(ncid,int32(varid),vndim,natts,nctype,name,int(dimids[vndim:-1:1]),vdim[vndim:-1:1],atts,0)
   end
   readdimvar==true ? _readdimvars(ncf) : nothing
   currentNcFiles[abspath(ncf.name)]=ncf
@@ -437,6 +411,7 @@ function nccreate(fil::String,varname::String,dims...;atts::Dict=Dict{Any,Any}()
       println("reopening file in WRITE mode")
       open(fil,NC_WRITE)
     end
+    v.ncid = nc.ncid
     haskey(nc.vars,varname) ? error("Variable $varname already exists in file fil") : nothing
     # Check if dimensions exist, if not, create
     i=1
@@ -492,6 +467,8 @@ function nccreate(fil::String,varname::String,dims...;atts::Dict=Dict{Any,Any}()
   end
 end
 
+show{T<:Any,N}(io::IO,a::NcVar{T,N})=println(io,a.name)
+showcompact{T<:Any,N}(io::IO,a::NcVar{T,N})=println(io,a.name)
 function show(io::IO,nc::NcFile)
   println(io,"")
   println(io,"##### NetCDF File #####")
