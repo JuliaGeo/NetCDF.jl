@@ -85,6 +85,20 @@ function nc_inq_dimid(id::Integer,name::String)
     return dimida[1]
 end
 
+function nc_redef(nc::NcFile)
+    if (!nc.in_def_mode)
+        nc_redef(nc.ncid)
+        nc.in_def_mode=true
+    end
+end
+
+function nc_enddef(nc::NcFile)
+    if nc.in_def_mode
+        nc_enddef(nc.ncid)
+        nc.in_def_mode=false
+    end
+end
+
 
 function nc_inq(id::Integer)
   # Inquire NetCDF file, return number of dims, number of variables, number of global attributes and number of unlimited dimensions

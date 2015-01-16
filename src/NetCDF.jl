@@ -257,35 +257,25 @@ function create(name::String,varlist::Array{NcVar};gatts::Dict{Any,Any}=Dict{Any
       end
   end
   nunlim=0;
-  ndim=int32(length(dims));
-  #Create Dimensions in the file
-  dim=Dict{ASCIIString,NcDim}();
+  ndim=int32(length(dims))
+  
+  #Create the NcFile Object
+  nc=NcFile(id,int32(length(vars)),ndim,zero(Int32),vars,Dict{ASCIIString,NcDim}(),Dict{Any,Any}(),zero(Int32),name,NC_WRITE,true)
+  
   for d in dims
 
-    nc_def_dim(id,d.name,d.dimlen,dima);
-    d.dimid=dima[1];
-    dim[d.name]=d;
+      create_dim(nc,d)
     
     #Create dimension variable, if necessary
     if (length(d.vals)>0) & (!haskey(vars,d.name))
-      nc_def_var(id,d.name,NC_DOUBLE,1,[d.dimid],varida)
-      putatt(id,varida[1],d.atts)
-      d.varid=varida[1]
-      vars[d.name]=NcVar{Float64,1}(id,varida[1],1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1)
+      push!(varlist,NcVar{Float64,1}(id,varida[1],1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1))
     end
     
   end
+ 
   # Create variables in the file
   for v in varlist
-    
-    v.dimids=Int32[v.dim[i].dimid for i=1:length(v.dim)]
-    for i=1:v.ndim dumids[i]=v.dimids[v.ndim+1-i] end
-    
-    nc_def_var(id,v.name,v.nctype,v.ndim,dumids,vara)
-    v.varid=vara[1]
-    vars[v.name]=v
-    setcompression(v,mode)
-    putatt(id,v.varid,v.atts)
+      create_var(nc,v,mode)
   end
   
   # Put global attributes
@@ -294,10 +284,8 @@ function create(name::String,varlist::Array{NcVar};gatts::Dict{Any,Any}=Dict{Any
   end
   
   # Leave define mode
-  nc_enddef(id)
+  nc_enddef(nc)
   
-  #Create the NcFile Object
-  nc=NcFile(id,int32(length(vars)),ndim,zero(Int32),vars,dim,Dict{Any,Any}(),zero(Int32),name,NC_WRITE,false)
   currentNcFiles[abspath(nc.name)]=nc
   
   for d in nc.dim
@@ -323,19 +311,22 @@ end
 function open(fil::String; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
   # Open netcdf file
   ncid=nc_open(fil,mode)
-  NC_VERBOSE ? println(ncid) : nothing
+  
   #Get initial information
   ndim,nvar,ngatt,nunlimdimid = nc_inq(ncid)
-  NC_VERBOSE ? println(ndim,nvar,ngatt,nunlimdimid) : nothing
+
   #Create ncdf object
   ncf=NcFile(ncid,int32(nvar-ndim),ndim,ngatt,Dict{ASCIIString,NcVar}(),Dict{ASCIIString,NcDim}(),Dict{Any,Any}(),nunlimdimid,abspath(fil),mode,false)
+  
   #Read global attributes
   ncf.gatts=getatts_all(ncid,NC_GLOBAL,ngatt)
+  
   #Read dimensions
   for dimid = 0:ndim-1
     (name,dimlen)=nc_inq_dim(ncid,dimid)
-    ncf.dim[name]=NcDim(ncid,dimid,-1,name,dimlen,[1:dimlen],Dict{Any,Any}())
+    ncf.dim[name]=NcDim(ncid,dimid,-1,name,dimlen,[],Dict{Any,Any}())
   end
+  
   #Read variable information
   for varid = 0:(nvar-1)
     (name,nctype,dimids,natts,vndim,isdimvar)=nc_inq_var(ncf,varid)
@@ -363,6 +354,7 @@ function ncread{T<:Integer}(fil::String,vname::String;start::Array{T}=Array(Int,
   x  = readvar(nc,vname,start,count)
   return x
 end
+
 ncread{T<:Integer}(fil::String,vname::String,start::Array{T,1},count::Array{T,1})=ncread(fil,vname,start=start,count=count)
 function ncread!{T<:Integer}(fil::String,vname::String,vals::Array;start::Array{T}=ones(Int,ndims(vals)),count::Array{T}=Array(Int,size(vals)))
   nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
@@ -371,13 +363,13 @@ function ncread!{T<:Integer}(fil::String,vname::String,vals::Array;start::Array{
 end
 
 function ncinfo(fil::String)
-  nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
+  nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
   return(nc)
 end
 
 #High-level functions for writing data to a file
 function ncwrite{T<:Integer}(x::Array,fil::String,vname::String;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...])
-  nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,mode=NC_WRITE)
+  nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,mode=NC_WRITE)
   if (nc.omode==NC_NOWRITE)
     close(nc)
     println("reopening file in WRITE mode")
@@ -397,74 +389,72 @@ end
 # if the file does not exist, it will be created
 # if the file already exists, the variable will be added to the file
 
-function nccreate(fil::String,varname::String,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Union(Integer,Type)=NC_DOUBLE,mode::Uint16=NC_NETCDF4)
-  # Checking dims argument for correctness
-  dim=parsedimargs(dims)
-  # open the file
-  # create the NcVar object
-  v=NcVar(varname,dim,atts=atts,compress=compress,t=t)
-  # Test if the file already exists
-  if (isfile(fil))
-    nc=haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,mode=NC_WRITE)
-    if (nc.omode==NC_NOWRITE)
-      close(nc)
-      println("reopening file in WRITE mode")
-      open(fil,NC_WRITE)
-    end
-    v.ncid = nc.ncid
-    haskey(nc.vars,varname) ? error("Variable $varname already exists in file fil") : nothing
-    # Check if dimensions exist, if not, create
-    i=1
-    # Remember if dimension was created
-    dcreate=Array(Bool,length(dim))
-    for d in dim
-      did=nc_inq_dimid(nc.ncid,d.name)
-      if (did==-1)
-        dima=Array(Int32,1);
-        #_nc_redef_c(nc.ncid)
-        if (!nc.in_def_mode)
-          nc_redef(nc.ncid)
-          nc.in_def_mode=true
-        end
-        nc_def_dim(nc.ncid,d.name,d.dimlen,dima);
-        d.dimid=dima[1];
-        v.dimids[i]=d.dimid;
-        dcreate[i] = true
-      else
-        dcreate[i] = false
-        v.dimids[i]=nc.dim[d.name].dimid;
-        v.dim[i] = nc.dim[d.name]
-      end
-      i=i+1
-    end
-    # Create variable
-    vara=Array(Int32,1);
-    dumids=int32(v.dimids)
-    if (!nc.in_def_mode)
-          nc_redef(nc.ncid)
-          nc.in_def_mode=true
-    end
-    nc_def_var(nc.ncid,v.name,v.nctype,v.ndim,int32(dumids[v.ndim:-1:1]),vara);
+function create_dim(nc,dim)
+    nc_redef(nc)
+    nc_def_dim(nc.ncid,dim.name,dim.dimlen,dima);
+    dim.dimid=dima[1];
+    nc.dim[dim.name]=dim;
+end
+
+function create_var(nc,v,mode)
+    
+    nc_redef(nc)
+    
+    v.dimids=Int32[v.dim[i].dimid for i=1:length(v.dim)]
+    for i=1:v.ndim dumids[i]=v.dimids[v.ndim+1-i] end
+    
+    nc_def_var(nc.ncid,v.name,v.nctype,v.ndim,dumids,vara)
+    
     v.varid=vara[1];
     nc.vars[v.name]=v;
-    putatt(nc.ncid,v.varid,atts)
-    if (nc.in_def_mode)
-          nc_enddef(nc.ncid)
-          nc.in_def_mode=false
+    putatt(nc.ncid,v.varid,v.atts)
+    setcompression(v,mode)
+end
+
+function nccreate(fil::String,varname::String,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Union(Integer,Type)=NC_DOUBLE,mode::Uint16=NC_NETCDF4)
+    # Checking dims argument for correctness
+    dim=parsedimargs(dims)
+    # open the file
+    # create the NcVar object
+    v=NcVar(varname,dim,atts=atts,compress=compress,t=t)
+    # Test if the file already exists
+    if (isfile(fil)) 
+        nc=haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,mode=NC_WRITE)
+        if (nc.omode==NC_NOWRITE)
+            close(nc)
+            println("reopening file in WRITE mode")
+            open(fil,NC_WRITE)
+        end
+        v.ncid = nc.ncid
+        haskey(nc.vars,varname) ? error("Variable $varname already exists in file fil") : nothing
+        # Check if dimensions exist, if not, create
+        # Remember if dimension was created
+        dcreate=Array(Bool,length(dim))
+        for i=1:length(dim)
+            if !haskey(nc.dim,dim[i].name)
+                create_dim(nc,dim[i])
+                v.dimids[i]=dim[i].dimid;
+                dcreate[i] = true
+            else
+                v.dimids[i]=nc.dim[dim[i].name].dimid;
+                v.dim[i] = nc.dim[dim[i].name]
+                dcreate[i] = false
+            end
+        end
+        # Create variable
+        create_var(nc,v,mode)
+        nc_enddef(nc)
+        for i=1:length(dim)
+            if dcreate[i] & !isempty(dim[i].vals)
+                ncwrite(dim[i].vals,fil,dim[i].name)
+            end
+        end
+    else
+        nc = create(fil,v,gatts=gatts,mode=mode | NC_NOCLOBBER)
+        for d in dim
+            ncwrite(d.vals,fil,d.name)
+        end
     end
-    i=1
-    for d in dim
-      if (dcreate[i])
-        ncwrite(d.vals,fil,d.name)
-      end
-      i=i+1
-    end
-  else
-    nc=create(fil,v,gatts=gatts,mode=mode | NC_NOCLOBBER)
-    for d in dim
-      ncwrite(d.vals,fil,d.name)
-    end
-  end
 end
 
 show{T<:Any,N}(io::IO,a::NcVar{T,N})=println(io,a.name)
