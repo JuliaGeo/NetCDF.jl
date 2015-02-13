@@ -37,6 +37,12 @@ const error_description=
      int32(-63)=> "Invalid dimension size",
      int32(-64)=> "File likely truncated or possibly corrupted"]
 
+const funext = [  (Float64, "double"),
+            (Float32, "float"),
+            (Int32  , "int"),
+            (Uint8  , "text"),
+            (Int8   , "schar")]
+
 const ida          = zeros(Int32,1)
 const namea        = zeros(Uint8,NC_MAX_NAME+1)
 const lengtha      = zeros(Csize_t,1)
@@ -58,6 +64,12 @@ const dima         = zeros(Int32,1)
 const varida       = zeros(Int32,1)
 const vara         = zeros(Int32,1);
 const dumids       = zeros(Int32,NC_MAX_DIMS)
+const gstart       = zeros(Uint,NC_MAX_DIMS)
+const gcount       = zeros(Uint,NC_MAX_DIMS)
+for (t,ending) in funext
+    vname = symbol("ret_$ending")
+    @eval const $vname = zeros($t,1)
+end
 
 function nc_open(fname::String,omode::Uint16)
     # Function to open file fname, returns a NetCDF file ID
@@ -218,19 +230,19 @@ function preparestartcount(start,count,v::NcVar)
     length(start) == v.ndim || error("Length of start ($(length(start))) must equal the number of variable dimensions ($(nc.vars[varname].ndim))")
     length(count) == v.ndim || error("Length of start ($(length(count))) must equal the number of variable dimensions ($(nc.vars[varname].ndim))")
     
-    p=one(eltype(count))
+    p  = one(eltype(gcount))
+    nd = length(start)
     
-    for i=1:length(start)
-        start[i] = start[i] - 1
-        count[i] = count[i] < 0 ? v.dim[i].dimlen - start[i] : count[i]
-        start[i] < 0 && error("Start index must not be smaller than 1")
-        start[i] + count[i] > v.dim[i].dimlen && error("Start + Count exceeds dimension length in dimension $(nc.vars[varname].dim[i].name)")
-        p=p*count[i]
+    for i=1:nd
+        ci             = nd+1-i
+        gstart[ci] = start[i] - 1
+        gcount[ci] = count[i] < 0 ? v.dim[i].dimlen - start[i] : count[i]
+        gstart[ci] < 0 && error("Start index must not be smaller than 1")
+        gstart[ci] + gcount[ci] > v.dim[i].dimlen && error("Start + Count exceeds dimension length in dimension $(nc.vars[varname].dim[i].name)")
+        p=p*gcount[ci]
     end
-    countout=Uint[count[i] for i in length(count):-1:1]
-    startout=Uint[start[i] for i in length(start):-1:1]
     
-    return startout,countout,p
+    return p
 end
     
 

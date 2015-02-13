@@ -100,56 +100,55 @@ function readvar!(nc::NcFile, varname::String, retvalsa::Array;start::Vector=one
     readvar!(nc.vars[varname],retvalsa,start=start,count=count)
 end
 
+
 function readvar!(v::NcVar, retvalsa::Array;start::Vector=ones(Uint,ndims(retvalsa)),count::Vector=size(retvalsa))
 
-  length(start) == v.ndim || error("Length of start ($(length(start))) must equal the number of variable dimensions ($(nc.vars[varname].ndim))")
-  length(count) == v.ndim || error("Length of start ($(length(count))) must equal the number of variable dimensions ($(nc.vars[varname].ndim))")
+  length(start) == v.ndim || error("Length of start ($(length(start))) must equal the number of variable dimensions ($(v.ndim))")
+  length(count) == v.ndim || error("Length of start ($(length(count))) must equal the number of variable dimensions ($(v.ndim))")
 
-  start,count,p=preparestartcount(start,count,v)
+  p=preparestartcount(start,count,v)
 
-  length(retvalsa) != p && error("Size of output array does not equal number of elements to be read!")
+  length(retvalsa) != p && error("Size of output array ($(length(retvalsa))) does not equal number of elements to be read ($p)!")
 
-  nc_get_vara_x!(v.ncid,v.varid,start,count,retvalsa)
+  nc_get_vara_x!(v.ncid,v.varid,gstart,gcount,retvalsa)
 
   retvalsa
 end
 readvar{T<:Integer}(nc::NcFile,varname::String,start::Array{T,1},count::Array{T,1})=readvar(nc,varname,start=start,count=count)
 
+
 function readvar(nc::NcFile, varname::String;start::Vector=Array(Int,0),count::Vector=Array(Int,0))
+    
     haskey(nc.vars,varname) || error("NetCDF file $(nc.name) does not have variable $varname")
     v=nc.vars[varname]
-    start = length(start)==0 ? ones(Uint,v.ndim) : start
-    count = length(count)==0 ? zeros(Uint,v.ndim) : count
+    
+    if length(start)==0 start = ones(Int,v.ndim)   end
+    if length(count)==0 count = Int[v.dim[i].dimlen - start[i] + 1  for i=1:v.ndim] end
+    
     readvar(v,start=start,count=count)
+    
 end
 
 function readvar{T,N}(v::NcVar{T,N};start::Vector=ones(Int,v.ndim),count::Vector=zeros(Int,v.ndim))
 
-    for i = 1:length(count)
-        if count[i] <= 0 count[i] = v.dim[i].dimlen end
-    end
-    p=prod(count) # Determine size of Array
-
     retvalsa = Array(T,count...) 
-
-    retvalsa == nothing && error("NetCDF type currently not supported, please file an issue on https://github.com/meggart/NetCDF.jl")
-
     readvar!(v, retvalsa, start=start, count=count)
-
-    if length(count)>1
-      return reshape(retvalsa,ntuple(length(count),x->int(count[x])))
-    else
-      return retvalsa
-    end
+    return retvalsa
 end
 
+function readvar(v::NcVar,index...)
+    for i=1:length(index)
+        gstart[length(index)+1-i]=index[i]-1
+    end
+    readvar(v,gstart)
+end
+#    nc_get_var1_x!(v.ncid,v.varid,gstart,)
 
-nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Float64})=nc_get_vara_double(ncid,varid,start,count,retvalsa)
-nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Float32})=nc_get_vara_float(ncid,varid,start,count,retvalsa)
-nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Int32})=nc_get_vara_int(ncid,varid,start,count,retvalsa)
-nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Uint8})=nc_get_vara_text(ncid,varid,start,count,retvalsa)
-nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Int8})=nc_get_vara_schar(ncid,varid,start,count,retvalsa)
-
+for (t,ending) in funext
+    fname = symbol("nc_get_vara_$ending")
+    @eval nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{$t})=$fname(ncid,varid,start,count,retvalsa)
+end
+#nc_get_var1_x!(ncid::Integer,varid::Integer,index::Vector{Uint},retval::Array{Float64})=nc_get_var1_double
 
 function putatt(ncid::Integer,varid::Integer,atts::Dict)
   for a in atts
@@ -188,9 +187,9 @@ end
 
 function putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
 
-  start,count,p=preparestartcount(start,count,v)
+  p=preparestartcount(start,count,v)
   
-  nc_put_vara_x(v.ncid,v.varid,start,count,vals)
+  nc_put_vara_x(v.ncid,v.varid,gstart,gcount,vals)
 end
 
 nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{Float64})=nc_put_vara_double(ncid,varid,start,count,vals)
