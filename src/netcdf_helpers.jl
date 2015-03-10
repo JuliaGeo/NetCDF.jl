@@ -158,12 +158,13 @@ nc_put_att(ncid::Integer,varid::Integer,name::String,val) = error("Writing attri
 
 
 function nc_get_att(ncid::Integer,varid::Integer,name::String,attype::Integer,attlen::Integer)
+
     valsa=Array(nctype2jltype[attype],attlen)
     nc_get_att!(ncid,varid,name,valsa)
-    valsa
 end
 
-nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Uint8}) = begin nc_get_att_text(ncid,varid,name,valsa); bytestring(valsa) end
+nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Uint8}) = begin nc_get_att_text(ncid,varid,name,valsa); ascii(valsa) end
+nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Ptr{Uint8}}) = begin nc_get_att_string(ncid,varid,name,valsa); [bytestring(valsa[i]) for i=1:length(valsa)] end
 nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Int8})  = begin nc_get_att_schar(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Int16})  = begin nc_get_att_short(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Int32})  = begin nc_get_att_int(ncid,varid,name,valsa); valsa end

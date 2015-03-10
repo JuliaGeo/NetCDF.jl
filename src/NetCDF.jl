@@ -20,7 +20,8 @@ nctype2jltype=@Compat.Dict(NC_BYTE=>Int8,
                     NC_LONG=>Int64,
                     NC_FLOAT=>Float32,
                     NC_DOUBLE=>Float64,
-                    NC_CHAR=>Uint8)
+                    NC_CHAR=>Uint8,
+                    NC_STRING=>Ptr{Uint8})
 
 nctype2string=@Compat.Dict(NC_BYTE=>"BYTE",
                    NC_SHORT=>"SHORT",
@@ -123,7 +124,11 @@ function readvar(nc::NcFile, varname::String;start::Vector=Array(Int,0),count::V
     v=nc.vars[varname]
     
     if length(start)==0 start = ones(Int,v.ndim)   end
-    if length(count)==0 count = Int[v.dim[i].dimlen - start[i] + 1  for i=1:v.ndim] end
+    if length(count)==0 
+        count = Int[v.dim[i].dimlen - start[i] + 1  for i=1:v.ndim] 
+    else
+        count = Int[count[i] > 0 ? count[i] : v.dim[i].dimlen - start[i] + 1  for i=1:v.ndim]
+    end
     
     readvar(v,start=start,count=count)
     
