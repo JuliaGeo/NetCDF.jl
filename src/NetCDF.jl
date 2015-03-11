@@ -53,7 +53,7 @@ NcDim(name::String,values::AbstractArray,atts::Dict{Any,Any})=
   NcDim(name,length(values),values=values,atts=atts)
 
 
-type NcVar{T,N} #<: AbstractArray{T,N}
+type NcVar{T,N} <: AbstractArray{T,N}
   ncid::Int32
   varid::Int32
   ndim::Int32
@@ -72,7 +72,13 @@ function NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1});atts::Dict{Any,An
 end
 NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1}),atts::Dict{Any,Any},t::Union(DataType,Integer)=Float64)=NcVar{typeof(t)==DataType ? t : nctype2jltype[t],length(dimin)}(-1,-1,length(dimin),length(atts), typeof(t)==DataType ? jltype2nctype[t] : t,name,Array(Int,length(dimin)),dimin,atts,-1)
 #Array methods
-Base.size(a::NcVar)=[d.dimlen for d in a.dim]
+Base.size(a::NcVar)=ntuple(length(a.dim),i->int(a.dim[i].dimlen))
+Base.getindex(v::NcVar,i::Integer...)=readvar(v,i...)
+function Base.getindex{T<:Integer}(v::NcVar,ind::Union(UnitRange{T},Integer)...)
+    start=[isa(ind[i],UnitRange) ? ind[i].start : ind[i] for i=1:length(ind)]
+    count=[isa(ind[i],UnitRange) ? ind[i].stop-ind[i].start+1 : 1 for i=1:length(ind)]
+    readvar(v,start=start,count=count)
+end
 
 
 
@@ -135,25 +141,35 @@ function readvar(nc::NcFile, varname::String;start::Vector=Array(Int,0),count::V
 end
 
 function readvar{T,N}(v::NcVar{T,N};start::Vector=ones(Int,v.ndim),count::Vector=zeros(Int,v.ndim))
-
+    
     retvalsa = Array(T,count...) 
     readvar!(v, retvalsa, start=start, count=count)
     return retvalsa
 end
 
-function readvar(v::NcVar,index...)
-    for i=1:length(index)
-        gstart[length(index)+1-i]=index[i]-1
+function readvar{T,N}(v::NcVar{T,N},index...)
+    
+    if length(index)==1
+        ic=index[1]-1
+        for i=1:v.ndim
+            ic,ii=divrem(ic,v.dim[i].dimlen)
+            gstart[v.ndim+1-i]=ii
+        end
+    else
+        for i=1:length(index)
+            gstart[length(index)+1-i]=index[i]-1
+        end
     end
-    readvar(v,gstart)
+    nc_get_var1_x(v.ncid,v.varid,gstart,T)
 end
-#    nc_get_var1_x!(v.ncid,v.varid,gstart,)
 
-for (t,ending) in funext
+for (t,ending,arname) in funext
     fname = symbol("nc_get_vara_$ending")
+    fname1 = symbol("nc_get_var1_$ending")
+    arsym=symbol(arname)
     @eval nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{$t})=$fname(ncid,varid,start,count,retvalsa)
+    @eval nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{Uint},::Type{$t})=begin $fname1(ncid,varid,start,$(arsym)); $(arsym)[1] end
 end
-#nc_get_var1_x!(ncid::Integer,varid::Integer,index::Vector{Uint},retval::Array{Float64})=nc_get_var1_double
 
 function putatt(ncid::Integer,varid::Integer,atts::Dict)
   for a in atts
@@ -197,13 +213,10 @@ function putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),
   nc_put_vara_x(v.ncid,v.varid,gstart,gcount,vals)
 end
 
-nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{Float64})=nc_put_vara_double(ncid,varid,start,count,vals)
-nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{Float32})=nc_put_vara_float(ncid,varid,start,count,vals)
-nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{Int8})=nc_put_vara_schar(ncid,varid,start,count,vals)
-nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{Int16})=nc_put_vara_short(ncid,varid,start,count,vals)
-nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{Int32})=nc_put_vara_int(ncid,varid,start,count,vals)
-nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{Int64})=nc_put_vara_long(ncid,varid,start,count,vals)
-nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::ASCIIString)=nc_put_vara_text(ncid,varid,start,count,vals)
+for (t,ending,arname) in funext
+    fname = symbol("nc_get_vara_$ending")
+    @eval nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{$t})=$fname(ncid,varid,start,count,vals)
+end
 
 
 
@@ -233,6 +246,7 @@ function ncclose()
   end
 end
 
+#Set compression mode of a file
 function setcompression(v::NcVar,mode)
     if v.compress > -1
         if (NC_NETCDF4 & mode)== 0
@@ -311,6 +325,11 @@ function close(nco::NcFile)
   return nco.ncid
 end
 
+
+function open(fil::String,v::String; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
+    nc=open(fil,mode=mode,readdimvar=readdimvar)
+    nc.vars[v]
+end
 
 function open(fil::String; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
   # Open netcdf file
@@ -461,8 +480,8 @@ function nccreate(fil::String,varname::String,dims...;atts::Dict=Dict{Any,Any}()
     end
 end
 
-show{T<:Any,N}(io::IO,a::NcVar{T,N})=println(io,a.name)
-showcompact{T<:Any,N}(io::IO,a::NcVar{T,N})=println(io,a.name)
+#show{T<:Any,N}(io::IO,a::NcVar{T,N})=println(io,a.name)
+#showcompact{T<:Any,N}(io::IO,a::NcVar{T,N})=println(io,a.name)
 function show(io::IO,nc::NcFile)
     ncol,nrow=Base.tty_size()
     hline = repeat("-",nrow)

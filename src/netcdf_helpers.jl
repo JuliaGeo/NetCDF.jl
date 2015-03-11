@@ -4,7 +4,7 @@
 # These are some helper functions that automatically 
 # First we define some constant arrays that are placeholders for pointers in ccall functions
 const error_description=
-     [int32(-33)=> "Not a netcdf id",
+     @Compat.Dict(int32(-33)=> "Not a netcdf id",
      int32(-34)=> "Too many netcdfs open",
      int32(-35)=> "netcdf file exists && NC_NOCLOBBER",
      int32(-36)=> "Invalid Argument",
@@ -35,13 +35,14 @@ const error_description=
      int32(-61)=> "Memory allocation (malloc) failure",
      int32(-62)=> "One or more variable sizes violate format constraints",
      int32(-63)=> "Invalid dimension size",
-     int32(-64)=> "File likely truncated or possibly corrupted"]
+     int32(-64)=> "File likely truncated or possibly corrupted")
 
-const funext = [  (Float64, "double"),
-            (Float32, "float"),
-            (Int32  , "int"),
-            (Uint8  , "text"),
-            (Int8   , "schar")]
+const funext = [  (Float64, "double","float64a"),
+            (Float32, "float","float32a"),
+            (Int32  , "int","int32a"),
+            (Uint8  , "text","uint8a"),
+            (Int8   , "schar","int8a"),
+            (ASCIIString, "text","uint8a")]
 
 const ida          = zeros(Int32,1)
 const namea        = zeros(Uint8,NC_MAX_NAME+1)
@@ -58,6 +59,7 @@ const int8a        = zeros(Int8,1)
 const int16a       = zeros(Int16,1)
 const int32a       = zeros(Int32,1)
 const int64a       = zeros(Int64,1)
+const uint8a       = zeros(Uint8,1)
 const float32a     = zeros(Float32,1)
 const float64a     = zeros(Float64,1)
 const dima         = zeros(Int32,1)
@@ -66,10 +68,11 @@ const vara         = zeros(Int32,1);
 const dumids       = zeros(Int32,NC_MAX_DIMS)
 const gstart       = zeros(Uint,NC_MAX_DIMS)
 const gcount       = zeros(Uint,NC_MAX_DIMS)
-for (t,ending) in funext
-    vname = symbol("ret_$ending")
-    @eval const $vname = zeros($t,1)
-end
+
+#for (t,ending) in funext
+#    vname = symbol("ret_$ending")
+#    @eval const $vname = zeros($t,1)
+#end
 
 function nc_open(fname::String,omode::Uint16)
     # Function to open file fname, returns a NetCDF file ID
