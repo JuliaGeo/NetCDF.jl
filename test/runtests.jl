@@ -25,7 +25,7 @@ end
 
 # Creating Files
 nc1 = NetCDF.create("nc1.nc",v1,mode=NC_NETCDF4);
-nc2 = NetCDF.create("nc2.nc",[v2,v3],gatts=@Compat.AnyDict("Some global attributes"=>2010),mode=NC_64BIT_OFFSET);
+nc2 = NetCDF.create("nc2.nc",v2,v3,gatts=@Compat.AnyDict("Some global attributes"=>2010),mode=NC_64BIT_OFFSET);
 nc3 = NetCDF.create("nc3.nc",vt,mode=NC_CLASSIC_MODEL);
 
 #Test Adding attributes

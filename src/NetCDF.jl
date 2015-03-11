@@ -209,12 +209,11 @@ end
 function putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
 
   p=preparestartcount(start,count,v)
-  
   nc_put_vara_x(v.ncid,v.varid,gstart,gcount,vals)
 end
 
 for (t,ending,arname) in funext
-    fname = symbol("nc_get_vara_$ending")
+    fname = symbol("nc_put_vara_$ending")
     @eval nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{$t})=$fname(ncid,varid,start,count,vals)
 end
 
@@ -316,7 +315,7 @@ function create(name::String,varlist::Array{NcVar};gatts::Dict{Any,Any}=Dict{Any
   return(nc)
 end
 
-create(name::String,varlist::NcVar;gatts::Dict{Any,Any}=Dict{Any,Any}(),mode::Uint16=NC_NETCDF4)=create(name,NcVar[varlist];gatts=gatts,mode=mode)
+create(name::String,varlist::NcVar...;gatts::Dict{Any,Any}=Dict{Any,Any}(),mode::Uint16=NC_NETCDF4)=create(name,NcVar[varlist[i] for i=1:length(varlist)];gatts=gatts,mode=mode)
 
 function close(nco::NcFile)
   #Close file

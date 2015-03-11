@@ -42,7 +42,8 @@ const funext = [  (Float64, "double","float64a"),
             (Int32  , "int","int32a"),
             (Uint8  , "text","uint8a"),
             (Int8   , "schar","int8a"),
-            (ASCIIString, "text","uint8a")]
+            (Int16  , "short","int16a"),
+            (Int64  , "longlong","int64a")]
 
 const ida          = zeros(Int32,1)
 const namea        = zeros(Uint8,NC_MAX_NAME+1)
@@ -55,13 +56,6 @@ const nunlimdimida = zeros(Int32,1)
 const typea        = zeros(Int32,1)
 const natta        = zeros(Int32,1)
 const nvals        = zeros(Csize_t,1)
-const int8a        = zeros(Int8,1)
-const int16a       = zeros(Int16,1)
-const int32a       = zeros(Int32,1)
-const int64a       = zeros(Int64,1)
-const uint8a       = zeros(Uint8,1)
-const float32a     = zeros(Float32,1)
-const float64a     = zeros(Float64,1)
 const dima         = zeros(Int32,1)
 const varida       = zeros(Int32,1)
 const vara         = zeros(Int32,1);
@@ -69,10 +63,9 @@ const dumids       = zeros(Int32,NC_MAX_DIMS)
 const gstart       = zeros(Uint,NC_MAX_DIMS)
 const gcount       = zeros(Uint,NC_MAX_DIMS)
 
-#for (t,ending) in funext
-#    vname = symbol("ret_$ending")
-#    @eval const $vname = zeros($t,1)
-#end
+for (t,ending,aname) in funext 
+    @eval const $(symbol(aname)) = zeros($t,1)
+end
 
 function nc_open(fname::String,omode::Uint16)
     # Function to open file fname, returns a NetCDF file ID
@@ -240,7 +233,7 @@ function preparestartcount(start,count,v::NcVar)
     for i=1:nd
         ci             = nd+1-i
         gstart[ci] = start[i] - 1
-        gcount[ci] = count[i] < 0 ? v.dim[i].dimlen - start[i] : count[i]
+        gcount[ci] = count[i] < 0 ? v.dim[i].dimlen - gstart[ci] : count[i]
         gstart[ci] < 0 && error("Start index must not be smaller than 1")
         gstart[ci] + gcount[ci] > v.dim[i].dimlen && error("Start + Count exceeds dimension length in dimension $(nc.vars[varname].dim[i].name)")
         p=p*gcount[ci]
