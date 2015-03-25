@@ -60,8 +60,8 @@ type NcVar{T,N} <: AbstractArray{T,N}
   natts::Int32
   nctype::Int32
   name::ASCIIString
-  dimids::Array{Int32}
-  dim::Array{NcDim}
+  dimids::Vector{Int32}
+  dim::Vector{NcDim}
   atts::Dict
   compress::Int32
 end
@@ -73,14 +73,37 @@ end
 NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1}),atts::Dict{Any,Any},t::Union(DataType,Integer)=Float64)=NcVar{typeof(t)==DataType ? t : nctype2jltype[t],length(dimin)}(-1,-1,length(dimin),length(atts), typeof(t)==DataType ? jltype2nctype[t] : t,name,Array(Int,length(dimin)),dimin,atts,-1)
 #Array methods
 Base.size(a::NcVar)=ntuple(length(a.dim),i->int(a.dim[i].dimlen))
-Base.getindex(v::NcVar,i::Integer...)=readvar(v,i...)
+Base.getindex(v::NcVar,i1::Integer)=readvar(v,i1)
+Base.getindex(v::NcVar,i1::Integer,i2::Integer)=readvar(v,i1,i2)
+Base.getindex(v::NcVar,i1::Integer,i2::Integer,i3::Integer)=readvar(v,i1,i2,i3)
+Base.getindex(v::NcVar,i1::Integer,i2::Integer,i3::Integer,i4::Integer)=readvar(v,i1,i2,i3,i4)
+Base.getindex(v::NcVar,i1::Integer,i2::Integer,i3::Integer,i4::Integer,i5::Integer)=readvar(v,i1,i2,i3,i4,i5)
+Base.getindex(v::NcVar,i1::Integer,i2::Integer,i3::Integer,i4::Integer,i5::Integer,i6::Integer)=readvar(v,i1,i2,i3,i4,i5,i6)
+
 function Base.getindex{T<:Integer}(v::NcVar,ind::Union(UnitRange{T},Integer)...)
     start=[isa(ind[i],UnitRange) ? ind[i].start : ind[i] for i=1:length(ind)]
     count=[isa(ind[i],UnitRange) ? ind[i].stop-ind[i].start+1 : 1 for i=1:length(ind)]
     readvar(v,start=start,count=count)
 end
+Base.setindex!(v::NcVar,x::AbstractArray,i::Integer...)=length(x)==1 ? putvar(v,x[1],i) : error("Dimensions do not match")
+Base.setindex!(v::NcVar,x::Number,i1::Integer)=putvar(v,x,i1)
+Base.setindex!(v::NcVar,x::Number,i1::Integer,i2::Integer)=putvar(v,x,i1,i2)
+Base.setindex!(v::NcVar,x::Number,i1::Integer,i2::Integer,i3::Integer)=putvar(v,x,i1,i2,i3)
+Base.setindex!(v::NcVar,x::Number,i1::Integer,i2::Integer,i3::Integer,i4::Integer)=putvar(v,x,i1,i2,i3,i4)
+Base.setindex!(v::NcVar,x::Number,i1::Integer,i2::Integer,i3::Integer,i4::Integer,i5::Integer)=putvar(v,x,i1,i2,i3,i4,i5)
+Base.setindex!(v::NcVar,x::Number,i1::Integer,i2::Integer,i3::Integer,i4::Integer,i5::Integer,i6::Integer)=putvar(v,x,i1,i2,i3,i4,i5,i6)
 
-
+function Base.setindex!{T<:Integer}(v::NcVar,x::AbstractArray,ind::Union(UnitRange{T},Integer)...)
+    start=[isa(ind[i],UnitRange) ? ind[i].start : ind[i] for i=1:length(ind)]
+    count=[isa(ind[i],UnitRange) ? ind[i].stop-ind[i].start+1 : 1 for i=1:length(ind)]
+    putvar(v,x,start=start,count=count)
+end
+function Base.setindex!{T<:Integer}(v::NcVar,x::Number,ind::Union(UnitRange{T},Integer)...)
+    start=[isa(ind[i],UnitRange) ? ind[i].start : ind[i] for i=1:length(ind)]
+    count=[isa(ind[i],UnitRange) ? ind[i].stop-ind[i].start+1 : 1 for i=1:length(ind)]
+    vals=fill(x,count...)
+    putvar(v,vals,start=start,count=count)
+end
 
 type NcFile
   ncid::Int32
@@ -163,6 +186,10 @@ function readvar{T,N}(v::NcVar{T,N},index...)
     nc_get_var1_x(v.ncid,v.varid,gstart,T)
 end
 
+function readvar{T,N}(v::NcVar{T,N},i1::Integer)
+    
+    
+
 for (t,ending,arname) in funext
     fname = symbol("nc_get_vara_$ending")
     fname1 = symbol("nc_get_var1_$ending")
@@ -207,14 +234,36 @@ function putvar(nc::NcFile,varname::String,vals::Array;start=ones(Int,length(siz
 end
 
 function putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
-
   p=preparestartcount(start,count,v)
   nc_put_vara_x(v.ncid,v.varid,gstart,gcount,vals)
 end
 
+function putvar(v::NcVar,val::Any,index::Integer...)
+
+    if length(index)==1
+        ic=index[1]-1
+        for i=1:v.ndim
+            ic,ii=divrem(ic,v.dim[i].dimlen)
+            (gstart::Vector{Uint})[v.ndim+1-i]=ii
+        end
+    else
+        for i=1:length(index)
+            (gstart::Vector{Uint})[length(index)+1-i]=index[i]-1
+        end
+    end
+    nc_put_var1_x(v.ncid,v.varid,gstart,val)
+end
+
+function globaltest()
+    gstart[1]=2
+end
+
 for (t,ending,arname) in funext
     fname = symbol("nc_put_vara_$ending")
+    fname1= symbol("nc_put_var1_$ending")
+    arsym=symbol(arname)
     @eval nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{$t})=$fname(ncid,varid,start,count,vals)
+    @eval nc_put_var1_x(ncid::Integer,varid::Integer,start::Vector{Uint},val::$t)=begin $(arsym)[1]=val; $fname1(ncid,varid,start,$(arsym)) end
 end
 
 
