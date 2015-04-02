@@ -170,24 +170,26 @@ function readvar{T,N}(v::NcVar{T,N};start::Vector=ones(Int,v.ndim),count::Vector
     return retvalsa
 end
 
-function readvar{T,N}(v::NcVar{T,N},index...)
-    
-    if length(index)==1
-        ic=index[1]-1
-        for i=1:v.ndim
-            ic,ii=divrem(ic,v.dim[i].dimlen)
-            gstart[v.ndim+1-i]=ii
-        end
-    else
-        for i=1:length(index)
-            gstart[length(index)+1-i]=index[i]-1
-        end
+using Base.Cartesian
+readvar{T}(v::NcVar{T,1},i_1) =                     begin @nexprs 1 j->(gstart[v.ndim+1-j]=i_j-1); nc_get_var1_x(v.ncid,v.varid,gstart,T) end
+readvar{T}(v::NcVar{T,2},i_1,i_2) =                 begin @nexprs 2 j->(gstart[v.ndim+1-j]=i_j-1); nc_get_var1_x(v.ncid,v.varid,gstart,T) end
+readvar{T}(v::NcVar{T,3},i_1,i_2,i_3) =             begin @nexprs 3 j->(gstart[v.ndim+1-j]=i_j-1); nc_get_var1_x(v.ncid,v.varid,gstart,T) end
+readvar{T}(v::NcVar{T,4},i_1,i_2,i_3,i_4) =         begin @nexprs 4 j->(gstart[v.ndim+1-j]=i_j-1); nc_get_var1_x(v.ncid,v.varid,gstart,T) end
+readvar{T}(v::NcVar{T,5},i_1,i_2,i_3,i_4,i_5) =     begin @nexprs 5 j->(gstart[v.ndim+1-j]=i_j-1); nc_get_var1_x(v.ncid,v.varid,gstart,T) end
+readvar{T}(v::NcVar{T,6},i_1,i_2,i_3,i_4,i_5,i_6) = begin @nexprs 6 j->(gstart[v.ndim+1-j]=i_j-1); nc_get_var1_x(v.ncid,v.varid,gstart,T) end
+
+function readvar{T,N}(v::NcVar{T,N},i1)
+    ic=i1[1]-1
+    for i=1:N
+        ic,ii=divrem(ic,v.dim[i].dimlen)
+        gstart[v.ndim+1-i]=ii
     end
     nc_get_var1_x(v.ncid,v.varid,gstart,T)
 end
 
-function readvar{T,N}(v::NcVar{T,N},i1::Integer)
-    
+
+
+
     
 
 for (t,ending,arname) in funext
@@ -252,10 +254,6 @@ function putvar(v::NcVar,val::Any,index::Integer...)
         end
     end
     nc_put_var1_x(v.ncid,v.varid,gstart,val)
-end
-
-function globaltest()
-    gstart[1]=2
 end
 
 for (t,ending,arname) in funext
