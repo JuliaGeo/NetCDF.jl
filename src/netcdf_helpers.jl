@@ -18,7 +18,7 @@ end
 function _nc_inq_dim(id::Integer,idim::Integer)
   namea=Array(Uint8,NC_MAX_NAME+1);lengtha=Array(Int32,1)
   NetCDF._nc_inq_dim_c(id,idim,namea,lengtha)
-  name=bytestring(convert(Ptr{Uint8}, namea))
+  name=bytestring(pointer(namea))
   dimlen=lengtha[1]
   NC_VERBOSE ? println("Successfully read from file") : nothing
   NC_VERBOSE ? println("name=",name," dimlen=",dimlen) : nothing
@@ -54,7 +54,7 @@ function _nc_inq_attname(ncid::Integer,varid::Integer,attnum::Integer)
   # Get attribute name from attribute number
   namea=Array(Uint8,NC_MAX_NAME+1)
   _nc_inq_attname_c(ncid,varid,attnum,namea)
-  name=bytestring(convert(Ptr{Uint8}, namea))
+  name=bytestring(pointer(namea))
   NC_VERBOSE ? println("Successfully read attribute name") : nothing
   NC_VERBOSE ? println("name=",name) : nothing
   return name
@@ -101,11 +101,11 @@ function _nc_put_att(ncid::Integer,varid::Integer,name,val)
   elseif (attype==NC_SHORT)
     _nc_put_att_short_c(ncid,varid,name,attype,attlen,val)
   elseif (attype==NC_INT)
-    _nc_put_att_int_c(ncid,varid,name,attype,attlen,int32(val))
+    _nc_put_att_int_c(ncid,varid,name,attype,attlen,map(Int32,val))
   elseif (attype==NC_FLOAT)
     _nc_put_att_float_c(ncid,varid,name,attype,attlen,val)
   elseif (attype==NC_DOUBLE)
-    _nc_put_att_float_c(ncid,varid,name,NC_FLOAT,attlen,float32(val))
+    _nc_put_att_float_c(ncid,varid,name,NC_FLOAT,attlen,map(Float32,val))
   elseif (attype==NC_BYTE)
     _nc_put_att_byte_c(ncid,varid,name,attype,attlen,val)
   else
@@ -154,7 +154,7 @@ function _ncv_inq(nc::NcFile,varid::Integer)
   dimids=vndim>0 ? dimida[1:vndim] : []
   natts=natta[1]
   NC_VERBOSE ? println("Successfully read from file") : nothing
-  name=bytestring(convert(Ptr{Uint8}, namea))
+  name=bytestring(pointer(namea))
   isdimvar=false
   for n in nc.dim
     if (n[2].name==name)
@@ -270,7 +270,7 @@ function parsedimargs(dim)
     elseif (typeof(a)<:AbstractArray)
       #Assume dimension values are given
       if dimvals==nothing
-        dimvals=float64(a)
+        dimvals=map(Float64,a)
         dimlen=length(dimvals)
       else
         error ("Dimension values of $name defined more than once")
@@ -289,7 +289,7 @@ function finalizedim(dimlen,dimvals,dimatts,name)
     dimlen=1
   end
   if ((dimlen!=nothing) & (dimvals==nothing))
-    dimvals=float64([1:dimlen])
+    dimvals=map(Float64,[1:dimlen;])
   end
   if (dimatts==nothing)
     dimatts=@Compat.AnyDict("missval"=>-9999)
