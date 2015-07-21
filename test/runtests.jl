@@ -10,7 +10,7 @@ end
 # Test Medium level Interface
 # Test Dimension Creation
 d1 = NcDim("Dim1",2;values=[5.0,10.0],atts=@Compat.AnyDict("units"=>"deg C"));
-d2 = NcDim("Dim2",[1:10]);
+d2 = NcDim("Dim2",collect(1:10));
 d3 = NcDim("Dim3",20;atts=@Compat.AnyDict("max"=>10));
 
 # Test Variable creation
@@ -31,16 +31,16 @@ nc3 = NetCDF.create("nc3.nc",vt,mode=NC_CLASSIC_MODEL);
 #Test Adding attributes
 NetCDF.putatt(nc1,"v1",@Compat.Dict("Additional String attribute"=>"att"))
 NetCDF.putatt(nc1,"global",@Compat.Dict("Additional global attribute"=>"gatt"))
-NetCDF.putatt(nc1,"global",@Compat.Dict("Additional Int8 attribute"=>int8(20),
-							"Additional Int16 attribute"=>int16(20),
-							"Additional Int32 attribute"=>int32(20),
-							"Additional Float32 attribute"=>float32(20),
-							"Additional Float64 attribute"=>float64(20)))
-NetCDF.putatt(nc1,"v1",    @Compat.Dict("Additional Int8 array attribute"=>int8([1:20]),
-							"Additional Int16 array attribute"=>int16([1:20]),
-							"Additional Int32 array attribute"=>int32([1:20]),
-							"Additional Float32 array attribute"=>float32([1:20]),
-							"Additional Float64 array attribute"=>float64([1:20])))
+NetCDF.putatt(nc1,"global",@Compat.Dict("Additional Int8 attribute"=>Int8(20),
+							"Additional Int16 attribute"=>Int16(20),
+							"Additional Int32 attribute"=>Int32(20),
+							"Additional Float32 attribute"=>Float32(20),
+							"Additional Float64 attribute"=>Float64(20)))
+NetCDF.putatt(nc1,"v1",    @Compat.Dict("Additional Int8 array attribute"=>Int8[i for i in 1:20],
+							"Additional Int16 array attribute"=>Int16[i for i in 1:20],
+							"Additional Int32 array attribute"=>Int32[i for i in 1:20],
+							"Additional Float32 array attribute"=>Float32[i for i in 1:20],
+							"Additional Float64 array attribute"=>Float64[i for i in 1:20]))
 
 
 #Test writing data
@@ -90,28 +90,28 @@ for fn in ("nc1.nc","nc2.nc","nc3.nc")
   end
 end
 
-nccreate("nc1.nc","v1","Dim1",[1,2],@Compat.AnyDict("units"=>"deg C"),"Dim2",[1:10],"Dim3",20,@Compat.AnyDict("max"=>10),
+nccreate("nc1.nc","v1","Dim1",[1,2],@Compat.AnyDict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,@Compat.AnyDict("max"=>10),
 mode=NC_NETCDF4)
-nccreate("nc2.nc","v2","Dim1",[1,2,3],@Compat.AnyDict("units"=>"deg C"),"Dim2",[1:10],"Dim3",20,@Compat.AnyDict("max"=>10),
+nccreate("nc2.nc","v2","Dim1",[1,2,3],@Compat.AnyDict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,@Compat.AnyDict("max"=>10),
 atts=@Compat.AnyDict("a1"=>"varatts"),gatts=@Compat.AnyDict("Some global attributes"=>2010),mode=NC_64BIT_OFFSET)
 nccreate("nc2.nc","v3","Dim1",mode=NC_CLASSIC_MODEL)
 tlist = [Float64, Float32, Int32, Int16, Int8]
 for i = 1:length(tlist)
-	nccreate("nc3.nc","vt$i","Dim2",[1:10],t=tlist[i])
+	nccreate("nc3.nc","vt$i","Dim2",collect(1:10),t=tlist[i])
 end
 
 ncputatt("nc1.nc","v1",@Compat.Dict("Additional String attribute"=>"att"))
 ncputatt("nc1.nc","global",@Compat.Dict("Additional global attribute"=>"gatt"))
-ncputatt("nc1.nc","global",@Compat.Dict("Additional Int8 attribute"=>int8(20),
-							"Additional Int16 attribute"=>int16(20),
-							"Additional Int32 attribute"=>int32(20),
-							"Additional Float32 attribute"=>float32(20),
-							"Additional Float64 attribute"=>float64(20)))
-ncputatt("nc1.nc","v1",    @Compat.Dict("Additional Int8 array attribute"=>int8([1:20]),
-							"Additional Int16 array attribute"=>int16([1:20]),
-							"Additional Int32 array attribute"=>int32([1:20]),
-							"Additional Float32 array attribute"=>float32([1:20]),
-							"Additional Float64 array attribute"=>float64([1:20])))
+ncputatt("nc1.nc","global",@Compat.Dict("Additional Int8 attribute"=>Int8(20),
+							"Additional Int16 attribute"=>Int16(20),
+							"Additional Int32 attribute"=>Int32(20),
+							"Additional Float32 attribute"=>Float32(20),
+							"Additional Float64 attribute"=>Float64(20)))
+ncputatt("nc1.nc","v1",    @Compat.Dict("Additional Int8 array attribute"=>Int8[i for i in 1:20],
+							"Additional Int16 array attribute"=>Int16[i for i in 1:20],
+							"Additional Int32 array attribute"=>Int32[i for i in 1:20],
+							"Additional Float32 array attribute"=>Float32[i for i in 1:20],
+							"Additional Float64 array attribute"=>Float64[i for i in 1:20]))
 
 #First generate the data
 x1 = rand(2,10,20)

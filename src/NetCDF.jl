@@ -1,5 +1,6 @@
 module NetCDF
 using Compat
+using Base.Cartesian
 include("netcdf_c.jl")
 import Base.show
 export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE, ncgetatt,NC_NOWRITE,NC_WRITE,NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4
@@ -67,31 +68,33 @@ type NcVar{T,N} <: AbstractArray{T,N}
 end
 #Some additional constructors
 function NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1});atts::Dict{Any,Any}=Dict{Any,Any}(),t::Union(DataType,Integer)=Float64,compress::Integer=-1)
-  dim=[dimin]
-  return NcVar{typeof(t)==DataType ? t : nctype2jltype[t],length(dim)}(-1,-1,length(dim),length(atts), typeof(t)==DataType ? jltype2nctype[t] : t,name,Array(Int,length(dim)),dim,atts,compress)
+  dim = isa(dimin,NcDim) ? NcDim[dimin] : dimin
+  return NcVar{typeof(t)==DataType ? t : nctype2jltype[t],length(dim)}(-1,-1,length(dim),length(atts), typeof(t)==DataType ? jltype2nctype[t] : t,name,Array(Int32,length(dim)),dim,atts,compress)
 end
 NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1}),atts::Dict{Any,Any},t::Union(DataType,Integer)=Float64)=NcVar{typeof(t)==DataType ? t : nctype2jltype[t],length(dimin)}(-1,-1,length(dimin),length(atts), typeof(t)==DataType ? jltype2nctype[t] : t,name,Array(Int,length(dimin)),dimin,atts,-1)
 #Array methods
-Base.size(a::NcVar)=ntuple(length(a.dim),i->int(a.dim[i].dimlen))
-Base.getindex(v::NcVar,i1::Integer)=readvar(v,i1)
-Base.getindex(v::NcVar,i1::Integer,i2::Integer)=readvar(v,i1,i2)
-Base.getindex(v::NcVar,i1::Integer,i2::Integer,i3::Integer)=readvar(v,i1,i2,i3)
-Base.getindex(v::NcVar,i1::Integer,i2::Integer,i3::Integer,i4::Integer)=readvar(v,i1,i2,i3,i4)
-Base.getindex(v::NcVar,i1::Integer,i2::Integer,i3::Integer,i4::Integer,i5::Integer)=readvar(v,i1,i2,i3,i4,i5)
-Base.getindex(v::NcVar,i1::Integer,i2::Integer,i3::Integer,i4::Integer,i5::Integer,i6::Integer)=readvar(v,i1,i2,i3,i4,i5,i6)
-
-function Base.getindex{T<:Integer}(v::NcVar,ind::Union(UnitRange{T},Integer)...)
-    start=[isa(ind[i],UnitRange) ? ind[i].start : ind[i] for i=1:length(ind)]
-    count=[isa(ind[i],UnitRange) ? ind[i].stop-ind[i].start+1 : 1 for i=1:length(ind)]
-    readvar(v,start=start,count=count)
+@generated function Base.size{T,N}(a::NcVar{T,N})
+  :(@ntuple($N,i->Int(a.dim[i].dimlen)))
 end
-Base.setindex!(v::NcVar,x::AbstractArray,i::Integer...)=length(x)==1 ? putvar(v,x[1],i) : error("Dimensions do not match")
-Base.setindex!(v::NcVar,x::Number,i1::Integer)=putvar(v,x,i1)
-Base.setindex!(v::NcVar,x::Number,i1::Integer,i2::Integer)=putvar(v,x,i1,i2)
-Base.setindex!(v::NcVar,x::Number,i1::Integer,i2::Integer,i3::Integer)=putvar(v,x,i1,i2,i3)
-Base.setindex!(v::NcVar,x::Number,i1::Integer,i2::Integer,i3::Integer,i4::Integer)=putvar(v,x,i1,i2,i3,i4)
-Base.setindex!(v::NcVar,x::Number,i1::Integer,i2::Integer,i3::Integer,i4::Integer,i5::Integer)=putvar(v,x,i1,i2,i3,i4,i5)
-Base.setindex!(v::NcVar,x::Number,i1::Integer,i2::Integer,i3::Integer,i4::Integer,i5::Integer,i6::Integer)=putvar(v,x,i1,i2,i3,i4,i5,i6)
+typealias IndR Union{Integer,UnitRange}
+typealias ArNum Union{AbstractArray,Number}
+
+Base.linearindexing(::NcVar)=Base.LinearSlow()
+Base.getindex{T}(v::NcVar{T,1},i1::IndR)=readvar(v,i1)
+Base.getindex{T}(v::NcVar{T,2},i1::IndR,i2::IndR)=readvar(v,i1,i2)
+Base.getindex{T}(v::NcVar{T,3},i1::IndR,i2::IndR,i3::IndR)=readvar(v,i1,i2,i3)
+Base.getindex{T}(v::NcVar{T,4},i1::IndR,i2::IndR,i3::IndR,i4::IndR)=readvar(v,i1,i2,i3,i4)
+Base.getindex{T}(v::NcVar{T,5},i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR)=readvar(v,i1,i2,i3,i4,i5)
+Base.getindex{T}(v::NcVar{T,6},i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR,i6::IndR)=readvar(v,i1,i2,i3,i4,i5,i6)
+
+Base.setindex!{T}(v::NcVar{T,1},x::ArNum,i1::IndR)=putvar(v,x,i1)
+Base.setindex!{T}(v::NcVar{T,2},x::ArNum,i1::IndR,i2::IndR)=putvar(v,x,i1,i2)
+Base.setindex!{T}(v::NcVar{T,3},x::ArNum,i1::IndR,i2::IndR,i3::IndR)=putvar(v,x,i1,i2,i3)
+Base.setindex!{T}(v::NcVar{T,4},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR)=putvar(v,x,i1,i2,i3,i4)
+Base.setindex!{T}(v::NcVar{T,5},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR)=putvar(v,x,i1,i2,i3,i4,i5)
+Base.setindex!{T}(v::NcVar{T,6},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR,i6::IndR)=putvar(v,x,i1,i2,i3,i4,i5,i6)
+
+
 
 function Base.setindex!{T<:Integer}(v::NcVar,x::AbstractArray,ind::Union(UnitRange{T},Integer)...)
     start=[isa(ind[i],UnitRange) ? ind[i].start : ind[i] for i=1:length(ind)]
@@ -144,7 +147,7 @@ function readvar!(v::NcVar, retvalsa::Array;start::Vector=ones(Uint,ndims(retval
 
   retvalsa
 end
-readvar{T<:Integer}(nc::NcFile,varname::String,start::Array{T,1},count::Array{T,1})=readvar(nc,varname,start=start,count=count)
+readvar{T<:Integer}(nc::NcFile,varname::AbstractString,start::Array{T,1},count::Array{T,1})=readvar(nc,varname,start=start,count=count)
 
 
 function readvar(nc::NcFile, varname::String;start::Vector=Array(Int,0),count::Vector=Array(Int,0))
@@ -158,39 +161,57 @@ function readvar(nc::NcFile, varname::String;start::Vector=Array(Int,0),count::V
     else
         count = Int[count[i] > 0 ? count[i] : v.dim[i].dimlen - start[i] + 1  for i=1:v.ndim]
     end
-    
     readvar(v,start=start,count=count)
-    
 end
 
 function readvar{T,N}(v::NcVar{T,N};start::Vector=ones(Int,v.ndim),count::Vector=zeros(Int,v.ndim))
-    
     retvalsa = Array(T,count...) 
     readvar!(v, retvalsa, start=start, count=count)
     return retvalsa
 end
 
-using Base.Cartesian
-readvar{T}(v::NcVar{T,1},i_1) =                     begin @nexprs 1 j->(gstart[v.ndim+1-j]=i_j-1); nc_get_var1_x(v.ncid,v.varid,gstart,T) end
-readvar{T}(v::NcVar{T,2},i_1,i_2) =                 begin @nexprs 2 j->(gstart[v.ndim+1-j]=i_j-1); nc_get_var1_x(v.ncid,v.varid,gstart,T) end
-readvar{T}(v::NcVar{T,3},i_1,i_2,i_3) =             begin @nexprs 3 j->(gstart[v.ndim+1-j]=i_j-1); nc_get_var1_x(v.ncid,v.varid,gstart,T) end
-readvar{T}(v::NcVar{T,4},i_1,i_2,i_3,i_4) =         begin @nexprs 4 j->(gstart[v.ndim+1-j]=i_j-1); nc_get_var1_x(v.ncid,v.varid,gstart,T) end
-readvar{T}(v::NcVar{T,5},i_1,i_2,i_3,i_4,i_5) =     begin @nexprs 5 j->(gstart[v.ndim+1-j]=i_j-1); nc_get_var1_x(v.ncid,v.varid,gstart,T) end
-readvar{T}(v::NcVar{T,6},i_1,i_2,i_3,i_4,i_5,i_6) = begin @nexprs 6 j->(gstart[v.ndim+1-j]=i_j-1); nc_get_var1_x(v.ncid,v.varid,gstart,T) end
-
-function readvar{T,N}(v::NcVar{T,N},i1)
-    ic=i1[1]-1
-    for i=1:N
-        ic,ii=divrem(ic,v.dim[i].dimlen)
-        gstart[v.ndim+1-i]=ii
-    end
-    nc_get_var1_x(v.ncid,v.varid,gstart,T)
+function readvar{T,N}(v::NcVar{T,N},I::Union{Integer,UnitRange,Colon}...)
+    count=ntuple(i->counti(I[i],v.dim[i].dimlen),length(I))
+    retvalsa = zeros(T,count)
+    readvar!(v, retvalsa, I...)
+    return retvalsa
 end
 
 
+# Here are some functions for array-style indexing readvar
+#For single indices
+@generated function readvar{T,N}(v::NcVar{T,N},I::Integer...)
+  N==length(I) || error("Dimension mismatch")
+  quote
+    checkbounds(v,I...)
+    @nexprs $N i->gstart[v.ndim+1-i]=I[i]-1
+    nc_get_var1_x(v.ncid,v.varid,gstart,T)::T
+  end
+end
 
+firsti(i::Integer,l::Integer)=i-1
+counti(i::Integer,l::Integer)=1
+firsti(r::UnitRange,l::Integer)=start(r)-1
+counti(r::UnitRange,l::Integer)=length(r)
+firsti(r::Colon,l::Integer)=0
+counti(r::Colon,l::Integer)=l
+# For ranges
+@generated function readvar!{T,N}(v::NcVar{T,N}, retvalsa::Array,I::Union{Integer,UnitRange}...)
+  
+  N==length(I) || error("Dimension mismatch")
 
-    
+  quote
+    checkbounds(v,I...)
+    @nexprs $N i->gstart[v.ndim+1-i]=firsti(I[i],v.dim[i].dimlen)
+    @nexprs $N i->gcount[v.ndim+1-i]=counti(I[i],v.dim[i].dimlen)
+    p=1
+    @nexprs $N i->p=p*gcount[v.ndim+1-i]
+    length(retvalsa) != p && error(string("Size of output array ($(length(retvalsa))) does not equal number of elements to be read (",p,")!"))
+    nc_get_vara_x!(v.ncid,v.varid,gstart,gcount,retvalsa)
+    retvalsa
+  end
+end
+
 
 for (t,ending,arname) in funext
     fname = symbol("nc_get_vara_$ending")
@@ -300,7 +321,7 @@ function setcompression(v::NcVar,mode)
             v.compress=-1
         else
             v.compress=max(v.compress,9)
-            nc_def_var_deflate(int32(v.ncid),int32(v.varid),int32(1),int32(1),int32(v.compress));
+            nc_def_var_deflate(v.ncid,v.varid,Int32(1),Int32(1),v.compress);
         end
     end
 end
@@ -320,11 +341,11 @@ function create(name::String,varlist::Array{NcVar};gatts::Dict{Any,Any}=Dict{Any
           push!(dims,d);
       end
   end
-  nunlim=0;
-  ndim=int32(length(dims))
+  nunlim=0
+  ndim=Int32(length(dims))
   
   #Create the NcFile Object
-  nc=NcFile(id,int32(length(vars)),ndim,zero(Int32),vars,Dict{ASCIIString,NcDim}(),Dict{Any,Any}(),zero(Int32),name,NC_WRITE,true)
+  nc=NcFile(id,Int32(length(vars)),ndim,zero(Int32),vars,Dict{ASCIIString,NcDim}(),Dict{Any,Any}(),zero(Int32),name,NC_WRITE,true)
   
   for d in dims
 
@@ -385,7 +406,7 @@ function open(fil::String; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
   ndim,nvar,ngatt,nunlimdimid = nc_inq(ncid)
 
   #Create ncdf object
-  ncf=NcFile(ncid,int32(nvar-ndim),ndim,ngatt,Dict{ASCIIString,NcVar}(),Dict{ASCIIString,NcDim}(),Dict{Any,Any}(),nunlimdimid,abspath(fil),mode,false)
+  ncf=NcFile(ncid,Int32(nvar-ndim),ndim,ngatt,Dict{ASCIIString,NcVar}(),Dict{ASCIIString,NcDim}(),Dict{Any,Any}(),nunlimdimid,abspath(fil),mode,false)
   
   #Read global attributes
   ncf.gatts=getatts_all(ncid,NC_GLOBAL,ngatt)
@@ -409,7 +430,7 @@ function open(fil::String; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
       vdim[i]=ncf.dim[getdimnamebyid(ncf,did)]
       i=i+1
     end
-    ncf.vars[name]=NcVar{nctype2jltype[nctype],int(vndim)}(ncid,int32(varid),vndim,natts,nctype,name,int(dimids[vndim:-1:1]),vdim[vndim:-1:1],atts,0)
+    ncf.vars[name]=NcVar{nctype2jltype[nctype],Int(vndim)}(ncid,Int32(varid),vndim,natts,nctype,name,dimids[vndim:-1:1],vdim[vndim:-1:1],atts,0)
   end
   readdimvar==true ? _readdimvars(ncf) : nothing
   currentNcFiles[abspath(ncf.name)]=ncf
@@ -550,7 +571,7 @@ function show(io::IO,nc::NcFile)
   println("---------------------------------------------------------------")
   for v in nc.vars
     @printf(io,"%20s",v[2].name)
-    @printf(io,"%20s          ",nctype2string[int(v[2].nctype)])
+    @printf(io,"%20s          ",nctype2string[Int(v[2].nctype)])
     for d in v[2].dim
       @printf(io,"%s, ",d.name)
     end

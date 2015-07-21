@@ -4,38 +4,38 @@
 # These are some helper functions that automatically 
 # First we define some constant arrays that are placeholders for pointers in ccall functions
 const error_description=
-     @Compat.Dict(int32(-33)=> "Not a netcdf id",
-     int32(-34)=> "Too many netcdfs open",
-     int32(-35)=> "netcdf file exists && NC_NOCLOBBER",
-     int32(-36)=> "Invalid Argument",
-     int32(-37)=> "Write to read only",
-     int32(-38)=> "Operation not allowed in data mode",
-     int32(-39)=> "Operation not allowed in define mode",
-     int32(-40)=> "Index exceeds dimension bound",
-     int32(-41)=> "NC_MAX_DIMS exceeded",
-     int32(-42)=> "String match to name in use",
-     int32(-43)=> "Attribute not found",
-     int32(-44)=> "NC_MAX_ATTRS exceeded",
-     int32(-45)=> "Not a netcdf data type",
-     int32(-46)=> "Invalid dimension id or name",
-     int32(-47)=> "NC_UNLIMITED in the wrong index",
-     int32(-48)=> "NC_MAX_VARS exceeded",
-     int32(-49)=> "Variable not found",
-     int32(-50)=> "Action prohibited on NC_GLOBAL varid",
-     int32(-51)=> "Not a netcdf file",
-     int32(-52)=> "In Fortran, string too short",
-     int32(-53)=> "NC_MAX_NAME exceeded",
-     int32(-54)=> "NC_UNLIMITED size already in use",
-     int32(-55)=> "nc_rec op when there are no record vars",
-     int32(-56)=> "Attempt to convert between text & numbers",
-     int32(-57)=> "Edge+start exceeds dimension bound",
-     int32(-58)=> "Illegal stride",
-     int32(-59)=> "Attribute or variable name contains illegal characters",
-     int32(-60)=> "Math result not representable",
-     int32(-61)=> "Memory allocation (malloc) failure",
-     int32(-62)=> "One or more variable sizes violate format constraints",
-     int32(-63)=> "Invalid dimension size",
-     int32(-64)=> "File likely truncated or possibly corrupted")
+     @Compat.Dict(Int32(-33)=> "Not a netcdf id",
+     Int32(-34)=> "Too many netcdfs open",
+     Int32(-35)=> "netcdf file exists && NC_NOCLOBBER",
+     Int32(-36)=> "Invalid Argument",
+     Int32(-37)=> "Write to read only",
+     Int32(-38)=> "Operation not allowed in data mode",
+     Int32(-39)=> "Operation not allowed in define mode",
+     Int32(-40)=> "Index exceeds dimension bound",
+     Int32(-41)=> "NC_MAX_DIMS exceeded",
+     Int32(-42)=> "String match to name in use",
+     Int32(-43)=> "Attribute not found",
+     Int32(-44)=> "NC_MAX_ATTRS exceeded",
+     Int32(-45)=> "Not a netcdf data type",
+     Int32(-46)=> "Invalid dimension id or name",
+     Int32(-47)=> "NC_UNLIMITED in the wrong index",
+     Int32(-48)=> "NC_MAX_VARS exceeded",
+     Int32(-49)=> "Variable not found",
+     Int32(-50)=> "Action prohibited on NC_GLOBAL varid",
+     Int32(-51)=> "Not a netcdf file",
+     Int32(-52)=> "In Fortran, string too short",
+     Int32(-53)=> "NC_MAX_NAME exceeded",
+     Int32(-54)=> "NC_UNLIMITED size already in use",
+     Int32(-55)=> "nc_rec op when there are no record vars",
+     Int32(-56)=> "Attempt to convert between text & numbers",
+     Int32(-57)=> "Edge+start exceeds dimension bound",
+     Int32(-58)=> "Illegal stride",
+     Int32(-59)=> "Attribute or variable name contains illegal characters",
+     Int32(-60)=> "Math result not representable",
+     Int32(-61)=> "Memory allocation (malloc) failure",
+     Int32(-62)=> "One or more variable sizes violate format constraints",
+     Int32(-63)=> "Invalid dimension size",
+     Int32(-64)=> "File likely truncated or possibly corrupted")
 
 const funext = [  (Float64, "double","float64a"),
             (Float32, "float","float32a"),
@@ -81,7 +81,7 @@ end
 function nc_inq_dim(id::Integer,idim::Integer)
     # File to inquire dimension idimm returns dimension name and length
     nc_inq_dim(id,idim,namea,lengtha)
-    name=bytestring(convert(Ptr{Uint8}, namea))
+    name=bytestring(pointer(namea))
     NC_VERBOSE ? println("name=",name," dimlen=",dimlen) : nothing
     return (name,lengtha[1])
 end
@@ -120,7 +120,7 @@ end
 function nc_inq_attname(ncid::Integer,varid::Integer,attnum::Integer)
   # Get attribute name from attribute number
   nc_inq_attname(ncid,varid,attnum,namea)
-  name=bytestring(convert(Ptr{Uint8}, namea))
+  name=bytestring(pointer(namea))
   NC_VERBOSE ? println("Successfully read attribute name $name") : nothing
   return name
 end
@@ -160,7 +160,7 @@ function nc_get_att(ncid::Integer,varid::Integer,name::String,attype::Integer,at
 end
 
 nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Uint8}) = begin nc_get_att_text(ncid,varid,name,valsa); ascii(valsa) end
-nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Ptr{Uint8}}) = begin nc_get_att_string(ncid,varid,name,valsa); [bytestring(valsa[i]) for i=1:length(valsa)] end
+nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Ptr{Uint8}}) = begin nc_get_att_string(ncid,varid,name,valsa); [bytestring(pointer(valsa[i])) for i=1:length(valsa)] end
 nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Int8})  = begin nc_get_att_schar(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Int16})  = begin nc_get_att_short(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Int32})  = begin nc_get_att_int(ncid,varid,name,valsa); valsa end
@@ -174,7 +174,7 @@ function nc_inq_var(nc::NcFile,varid::Integer)
   nc_inq_var(nc.ncid,varid,namea,typea,ndima,dimida,natta)
   NC_VERBOSE ? println("dimida=",dimida," ndimsa=",ndima) : nothing
   dimids=ndima[1]>0 ? dimida[1:ndima[1]] : Int32[]
-  name=bytestring(convert(Ptr{Uint8}, namea))
+  name=bytestring(pointer(namea))
   return (name,typea[1],dimids,natta[1],ndima[1],isdimvar(nc,name))
 end
 
@@ -279,10 +279,10 @@ function parsedimargs(dim)
     elseif (typeof(a)<:AbstractArray)
       #Assume dimension values are given
       if dimvals==nothing
-        dimvals=float64(a)
+        dimvals=map(Float64,a)
         dimlen=length(dimvals)
       else
-        error ("Dimension values of $name defined more than once")
+        error("Dimension values of $name defined more than once")
       end
     elseif (typeof(a)<:Dict)
       #Assume attributes are given
@@ -298,7 +298,7 @@ function finalizedim(dimlen,dimvals,dimatts,name)
     dimlen=1
   end
   if ((dimlen!=nothing) & (dimvals==nothing))
-    dimvals=float64([1:dimlen])
+    dimvals=Float64[i for i in 1:dimlen]
   end
   if (dimatts==nothing)
     dimatts=@Compat.AnyDict("missval"=>-9999)

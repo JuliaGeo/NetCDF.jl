@@ -15,7 +15,7 @@ end
 @osx_only begin
     # Add Homebrew/lib to the DL_LOAD_PATH
     const brew_prefix = Pkg.dir("Homebrew", "deps", "usr")
-    push!(DL_LOAD_PATH, joinpath(brew_prefix, "lib"))
+    push!(Libdl.DL_LOAD_PATH, joinpath(brew_prefix, "lib"))
 end
 ncname= @windows ? "netcdf" : "libnetcdf"
 
