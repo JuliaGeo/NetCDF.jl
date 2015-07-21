@@ -122,6 +122,7 @@ function readvar{T<:Integer}(nc::NcFile, varname::String;start::Array{T,1}=Array
                nc.vars[varname].nctype==NC_SHORT ? Array(Int32,p) :
                nc.vars[varname].nctype==NC_CHAR ? Array(Uint8,p) :
                nc.vars[varname].nctype==NC_BYTE ? Array(Int8,p) :
+               nc.vars[varname].nctype==NC_INT64 ? Array(Int64,p) :
                nothing
 
     retvalsa == nothing && error("NetCDF type currently not supported, please file an issue on https://github.com/meggart/NetCDF.jl")
@@ -139,6 +140,7 @@ end
 nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Float64})=_nc_get_vara_double_c(ncid,varid,start,count,retvalsa)
 nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Float32})=_nc_get_vara_float_c(ncid,varid,start,count,retvalsa)
 nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Int32})=_nc_get_vara_int_c(ncid,varid,start,count,retvalsa)
+nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Int64})=_nc_get_vara_longlong_c(ncid,varid,start,count,retvalsa)
 nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Uint8})=_nc_get_vara_text_c(ncid,varid,start,count,retvalsa)
 nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{Int8})=_nc_get_vara_schar_c(ncid,varid,start,count,retvalsa)
 
@@ -194,6 +196,8 @@ function putvar{T<:Integer}(nc::NcFile,varname::String,vals::Array;start::Array{
     _nc_put_vara_float_c(ncid,varid,start,count,map(Float32,x))
   elseif nc.vars[varname].nctype==NC_INT
     _nc_put_vara_int_c(ncid,varid,start,count,map(Int32,x))
+  elseif nc.vars[varname].nctype==NC_INT64
+    _nc_put_vara_longlong_c(ncid,varid,start,count,map(Int64,x))
   elseif nc.vars[varname].nctype==NC_SHORT
     _nc_put_vara_short_c(ncid,varid,start,count,map(Int16,x))
   elseif nc.vars[varname].nctype==NC_CHAR

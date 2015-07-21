@@ -1,7 +1,7 @@
 jltype2nctype=@Compat.Dict(Int8=>NC_BYTE,
 	               Int16=>NC_SHORT,
                    Int32=>NC_INT,
-                   Int64=>NC_LONG,
+                   Int64=>NC_INT64,
                    Float32=>NC_FLOAT,
                    Float64=>NC_DOUBLE)
 
