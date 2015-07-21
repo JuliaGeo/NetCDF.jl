@@ -11,6 +11,7 @@ NC_VERBOSE=false
 jltype2nctype=@Compat.Dict(Int8=>NC_BYTE,
                    Int16=>NC_SHORT,
                    Int32=>NC_INT,
+                   Int64=>NC_INT64,
                    Float32=>NC_FLOAT,
                    Float64=>NC_DOUBLE,
                    Uint8=>NC_CHAR)
@@ -28,7 +29,8 @@ nctype2string=@Compat.Dict(NC_BYTE=>"BYTE",
                    NC_SHORT=>"SHORT",
                    NC_INT=>"INT",
                    NC_FLOAT=>"FLOAT",
-                   NC_DOUBLE=>"DOUBLE")
+                   NC_DOUBLE=>"DOUBLE",
+                   NC_INT64=>"INT64")
 
 
 type NcDim
@@ -76,7 +78,7 @@ NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1}),atts::Dict{Any,Any},t::Uni
 @generated function Base.size{T,N}(a::NcVar{T,N})
   :(@ntuple($N,i->Int(a.dim[i].dimlen)))
 end
-typealias IndR Union{Integer,UnitRange}
+typealias IndR Union{Integer,UnitRange,Colon}
 typealias ArNum Union{AbstractArray,Number}
 
 Base.linearindexing(::NcVar)=Base.LinearSlow()
@@ -95,18 +97,6 @@ Base.setindex!{T}(v::NcVar{T,5},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5:
 Base.setindex!{T}(v::NcVar{T,6},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR,i6::IndR)=putvar(v,x,i1,i2,i3,i4,i5,i6)
 
 
-
-function Base.setindex!{T<:Integer}(v::NcVar,x::AbstractArray,ind::Union(UnitRange{T},Integer)...)
-    start=[isa(ind[i],UnitRange) ? ind[i].start : ind[i] for i=1:length(ind)]
-    count=[isa(ind[i],UnitRange) ? ind[i].stop-ind[i].start+1 : 1 for i=1:length(ind)]
-    putvar(v,x,start=start,count=count)
-end
-function Base.setindex!{T<:Integer}(v::NcVar,x::Number,ind::Union(UnitRange{T},Integer)...)
-    start=[isa(ind[i],UnitRange) ? ind[i].start : ind[i] for i=1:length(ind)]
-    count=[isa(ind[i],UnitRange) ? ind[i].stop-ind[i].start+1 : 1 for i=1:length(ind)]
-    vals=fill(x,count...)
-    putvar(v,vals,start=start,count=count)
-end
 
 type NcFile
   ncid::Int32
@@ -170,7 +160,7 @@ function readvar{T,N}(v::NcVar{T,N};start::Vector=ones(Int,v.ndim),count::Vector
     return retvalsa
 end
 
-function readvar{T,N}(v::NcVar{T,N},I::Union{Integer,UnitRange,Colon}...)
+function readvar{T,N}(v::NcVar{T,N},I::IndR...)
     count=ntuple(i->counti(I[i],v.dim[i].dimlen),length(I))
     retvalsa = zeros(T,count)
     readvar!(v, retvalsa, I...)
@@ -194,9 +184,9 @@ counti(i::Integer,l::Integer)=1
 firsti(r::UnitRange,l::Integer)=start(r)-1
 counti(r::UnitRange,l::Integer)=length(r)
 firsti(r::Colon,l::Integer)=0
-counti(r::Colon,l::Integer)=l
+counti(r::Colon,l::Integer)=Int(l)
 # For ranges
-@generated function readvar!{T,N}(v::NcVar{T,N}, retvalsa::Array,I::Union{Integer,UnitRange}...)
+@generated function readvar!{T,N}(v::NcVar{T,N}, retvalsa::Array,I::IndR...)
   
   N==length(I) || error("Dimension mismatch")
 
@@ -261,20 +251,30 @@ function putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),
   nc_put_vara_x(v.ncid,v.varid,gstart,gcount,vals)
 end
 
-function putvar(v::NcVar,val::Any,index::Integer...)
+@generated function putvar{T,N}(v::NcVar{T,N},val::Any,I::IndR...)
+  
+  N==length(I) || error("Dimension mismatch")
 
-    if length(index)==1
-        ic=index[1]-1
-        for i=1:v.ndim
-            ic,ii=divrem(ic,v.dim[i].dimlen)
-            (gstart::Vector{Uint})[v.ndim+1-i]=ii
-        end
-    else
-        for i=1:length(index)
-            (gstart::Vector{Uint})[length(index)+1-i]=index[i]-1
-        end
+  quote
+    checkbounds(v,I...)
+    @nexprs $N i->gstart[v.ndim+1-i]=firsti(I[i],v.dim[i].dimlen)
+    @nexprs $N i->gcount[v.ndim+1-i]=counti(I[i],v.dim[i].dimlen)
+    p=1
+    @nexprs $N i->p=p*gcount[v.ndim+1-i]
+    length(val) != p && error(string("Size of output array ($(length(retvalsa))) does not equal number of elements to be read (",p,")!"))
+    nc_put_vara_x(v.ncid,v.varid,gstart,gcount,val)
+  end
+end
+
+function putvar{T,N}(v::NcVar{T,N},val::Any,I::Integer...)
+
+    N==length(I) || error("Dimension mismatch")
+    quote
+      checkbounds(v,I...)
+      @nexprs $N i->gstart[v.ndim+1-i]=I[i]-1
+      nc_put_var1_x(v.ncid,v.varid,gstart,val)
     end
-    nc_put_var1_x(v.ncid,v.varid,gstart,val)
+
 end
 
 for (t,ending,arname) in funext
@@ -456,6 +456,8 @@ function ncinfo(fil::String)
   nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
   return(nc)
 end
+
+iswritable(nc::NcFile)=(nc.omode & NC_WRITE) != zero(UInt16)
 
 #High-level functions for writing data to a file
 function ncwrite{T<:Integer}(x::Array,fil::String,vname::String;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...])
