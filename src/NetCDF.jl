@@ -181,29 +181,29 @@ function putvar{T<:Integer}(nc::NcFile,varname::String,vals::Array;start::Array{
   haskey(nc.vars,varname) ? nothing : error("No variable $varname in file $nc.name")
   nc.vars[varname].ndim==length(start) ? nothing : error("Length of start vector does not equal number of NetCDF variable dimensions")
   nc.vars[varname].ndim==length(count) ? nothing : error("Length of count vector does not equal number of NetCDF variable dimensions")
-  start=map(Int,start).-1
+  start=Int[start...].-1
   for i=1:length(start)
     count[i] = count[i] < 0 ? nc.vars[varname].dim[i].dimlen - start[i] : count[i]
     start[i]+count[i] > nc.vars[varname].dim[i].dimlen ? error("In dimension $(nc.vars[varname].dim[i].name) start+count exceeds dimension bounds: $(start[i])+$(count[i]) > $(nc.vars[varname].dim[i].dimlen)") : nothing
   end
-  count=map(UInt,count[length(count):-1:1])
-  start=map(UInt,start[length(start):-1:1])
+  count=UInt[count[i] for i=length(count):-1:1]
+  start=UInt[start[i] for i=length(start):-1:1]
   x=vals
   varid=nc.vars[varname].varid
   if nc.vars[varname].nctype==NC_DOUBLE
-    _nc_put_vara_double_c(ncid,varid,start,count,map(Float64,x))
+    _nc_put_vara_double_c(ncid,varid,start,count,Float64[x...])
   elseif nc.vars[varname].nctype==NC_FLOAT
-    _nc_put_vara_float_c(ncid,varid,start,count,map(Float32,x))
+    _nc_put_vara_float_c(ncid,varid,start,count,Float32[x...])
   elseif nc.vars[varname].nctype==NC_INT
-    _nc_put_vara_int_c(ncid,varid,start,count,map(Int32,x))
+    _nc_put_vara_int_c(ncid,varid,start,count,Int32[x...])
   elseif nc.vars[varname].nctype==NC_INT64
-    _nc_put_vara_longlong_c(ncid,varid,start,count,map(Int64,x))
+    _nc_put_vara_longlong_c(ncid,varid,start,count,Int64[x...])
   elseif nc.vars[varname].nctype==NC_SHORT
-    _nc_put_vara_short_c(ncid,varid,start,count,map(Int16,x))
+    _nc_put_vara_short_c(ncid,varid,start,count,Int16[x...])
   elseif nc.vars[varname].nctype==NC_CHAR
     _nc_put_vara_text_c(ncid,varid,start,count,ascii(x))
   elseif nc.vars[varname].nctype==NC_BYTE
-    _nc_put_vara_schar_c(ncid,varid,start,count,map(Int8,x))
+    _nc_put_vara_schar_c(ncid,varid,start,count,Int8[x...])
   end
   NC_VERBOSE ? println("Successfully wrote to file ",ncid) : nothing
 end
@@ -254,7 +254,7 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict=Dict
     end
   end
   nunlim=0;
-  ndim=Int32(length(dims));
+  ndim=@compat Int32(length(dims));
   #Create Dimensions in the file
   dim=Dict{ASCIIString,NcDim}();
   for d in dims
@@ -283,9 +283,9 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict=Dict
       i=i+1
     end
     vara=Array(Int32,1);
-    dumids=map(Int32,v.dimids)
+    dumids=Int32[v.dimids...]
     NC_VERBOSE ? println(dumids) : nothing
-    _nc_def_var_c(id,v.name,Int32(v.nctype),v.ndim,map(Int32,dumids[v.ndim:-1:1]),vara);
+    _nc_def_var_c(id,v.name,v.nctype,v.ndim,Int32[dumids[i] for i=(v.ndim:-1:1)],vara);
     v.varid=vara[1];
     vars[v.name]=v;
     if v.compress > -1
@@ -294,7 +294,7 @@ function create(name::String,varlist::Union(Array{NcVar},NcVar);gatts::Dict=Dict
         v.compress=-1
       else
         v.compress=max(v.compress,9)
-        _nc_def_var_deflate_c(Int32(id),Int32(v.varid),Int32(1),Int32(1),Int32(v.compress));
+        _nc_def_var_deflate_c(@compat(Int32(id)),@compat(Int32(v.varid)),@compat(Int32(1)),@compat(Int32(1)),@compat(Int32(v.compress)));
       end
     end
     putatt(id,v.varid,v.atts)
@@ -370,7 +370,7 @@ function open(fil::String; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
       vdim[i]=ncf.dim[getdimnamebyid(ncf,did)]
       i=i+1
     end
-    ncf.vars[name]=NcVar(ncid,varid,vndim,natts,nctype,name,map(Int,dimids[vndim:-1:1]),vdim[vndim:-1:1],atts,0)
+    ncf.vars[name]=NcVar(ncid,varid,vndim,natts,nctype,name,Int[dimids[i] for i=vndim:-1:1],vdim[vndim:-1:1],atts,0)
   end
   readdimvar==true ? _readdimvars(ncf) : nothing
   currentNcFiles[abspath(ncf.name)]=ncf
@@ -459,12 +459,12 @@ function nccreate(fil::String,varname::String,dims...;atts::Dict=Dict{Any,Any}()
     end
     # Create variable
     vara=Array(Int32,1);
-    dumids=map(Int32,v.dimids)
+    dumids=Int32[v.dimids...]
     if (!nc.in_def_mode)
           _nc_redef_c(nc.ncid)
           nc.in_def_mode=true
     end
-    _nc_def_var_c(nc.ncid,v.name,v.nctype,v.ndim,map(Int32,dumids[v.ndim:-1:1]),vara);
+    _nc_def_var_c(nc.ncid,v.name,v.nctype,v.ndim,Int32[dumids[i] for i=v.ndim:-1:1],vara);
     v.varid=vara[1];
     nc.vars[v.name]=v;
     putatt(nc.ncid,v.varid,atts)

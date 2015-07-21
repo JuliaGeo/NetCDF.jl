@@ -1,6 +1,7 @@
 import Base.Test.@test
 using NetCDF
 using Compat
+println(bytestring(ccall((:nc_inq_libvers,"libnetcdf"),Ptr{Uint8},(),)))
 #First delete any existing nc-files
 for fn in ("nc1.nc","nc2.nc","nc3.nc")
   if (isfile(fn))
@@ -18,7 +19,7 @@ d3 = NcDim("Dim3",20;atts=@Compat.AnyDict("max"=>10));
 v1 = NcVar("v1",[d1,d2,d3],compress=5) 						# With several dims in an Array, and compressed
 v2 = NcVar("v2",[d1,d2,d3],atts=@Compat.AnyDict("a1"=>"varatts"))  # with given attributes
 v3 = NcVar("v3",d1) 								# with a single dimension
-tlist = [Float64, Float32, Int64, Int32, Int16, Int8]
+tlist = [Float64, Int64, Float32, Int32, Int16, Int8]
 vt = Array(NcVar, length(tlist))
 for i= 1:length(tlist)
   vt[i]=NcVar("vt$i",d2,t = tlist[i])
@@ -27,7 +28,7 @@ end
 # Creating Files
 nc1 = NetCDF.create("nc1.nc",v1,mode=NC_NETCDF4);
 nc2 = NetCDF.create("nc2.nc",[v2,v3],gatts=@Compat.AnyDict("Some global attributes"=>2010),mode=NC_64BIT_OFFSET);
-nc3 = NetCDF.create("nc3.nc",vt,mode=NC_CLASSIC_MODEL);
+nc3 = NetCDF.create("nc3.nc",vt,mode=NC_NETCDF4);
 
 #Test Adding attributes
 NetCDF.putatt(nc1,"v1",@Compat.Dict("Additional String attribute"=>"att"))
@@ -95,7 +96,7 @@ nccreate("nc1.nc","v1","Dim1",[1,2,3],@Compat.AnyDict("units"=>"deg C"),"Dim2",[
 mode=NC_NETCDF4)
 nccreate("nc2.nc","v2","Dim1",[1,2,3],@Compat.AnyDict("units"=>"deg C"),"Dim2",[1:10;],"Dim3",20,@Compat.AnyDict("max"=>10),
 atts=@Compat.AnyDict("a1"=>"varatts"),gatts=@Compat.AnyDict("Some global attributes"=>2010),mode=NC_64BIT_OFFSET)
-nccreate("nc2.nc","v3","Dim1",mode=NC_CLASSIC_MODEL)
+nccreate("nc2.nc","v3","Dim1",mode=NC_NETCDF4)
 tlist = [Float64, Float32, Int64, Int32, Int16, Int8]
 for i = 1:length(tlist)
 	nccreate("nc3.nc","vt$i","Dim2",[1:10;],t=tlist[i])

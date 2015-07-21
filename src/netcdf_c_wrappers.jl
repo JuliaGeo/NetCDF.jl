@@ -105,7 +105,7 @@ for (jlname, fname, outtype, argtypes, argsyms, ex_error) in
       (:_nc_put_vara_double_c,:nc_put_vara_double,Int32,(Int32,Int32,Ptr{Uint},Ptr{Uint},Ptr{Float64}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
       (:_nc_put_vara_float_c,:nc_put_vara_float,Int32,(Int32,Int32,Ptr{Uint},Ptr{Uint},Ptr{Float32}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
       (:_nc_put_vara_int_c,:nc_put_vara_int,Int32,(Int32,Int32,Ptr{Uint},Ptr{Uint},Ptr{Int32}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
-      (:_nc_put_vara_longlong_c,:nc_put_vara_longlong,Int32,(Int32,Int32,Ptr{Uint},Ptr{Uint},Ptr{Int32}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
+      (:_nc_put_vara_longlong_c,:nc_put_vara_longlong,Int32,(Int32,Int32,Ptr{Uint},Ptr{Uint},Ptr{Int64}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
       (:_nc_put_vara_short_c,:nc_put_vara_short,Int32,(Int32,Int32,Ptr{Uint},Ptr{Uint},Ptr{Int16}),(:ncid,:varid,:start,:count,:retvalsa),:(error("Error writing variable"))),
       (:_nc_close_c,:nc_close,Int32,(Int32,),(:ncid,),:(error("Error closing variable"))),
       (:_nc_enddef_c,:nc_enddef,Int32,(Int32,),(:ncid,),:(error("Error leaving define mode"))),

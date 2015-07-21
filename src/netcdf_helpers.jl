@@ -101,11 +101,11 @@ function _nc_put_att(ncid::Integer,varid::Integer,name,val)
   elseif (attype==NC_SHORT)
     _nc_put_att_short_c(ncid,varid,name,attype,attlen,val)
   elseif (attype==NC_INT)
-    _nc_put_att_int_c(ncid,varid,name,attype,attlen,map(Int32,val))
+    _nc_put_att_int_c(ncid,varid,name,attype,attlen,Int32[val...])
   elseif (attype==NC_FLOAT)
     _nc_put_att_float_c(ncid,varid,name,attype,attlen,val)
   elseif (attype==NC_DOUBLE)
-    _nc_put_att_float_c(ncid,varid,name,NC_FLOAT,attlen,map(Float32,val))
+    _nc_put_att_float_c(ncid,varid,name,NC_FLOAT,attlen,Float32[val...])
   elseif (attype==NC_BYTE)
     _nc_put_att_byte_c(ncid,varid,name,attype,attlen,val)
   else
@@ -270,7 +270,7 @@ function parsedimargs(dim)
     elseif (typeof(a)<:AbstractArray)
       #Assume dimension values are given
       if dimvals==nothing
-        dimvals=map(Float64,a)
+        dimvals=Float64[a...]
         dimlen=length(dimvals)
       else
         error ("Dimension values of $name defined more than once")
@@ -289,7 +289,7 @@ function finalizedim(dimlen,dimvals,dimatts,name)
     dimlen=1
   end
   if ((dimlen!=nothing) & (dimvals==nothing))
-    dimvals=map(Float64,[1:dimlen;])
+    dimvals=Float64[i for i=1:dimlen]
   end
   if (dimatts==nothing)
     dimatts=@Compat.AnyDict("missval"=>-9999)
