@@ -5,10 +5,10 @@ import Base.show
 export show,NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE, ncgetatt,NC_NOWRITE,NC_WRITE,NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4
 #Some constants
 
-
 jltype2nctype=@Compat.Dict(Int8=>NC_BYTE,
                    Int16=>NC_SHORT,
                    Int32=>NC_INT,
+                   Int64=>NC_INT64,
                    Float32=>NC_FLOAT,
                    Float64=>NC_DOUBLE)
 
@@ -16,7 +16,8 @@ nctype2string=@Compat.Dict(NC_BYTE=>"BYTE",
                    NC_SHORT=>"SHORT",
                    NC_INT=>"INT",
                    NC_FLOAT=>"FLOAT",
-                   NC_DOUBLE=>"DOUBLE")
+                   NC_DOUBLE=>"DOUBLE",
+                   NC_INT64=>"INT64")
 
 
 type NcDim
