@@ -1,5 +1,6 @@
 module NetCDF
 using Compat
+using Formatting
 using Base.Cartesian
 include("netcdf_c.jl")
 import Base.show
@@ -7,8 +8,8 @@ export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,
 NC_VERBOSE=false
 #Some constants
 
-
-jltype2nctype=@Compat.Dict(Int8=>NC_BYTE,
+function __init__()
+  global const jltype2nctype=@Compat.Dict(Int8=>NC_BYTE,
                    Int16=>NC_SHORT,
                    Int32=>NC_INT,
                    Int64=>NC_INT64,
@@ -16,7 +17,7 @@ jltype2nctype=@Compat.Dict(Int8=>NC_BYTE,
                    Float64=>NC_DOUBLE,
                    Uint8=>NC_CHAR)
 
-nctype2jltype=@Compat.Dict(NC_BYTE=>Int8,
+  global const nctype2jltype=@Compat.Dict(NC_BYTE=>Int8,
                     NC_SHORT=>Int16, 
                     NC_INT=>Int32,
                     NC_LONG=>Int64,
@@ -25,12 +26,13 @@ nctype2jltype=@Compat.Dict(NC_BYTE=>Int8,
                     NC_CHAR=>Uint8,
                     NC_STRING=>Ptr{Uint8})
 
-nctype2string=@Compat.Dict(NC_BYTE=>"BYTE",
+  global const nctype2string=@Compat.Dict(NC_BYTE=>"BYTE",
                    NC_SHORT=>"SHORT",
                    NC_INT=>"INT",
                    NC_FLOAT=>"FLOAT",
                    NC_DOUBLE=>"DOUBLE",
                    NC_INT64=>"INT64")
+end
 
 
 type NcDim
@@ -44,8 +46,7 @@ type NcDim
 end
 
 
-NcDim(name::String,dimlength::Integer;values::Union(AbstractArray,Number)=[],atts::Dict{Any,Any}=Dict{Any,Any}())=
-  begin
+function NcDim(name::String,dimlength::Integer;values::Union(AbstractArray,Number)=[],atts::Dict{Any,Any}=Dict{Any,Any}())
     (length(values)>0 && length(values)!=dimlength) ? error("Dimension value vector must have the same length as dimlength!") : nothing
     NcDim(-1,-1,-1,name,dimlength,values,atts)
   end
@@ -544,7 +545,7 @@ function nccreate(fil::String,varname::String,dims...;atts::Dict=Dict{Any,Any}()
     else
         nc = create(fil,v,gatts=gatts,mode=mode | NC_NOCLOBBER)
         for d in dim
-            ncwrite(d.vals,fil,d.name)
+            !isempty(d.vals) && ncwrite(d.vals,fil,d.name)
         end
     end
 end
@@ -552,8 +553,10 @@ end
 #show{T<:Any,N}(io::IO,a::NcVar{T,N})=println(io,a.name)
 #showcompact{T<:Any,N}(io::IO,a::NcVar{T,N})=println(io,a.name)
 function show(io::IO,nc::NcFile)
-    ncol,nrow=Base.tty_size()
-    hline = repeat("-",nrow)
+    nrow,ncol=Base.tty_size()
+    hline = repeat("-",ncol)
+    l1=div(ncol,3)
+    l2=2*l1
     println(io,"")
     println(io,"##### NetCDF File #####")
     println(io,"")
@@ -561,47 +564,54 @@ function show(io::IO,nc::NcFile)
     println(io,"")
     println(io,"##### Dimensions #####")
     println(io,"")
-    @printf(io,"%15s %8s","Name","Length\n")
+    println(io,tolen("Name",l2),tolen("Length",l1))
     println(hline)
   for d in nc.dim
-    @printf(io,"%15s %8d\n",d[2].name,d[2].dimlen)
+    println(io,tolen(d[2].name,l2),tolen(d[2].dimlen,l1))
   end
+  l1=div(ncol,5)
+  l2=2*l1
   println(io,"")
   println(io,"##### Variables #####")
   println(io,"")
-  @printf(io,"%20s%20s%20s\n","Name","Type","Dimensions")
-  println("---------------------------------------------------------------")
+  println(io,tolen("Name",l2),tolen("Type",l1),tolen("Dimensions",l2))
+  println(hline)
   for v in nc.vars
-    @printf(io,"%20s",v[2].name)
-    @printf(io,"%20s          ",nctype2string[Int(v[2].nctype)])
+    s1=string(tolen(v[2].name,l2))
+    s2=string(tolen(nctype2string[Int(v[2].nctype)],l1))
+    s3=""
     for d in v[2].dim
-      @printf(io,"%s, ",d.name)
+      s3=string(s3,d.name," ")
     end
-    @printf(io,"\n")
+    println(s1,s2,tolen(s3,l2))
   end
+  l1=div(ncol,4)
+  l2=2*l1
   println(io,"")
   println(io,"##### Attributes #####")
   println(io,"")
-  @printf(io,"%20s %20s %20s\n","Variable","Name","Value")
-  println("---------------------------------------------------------------")
+  println(io,tolen("Variable",l1),tolen("Name",l1),tolen("Value",l2))
+  println(hline)
   for a in nc.gatts
-    an=string(a[1])
-    av=string(a[2])
-    an=an[1:min(length(an),38)]
-    av=av[1:min(length(av),38)]
-    @printf(io,"%20s %20s %40s\n","global",an,av)
+    println(io,tolen("global",l1),tolen(a[1],l1),tolen(a[2],l2))
   end
   for v in nc.vars
     for a in v[2].atts
-      an=string(a[1])
-      av=string(a[2])
-      vn=
-      an=an[1:min(length(an),38)]
-      av=av[1:min(length(av),38)]
-      @printf(io,"%20s %20s %40s\n",v[2].name,an,av)
+      println(io,tolen(v[2].name,l1),tolen(a[1],l1),tolen(a[2],l2))
     end
   end
 
+end
+tolen(s::Any,l::Number)=tolen(string(s),round(Int,l))
+function tolen(s::AbstractString,l::Integer)
+  ls = length(s)
+  if ls<l
+    return rpad(s,l)
+  elseif ls>l
+    return string(s[1:prevind(s,l-1)],"..")
+  else
+    return s
+  end
 end
 
 end # Module

@@ -13,11 +13,8 @@ macro c(ret_type, func, arg_types, lib)
 end
 
 @osx_only begin
-    # Add Homebrew/lib to the DL_LOAD_PATH
-    const brew_prefix = Pkg.dir("Homebrew", "deps", "usr")
-    push!(Libdl.DL_LOAD_PATH, joinpath(brew_prefix, "lib"))
+    import Homebrew
 end
-ncname= @windows ? "netcdf" : "libnetcdf"
 
 const NC_NAT = 0
 const NC_BYTE = 1
