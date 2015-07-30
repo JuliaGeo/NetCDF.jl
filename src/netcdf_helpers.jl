@@ -273,7 +273,7 @@ function parsedimargs(dim)
         dimvals=Float64[a...]
         dimlen=length(dimvals)
       else
-        error ("Dimension values of $name defined more than once")
+        error("Dimension values of $name defined more than once")
       end
     elseif (typeof(a)<:Dict)
       #Assume attributes are given
