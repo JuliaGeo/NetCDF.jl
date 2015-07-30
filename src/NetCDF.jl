@@ -476,14 +476,14 @@ function nccreate(fil::String,varname::String,dims...;atts::Dict=Dict{Any,Any}()
     i=1
     for d in dim
       if (dcreate[i])
-        ncwrite(d.vals,fil,d.name)
+        !isempty(d.vals) && ncwrite(d.vals,fil,d.name)
       end
       i=i+1
     end
   else
     nc=create(fil,v,gatts=gatts,mode=mode | NC_NOCLOBBER)
     for d in dim
-      ncwrite(d.vals,fil,d.name)
+      !isempty(d.vals) && ncwrite(d.vals,fil,d.name)
     end
   end
 end

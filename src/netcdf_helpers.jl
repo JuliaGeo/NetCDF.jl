@@ -289,10 +289,10 @@ function finalizedim(dimlen,dimvals,dimatts,name)
     dimlen=1
   end
   if ((dimlen!=nothing) & (dimvals==nothing))
-    dimvals=Float64[i for i=1:dimlen]
+    dimvals=Float64[]
   end
   if (dimatts==nothing)
     dimatts=@Compat.AnyDict("missval"=>-9999)
   end
-  return(NcDim(name,dimvals,dimatts))
+  return(NcDim(name,dimlen,values=dimvals,atts=dimatts))
 end
