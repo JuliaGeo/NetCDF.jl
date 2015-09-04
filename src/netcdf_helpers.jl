@@ -212,8 +212,8 @@ end
 
 function preparestartcount(start,count,v::NcVar)
     
-    length(start) == v.ndim || error("Length of start ($(length(start))) must equal the number of variable dimensions ($(nc.vars[varname].ndim))")
-    length(count) == v.ndim || error("Length of start ($(length(count))) must equal the number of variable dimensions ($(nc.vars[varname].ndim))")
+    length(start) == v.ndim || error("Length of start ($(length(start))) must equal the number of variable dimensions ($(v.ndim))")
+    length(count) == v.ndim || error("Length of start ($(length(count))) must equal the number of variable dimensions ($(v.ndim))")
     
     p  = one(eltype(gcount))
     nd = length(start)
@@ -223,7 +223,7 @@ function preparestartcount(start,count,v::NcVar)
         gstart[ci] = start[i] - 1
         gcount[ci] = count[i] < 0 ? v.dim[i].dimlen - gstart[ci] : count[i]
         gstart[ci] < 0 && error("Start index must not be smaller than 1")
-        gstart[ci] + gcount[ci] > v.dim[i].dimlen && error("Start + Count exceeds dimension length in dimension $(nc.vars[varname].dim[i].name)")
+        gstart[ci] + gcount[ci] > v.dim[i].dimlen && error("Start + Count exceeds dimension length in dimension $(v.dim[i].name)")
         p=p*gcount[ci]
     end
     

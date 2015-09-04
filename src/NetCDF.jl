@@ -575,8 +575,14 @@ function create_dim(nc,dim)
     nc_redef(nc)
     nc_def_dim(nc.ncid,dim.name,dim.dimlen,dima);
     dim.dimid=dima[1];
+    if !isempty(dim.vals)
+      dumids[1]=dim.dimid
+      nc_def_var(nc.ncid,dim.name,NC_DOUBLE,1,dumids,vara)
+      nc.vars[dim.name]=NcVar{Float64,1}(nc.ncid,vara[1],1,0,NC_DOUBLE,dim.name,Int32[dim.dimid],NcDim[dim],Dict{Any,Any}(),-1)
+    end
     nc.dim[dim.name]=dim;
 end
+
 
 function create_var(nc,v,mode)
     
