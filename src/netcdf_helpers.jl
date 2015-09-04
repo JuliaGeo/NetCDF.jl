@@ -82,14 +82,12 @@ function nc_inq_dim(id::Integer,idim::Integer)
     # File to inquire dimension idimm returns dimension name and length
     nc_inq_dim(id,idim,namea,lengtha)
     name=bytestring(pointer(namea))
-    NC_VERBOSE ? println("name=",name," dimlen=",dimlen) : nothing
     return (name,lengtha[1])
 end
 
 function nc_inq_dimid(id::Integer,name::String)
     # Function to read dimension id for a given function name
     NetCDF.nc_inq_dimid(id,name,dimida)
-    NC_VERBOSE ? println("Successfully read from file") : nothing
     return dimida[1]
 end
 
@@ -111,8 +109,6 @@ end
 function nc_inq(id::Integer)
   # Inquire NetCDF file, return number of dims, number of variables, number of global attributes and number of unlimited dimensions
   nc_inq(id,ndima,nvara,ngatta,nunlimdimida)
-  NetCDF.NC_VERBOSE ? println("Successfully read from file") : nothing
-  NetCDF.NC_VERBOSE ? println("ndim=",ndim," nvar=",nvar," ngatt=",ngatt," numlimdimid=",nunlimdimid) : nothing
   return (ndima[1],nvara[1],ngatta[1],nunlimdimida[1])
 end
 
@@ -121,7 +117,6 @@ function nc_inq_attname(ncid::Integer,varid::Integer,attnum::Integer)
   # Get attribute name from attribute number
   nc_inq_attname(ncid,varid,attnum,namea)
   name=bytestring(pointer(namea))
-  NC_VERBOSE ? println("Successfully read attribute name $name") : nothing
   return name
 end
 
@@ -172,7 +167,6 @@ nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Float64})  = 
 function nc_inq_var(nc::NcFile,varid::Integer)
   # Inquire variables in the file
   nc_inq_var(nc.ncid,varid,namea,typea,ndima,dimida,natta)
-  NC_VERBOSE ? println("dimida=",dimida," ndimsa=",ndima) : nothing
   dimids=ndima[1]>0 ? dimida[1:ndima[1]] : Int32[]
   name=bytestring(pointer(namea))
   return (name,typea[1],dimids,natta[1],ndima[1],isdimvar(nc,name))
@@ -241,7 +235,9 @@ function preparestartcount(start,count,v::NcVar)
     
     return p
 end
-    
+   
+defaultstart(v::NcVar)=ones(Int,v.ndim)
+defaultcount(v::NcVar)=Int[i for i in size(v)] 
 
 function parsedimargs(dim)
   idim=0
