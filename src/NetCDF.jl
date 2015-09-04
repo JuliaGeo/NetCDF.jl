@@ -84,6 +84,8 @@ type NcVar{T,N} <: AbstractArray{T,N}
   compress::Int32
 end
 
+Base.convert{S,T,N}(::Type{NcVar{T,N}},v::NcVar{S,N})=NcVar{T,N}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress)
+
 """
     NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1});atts::Dict{Any,Any}=Dict{Any,Any}(),t::Union(DataType,Integer)=Float64,compress::Integer=-1)
 Here varname is the name of the variable, dimlist an array of type NcDim holding the dimensions associated to the variable, varattributes is a Dict 
@@ -138,14 +140,14 @@ type NcFile
   in_def_mode::Bool
 end
 #Define getindex method to retrieve a variable
-Base.getindex(nc::NcFile,i::AbstractString)=nc.vars[i]
+Base.getindex(nc::NcFile,i::AbstractString)=haskey(nc.vars,i) ? nc.vars[i] : error("NetCDF file $(nc.name) does not have a variable named $(i)")
 
 include("netcdf_helpers.jl")
 
 const currentNcFiles=Dict{ASCIIString,NcFile}()
 
 
-readvar!(nc::NcFile, varname::String, retvalsa::Array;start::Vector=ones(Uint,ndims(retvalsa)),count::Vector=size(retvalsa))=readvar!(nc[varname],retvalsa,start=start,count=count)
+readvar!(nc::NcFile, varname::String, retvalsa::Array;start::Vector=defaultstart(nc[varname]),count::Vector=defaultcount(nc[varname]))=readvar!(nc[varname],retvalsa,start=start,count=count)
 
 
 """
@@ -156,7 +158,7 @@ If only parts of the variable are to be read, you can provide optionally `start`
 length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension. 
 As a special case, setting a value in count to -1 will cause the function to read all values along this dimension. 
 """
-function readvar!(v::NcVar, retvalsa::Array;start::Vector=ones(Uint,ndims(retvalsa)),count::Vector=size(retvalsa))
+function readvar!(v::NcVar, retvalsa::Array;start::Vector=defaultstart(v),count::Vector=defaultcount(v))
 
   length(start) == v.ndim || error("Length of start ($(length(start))) must equal the number of variable dimensions ($(v.ndim))")
   length(count) == v.ndim || error("Length of start ($(length(count))) must equal the number of variable dimensions ($(v.ndim))")
@@ -172,19 +174,7 @@ end
 #readvar{T<:Integer}(nc::NcFile,varname::AbstractString,start::Array{T,1},count::Array{T,1})=readvar(nc,varname,start=start,count=count)
 
 
-#function readvar(nc::NcFile, varname::String;start::Vector=Array(Int,0),count::Vector=Array(Int,0))
-#    
-#    haskey(nc.vars,varname) || error("NetCDF file $(nc.name) does not have variable $varname")
-#    v=nc.vars[varname]
-#    
-#    if length(start)==0 start = ones(Int,v.ndim)   end
-#    if length(count)==0 
-#        count = Int[v.dim[i].dimlen - start[i] + 1  for i=1:v.ndim] 
-#    else
-#        count = Int[count[i] > 0 ? count[i] : v.dim[i].dimlen - start[i] + 1  for i=1:v.ndim]
-#    end
-#    readvar(v,start=start,count=count)
-#end
+readvar(nc::NcFile, varname::String;start::Vector=defaultstart(nc[varname]),count::Vector=defaultcount(nc[varname]))=readvar(nc[varname],start=start,count=count)
 
 """
 readvar{T,N}(v::NcVar{T,N};start::Vector=ones(Int,v.ndim),count::Vector=zeros(Int,v.ndim))
@@ -193,7 +183,7 @@ If only parts of the variable are to be read, you can provide optionally `start`
 length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension. 
 As a special case, setting a value in count to -1 will cause the function to read all values along this dimension. 
 """
-function readvar{T,N}(v::NcVar{T,N};start::Vector=ones(Int,v.ndim),count::Vector=zeros(Int,v.ndim))
+function readvar{T,N}(v::NcVar{T,N};start::Vector=defaultstart(v),count::Vector=defaultcount(v))
     retvalsa = Array(T,count...) 
     readvar!(v, retvalsa, start=start, count=count)
     return retvalsa
@@ -291,10 +281,7 @@ function ncputatt(nc::String,varname::String,atts::Dict)
   putatt(nc,varname,atts)
 end
 
-function putvar(nc::NcFile,varname::String,vals::Array;start=ones(Int,length(size(vals))),count=[size(vals)...])
-    haskey(nc.vars,varname) ? nothing : error("No variable $varname in file $nc.name")
-    putvar(nc.vars[varname],vals, start=start, count=count)
-end
+putvar(nc::NcFile,varname::String,vals::Array;start=ones(Int,length(size(vals))),count=[size(vals)...])=putvar(nc[varname],vals,start=start,count=count)
 
 """
     putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
@@ -521,7 +508,9 @@ As a special case, setting a value in count to -1 will cause the function to rea
 """
 function ncread{T<:Integer}(fil::String,vname::String;start::Array{T}=Array(Int,0),count::Array{T}=Array(Int,0))
   nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
-  x  = readvar(nc,vname,start,count)
+  length(start)==0 && (start=defaultstart(nc[vname]))
+  length(count)==0 && (count=defaultcount(nc[vname]))
+  x  = readvar(nc[vname],start=start,count=count)
   return x
 end
 ncread{T<:Integer}(fil::String,vname::String,start::Array{T,1},count::Array{T,1})=ncread(fil,vname,start=start,count=count)
