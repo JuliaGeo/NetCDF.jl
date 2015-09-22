@@ -35,13 +35,13 @@ const error_description=
 const funext = [  (Float64, "double","float64a"),
             (Float32, "float","float32a"),
             (Int32  , "int","int32a"),
-            (Uint8  , "text","uint8a"),
+            (UInt8  , "text","uint8a"),
             (Int8   , "schar","int8a"),
             (Int16  , "short","int16a"),
             (Int64  , "longlong","int64a")]
 
 const ida          = zeros(Int32,1)
-const namea        = zeros(Uint8,NC_MAX_NAME+1)
+const namea        = zeros(UInt8,NC_MAX_NAME+1)
 const lengtha      = zeros(Csize_t,1)
 const dimida       = zeros(Int32,NC_MAX_VAR_DIMS)
 const ndima        = zeros(Int32,1)
@@ -55,14 +55,14 @@ const dima         = zeros(Int32,1)
 const varida       = zeros(Int32,1)
 const vara         = zeros(Int32,1);
 const dumids       = zeros(Int32,NC_MAX_DIMS)
-const gstart       = zeros(Uint,NC_MAX_DIMS)
-const gcount       = zeros(Uint,NC_MAX_DIMS)
+const gstart       = zeros(UInt,NC_MAX_DIMS)
+const gcount       = zeros(UInt,NC_MAX_DIMS)
 
 for (t,ending,aname) in funext 
     @eval const $(symbol(aname)) = zeros($t,1)
 end
 
-function nc_open(fname::String,omode::Uint16)
+function nc_open(fname::AbstractString,omode::UInt16)
     # Function to open file fname, returns a NetCDF file ID
     nc_open(fname,omode,ida)
     return ida[1]
@@ -80,7 +80,7 @@ function nc_inq_dim(id::Integer,idim::Integer)
     return (name,lengtha[1])
 end
 
-function nc_inq_dimid(id::Integer,name::String)
+function nc_inq_dimid(id::Integer,name::AbstractString)
     # Function to read dimension id for a given function name
     NetCDF.nc_inq_dimid(id,name,dimida)
     return dimida[1]
@@ -124,38 +124,38 @@ function nc_get_att(ncid::Integer,varid::Integer,attnum::Integer)
 end
 
 #Define methods for writing attributes
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Int8})    = nc_put_att_schar(ncid,varid,name,NC_BYTE,length(val),val)
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Int16})   = nc_put_att_short(ncid,varid,name,NC_SHORT,length(val),val)
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Int32})   = nc_put_att_int(ncid,varid,name,NC_INT,length(val),val)
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Int64})   = nc_put_att_long(ncid,varid,name,NC_LONG,length(val),val)
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Float32}) = nc_put_att_float(ncid,varid,name,NC_FLOAT,length(val),val)
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Float64}) = nc_put_att_double(ncid,varid,name,NC_DOUBLE,length(val),val)
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::String)         = nc_put_att_text(ncid,varid,name,length(val)+1,val)
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::Array{Any})     = error("Writing attribute array of type Any is not possible") 
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int8})    = nc_put_att_schar(ncid,varid,name,NC_BYTE,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int16})   = nc_put_att_short(ncid,varid,name,NC_SHORT,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int32})   = nc_put_att_int(ncid,varid,name,NC_INT,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int64})   = nc_put_att_long(ncid,varid,name,NC_LONG,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Float32}) = nc_put_att_float(ncid,varid,name,NC_FLOAT,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Float64}) = nc_put_att_double(ncid,varid,name,NC_DOUBLE,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::AbstractString)         = nc_put_att_text(ncid,varid,name,length(val)+1,val)
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Any})     = error("Writing attribute array of type Any is not possible") 
 
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::Int8) = begin int8a[1] = val; nc_put_att(ncid,varid,name,int8a) end
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::Int16) = begin int16a[1] = val; nc_put_att(ncid,varid,name,int16a) end
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::Int32) = begin int32a[1] = val; nc_put_att(ncid,varid,name,int32a) end
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::Int64) = begin int64a[1] = val; nc_put_att(ncid,varid,name,int64a) end
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::Float32) = begin float32a[1] = val; nc_put_att(ncid,varid,name,float32a) end
-nc_put_att(ncid::Integer,varid::Integer,name::String,val::Float64) = begin float64a[1] = val; nc_put_att(ncid,varid,name,float64a) end
-nc_put_att(ncid::Integer,varid::Integer,name::String,val) = error("Writing attribute of type $(typeof(val)) is currently not possible.") 
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Int8) = begin int8a[1] = val; nc_put_att(ncid,varid,name,int8a) end
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Int16) = begin int16a[1] = val; nc_put_att(ncid,varid,name,int16a) end
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Int32) = begin int32a[1] = val; nc_put_att(ncid,varid,name,int32a) end
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Int64) = begin int64a[1] = val; nc_put_att(ncid,varid,name,int64a) end
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Float32) = begin float32a[1] = val; nc_put_att(ncid,varid,name,float32a) end
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Float64) = begin float64a[1] = val; nc_put_att(ncid,varid,name,float64a) end
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val) = error("Writing attribute of type $(typeof(val)) is currently not possible.") 
 
 
 
-function nc_get_att(ncid::Integer,varid::Integer,name::String,attype::Integer,attlen::Integer)
+function nc_get_att(ncid::Integer,varid::Integer,name::AbstractString,attype::Integer,attlen::Integer)
     valsa=Array(nctype2jltype[attype],attlen)
     nc_get_att!(ncid,varid,name,valsa)
 end
 
-nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Uint8}) = begin nc_get_att_text(ncid,varid,name,valsa); ascii(valsa) end
-nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Ptr{Uint8}}) = begin nc_get_att_string(ncid,varid,name,valsa); [bytestring(pointer(valsa[i])) for i=1:length(valsa)] end
-nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Int8})  = begin nc_get_att_schar(ncid,varid,name,valsa); valsa end
-nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Int16})  = begin nc_get_att_short(ncid,varid,name,valsa); valsa end
-nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Int32})  = begin nc_get_att_int(ncid,varid,name,valsa); valsa end
-nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Int64})  = begin nc_get_att_long(ncid,varid,name,valsa); valsa end
-nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Float32})  = begin nc_get_att_float(ncid,varid,name,valsa); valsa end
-nc_get_att!(ncid::Integer,varid::Integer,name::String,valsa::Array{Float64})  = begin nc_get_att_double(ncid,varid,name,valsa); valsa end
+nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{UInt8}) = begin nc_get_att_text(ncid,varid,name,valsa); ascii(valsa) end
+nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Ptr{UInt8}}) = begin nc_get_att_string(ncid,varid,name,valsa); [bytestring(pointer(valsa[i])) for i=1:length(valsa)] end
+nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int8})  = begin nc_get_att_schar(ncid,varid,name,valsa); valsa end
+nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int16})  = begin nc_get_att_short(ncid,varid,name,valsa); valsa end
+nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int32})  = begin nc_get_att_int(ncid,varid,name,valsa); valsa end
+nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int64})  = begin nc_get_att_long(ncid,varid,name,valsa); valsa end
+nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float32})  = begin nc_get_att_float(ncid,varid,name,valsa); valsa end
+nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float64})  = begin nc_get_att_double(ncid,varid,name,valsa); valsa end
 
 
 function nc_inq_var(nc::NcFile,varid::Integer)
@@ -192,7 +192,7 @@ function getatts_all(ncid::Integer,varid::Integer,natts::Integer)
   atts=Dict{Any,Any}()
   for attnum=0:natts-1
     attname,attval=nc_get_att(ncid,varid,attnum)
-    if ((length(attval)==1) & !(typeof(attval)<:String))
+    if ((length(attval)==1) & !(typeof(attval)<:AbstractString))
       attval=attval[1]
     end
     atts[attname]=attval
@@ -242,7 +242,7 @@ function parsedimargs(dim)
   #Determine number of dimensions
   ndim=0
   for a in dim
-    if (typeof(a)<:String)
+    if (typeof(a)<:AbstractString)
       ndim=ndim+1
     end
     NC_VERBOSE ? println(a) : nothing
@@ -251,7 +251,7 @@ function parsedimargs(dim)
   idim=1
   for a in dim
     NC_VERBOSE ? println(a,idim) : nothing
-    if (typeof(a)<:String)
+    if (typeof(a)<:AbstractString)
       #Assume a name is given
       #first create an NcDim object from the last dim
       if (name!=nothing)
