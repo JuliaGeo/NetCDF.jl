@@ -352,7 +352,15 @@ for (t,ending,arname) in funext
     @eval nc_put_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},val::$t)=begin $(arsym)[1]=val; $fname1(ncid,varid,start,$(arsym)) end
 end
 
+function nc_put_vara_x(ncid::Integer, varid::Integer, start, count,vals::Array{String})
+  vals_p=map(x->pointer(x.data),vals)
+  nc_put_vara_string(ncid,varid,start,count,vals_p)
+end
 
+function nc_put_var1_x(ncid::Integer,varid::Integer,start::Vector{Uint},val::String)
+  val_p=fill(pointer(val.data),1)
+  nc_put_var1_string(ncid,varid,start,val_p)
+end
 
 "Synchronizes the changes made to the file and writes changes to the disk. If the argument is omitted, all open files are synchronized. "
 function ncsync()
