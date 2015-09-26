@@ -4,7 +4,7 @@ using Formatting
 using Base.Cartesian
 include("netcdf_c.jl")
 import Base.show
-export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE, ncgetatt,NC_NOWRITE,NC_WRITE,NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4
+export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE,NC_STRING,ncgetatt,NC_NOWRITE,NC_WRITE,NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4
 NC_VERBOSE=false
 #Some constants
 
@@ -15,7 +15,8 @@ function __init__()
                    Int64=>NC_INT64,
                    Float32=>NC_FLOAT,
                    Float64=>NC_DOUBLE,
-                   Uint8=>NC_CHAR)
+                   Uint8=>NC_CHAR,
+                   String=>NC_STRING)
 
   global const nctype2jltype=@Compat.Dict(NC_BYTE=>Int8,
                     NC_SHORT=>Int16, 
@@ -24,14 +25,15 @@ function __init__()
                     NC_FLOAT=>Float32,
                     NC_DOUBLE=>Float64,
                     NC_CHAR=>Uint8,
-                    NC_STRING=>Ptr{Uint8})
+                    NC_STRING=>String)
 
   global const nctype2string=@Compat.Dict(NC_BYTE=>"BYTE",
                    NC_SHORT=>"SHORT",
                    NC_INT=>"INT",
                    NC_FLOAT=>"FLOAT",
                    NC_DOUBLE=>"DOUBLE",
-                   NC_INT64=>"INT64")
+                   NC_INT64=>"INT64",
+                   NC_STRING=>"STRING")
 end
 
 
@@ -247,6 +249,23 @@ for (t,ending,arname) in funext
     @eval nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{Uint},::Type{$t})=begin $fname1(ncid,varid,start,$(arsym)); $(arsym)[1] end
 end
 
+function nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{String})
+  retvalsa_c=Array(Ptr{Uint8},length(retvalsa))
+  nc_get_vara_string(ncid,varid,start,count,retvalsa_c)
+  for i=1:length(retvalsa)
+    retvalsa[i]=bytestring(retvalsa_c[i])
+  end
+  nc_free_string(length(retvalsa_c),retvalsa_c)
+  retvalsa
+end
+
+function nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{Uint},::Type{String})
+  retvalsa_c=Array(Ptr{Uint8},1)
+  nc_get_var1_string(ncid,varid,start,retvalsa_c)
+  retval=bytestring(retvalsa_c[1])
+  nc_free_string(1,retvalsa_c)
+  retval
+end
 
 function putatt(ncid::Integer,varid::Integer,atts::Dict)
   for a in atts

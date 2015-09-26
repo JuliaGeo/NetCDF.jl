@@ -14,6 +14,7 @@ const NC_FLOAT=5
 const NC_LONG=4
 const NC_INT64=10
 const NC_DOUBLE =6
+const NC_STRING=12
 const NC_GLOBAL=-1
 const NC_CLOBBER=0x0000
 const NC_NOCLOBBER=0x0004
