@@ -3,25 +3,25 @@
 macro c(ret_type, func, arg_types, lib)
     local args_in = Any[ symbol(string('a',x)) for x in 1:length(arg_types.args) ]
     quote
-        function $(esc(func))($(args_in...))  
-            retval=ccall( ($(string(func)), $(Expr(:quote, lib)) ), $ret_type, $arg_types, $(args_in...) )
-            if retval!=NC_NOERR 
+        function $(esc(func))($(args_in...))
+            retval=ccall( Libdl.dlsym(libnc,$(Expr(:quote,func))), $ret_type, $arg_types, $(args_in...) )
+            if retval!=NC_NOERR
                 haskey(error_description,retval) ? error("NetCDF library error: $(error_description[retval])") : error("NetCDF library error: $(retval)")
             end
         end
     end
 end
 
-@osx_only begin
-    import Homebrew
-end
+using BinDeps
+@BinDeps.load_dependencies [:libnetcdf]
+const libnc = Libdl.dlopen(libnetcdf[1][2])
 
 const NC_NAT = 0
 const NC_BYTE = 1
 const NC_CHAR = 2
 const NC_SHORT = 3
 const NC_INT = 4
-const NC_LONG = 
+const NC_LONG =
 const NC_FLOAT = 5
 const NC_DOUBLE = 6
 const NC_UBYTE = 7
@@ -30,7 +30,7 @@ const NC_UINT = 9
 const NC_INT64 = 10
 const NC_UINT64 = 11
 const NC_STRING = 12
-const NC_MAX_ATOMIC_TYPE = 
+const NC_MAX_ATOMIC_TYPE =
 const NC_VLEN = 13
 const NC_OPAQUE = 14
 const NC_ENUM = 15
@@ -168,60 +168,60 @@ const NC_COLLECTIVE = 1
 typealias nc_type Cint
 typealias nclong Cint
 
-@c Ptr{Uint8} nc_inq_libvers () libnetcdf
-@c Ptr{Uint8} nc_strerror (Cint,) libnetcdf
-@c Cint nc__create (Ptr{Uint8}, Cint, Csize_t, Ptr{Csize_t}, Ptr{Cint}) libnetcdf
-@c Cint nc_create (Ptr{Uint8}, Cint, Ptr{Cint}) libnetcdf
-@c Cint nc__open (Ptr{Uint8}, Cint, Ptr{Csize_t}, Ptr{Cint}) libnetcdf
-@c Cint nc_open (Ptr{Uint8}, Cint, Ptr{Cint}) libnetcdf
-@c Cint nc_inq_path (Cint, Ptr{Csize_t}, Ptr{Uint8}) libnetcdf
+@c Ptr{UInt8} nc_inq_libvers () libnetcdf
+@c Ptr{UInt8} nc_strerror (Cint,) libnetcdf
+@c Cint nc__create (Ptr{UInt8}, Cint, Csize_t, Ptr{Csize_t}, Ptr{Cint}) libnetcdf
+@c Cint nc_create (Ptr{UInt8}, Cint, Ptr{Cint}) libnetcdf
+@c Cint nc__open (Ptr{UInt8}, Cint, Ptr{Csize_t}, Ptr{Cint}) libnetcdf
+@c Cint nc_open (Ptr{UInt8}, Cint, Ptr{Cint}) libnetcdf
+@c Cint nc_inq_path (Cint, Ptr{Csize_t}, Ptr{UInt8}) libnetcdf
 @c Cint nc_var_par_access (Cint, Cint, Cint) libnetcdf
-@c Cint nc_inq_ncid (Cint, Ptr{Uint8}, Ptr{Cint}) libnetcdf
+@c Cint nc_inq_ncid (Cint, Ptr{UInt8}, Ptr{Cint}) libnetcdf
 @c Cint nc_inq_grps (Cint, Ptr{Cint}, Ptr{Cint}) libnetcdf
-@c Cint nc_inq_grpname (Cint, Ptr{Uint8}) libnetcdf
-@c Cint nc_inq_grpname_full (Cint, Ptr{Csize_t}, Ptr{Uint8}) libnetcdf
+@c Cint nc_inq_grpname (Cint, Ptr{UInt8}) libnetcdf
+@c Cint nc_inq_grpname_full (Cint, Ptr{Csize_t}, Ptr{UInt8}) libnetcdf
 @c Cint nc_inq_grpname_len (Cint, Ptr{Csize_t}) libnetcdf
 @c Cint nc_inq_grp_parent (Cint, Ptr{Cint}) libnetcdf
-@c Cint nc_inq_grp_ncid (Cint, Ptr{Uint8}, Ptr{Cint}) libnetcdf
-@c Cint nc_inq_grp_full_ncid (Cint, Ptr{Uint8}, Ptr{Cint}) libnetcdf
+@c Cint nc_inq_grp_ncid (Cint, Ptr{UInt8}, Ptr{Cint}) libnetcdf
+@c Cint nc_inq_grp_full_ncid (Cint, Ptr{UInt8}, Ptr{Cint}) libnetcdf
 @c Cint nc_inq_varids (Cint, Ptr{Cint}, Ptr{Cint}) libnetcdf
 @c Cint nc_inq_dimids (Cint, Ptr{Cint}, Ptr{Cint}, Cint) libnetcdf
 @c Cint nc_inq_typeids (Cint, Ptr{Cint}, Ptr{Cint}) libnetcdf
 @c Cint nc_inq_type_equal (Cint, nc_type, Cint, nc_type, Ptr{Cint}) libnetcdf
-@c Cint nc_def_grp (Cint, Ptr{Uint8}, Ptr{Cint}) libnetcdf
-@c Cint nc_def_compound (Cint, Csize_t, Ptr{Uint8}, Ptr{nc_type}) libnetcdf
-@c Cint nc_insert_compound (Cint, nc_type, Ptr{Uint8}, Csize_t, nc_type) libnetcdf
-@c Cint nc_insert_array_compound (Cint, nc_type, Ptr{Uint8}, Csize_t, nc_type, Cint, Ptr{Cint}) libnetcdf
-@c Cint nc_inq_type (Cint, nc_type, Ptr{Uint8}, Ptr{Csize_t}) libnetcdf
-@c Cint nc_inq_typeid (Cint, Ptr{Uint8}, Ptr{nc_type}) libnetcdf
-@c Cint nc_inq_compound (Cint, nc_type, Ptr{Uint8}, Ptr{Csize_t}, Ptr{Csize_t}) libnetcdf
-@c Cint nc_inq_compound_name (Cint, nc_type, Ptr{Uint8}) libnetcdf
+@c Cint nc_def_grp (Cint, Ptr{UInt8}, Ptr{Cint}) libnetcdf
+@c Cint nc_def_compound (Cint, Csize_t, Ptr{UInt8}, Ptr{nc_type}) libnetcdf
+@c Cint nc_insert_compound (Cint, nc_type, Ptr{UInt8}, Csize_t, nc_type) libnetcdf
+@c Cint nc_insert_array_compound (Cint, nc_type, Ptr{UInt8}, Csize_t, nc_type, Cint, Ptr{Cint}) libnetcdf
+@c Cint nc_inq_type (Cint, nc_type, Ptr{UInt8}, Ptr{Csize_t}) libnetcdf
+@c Cint nc_inq_typeid (Cint, Ptr{UInt8}, Ptr{nc_type}) libnetcdf
+@c Cint nc_inq_compound (Cint, nc_type, Ptr{UInt8}, Ptr{Csize_t}, Ptr{Csize_t}) libnetcdf
+@c Cint nc_inq_compound_name (Cint, nc_type, Ptr{UInt8}) libnetcdf
 @c Cint nc_inq_compound_size (Cint, nc_type, Ptr{Csize_t}) libnetcdf
 @c Cint nc_inq_compound_nfields (Cint, nc_type, Ptr{Csize_t}) libnetcdf
-@c Cint nc_inq_compound_field (Cint, nc_type, Cint, Ptr{Uint8}, Ptr{Csize_t}, Ptr{nc_type}, Ptr{Cint}, Ptr{Cint}) libnetcdf
-@c Cint nc_inq_compound_fieldname (Cint, nc_type, Cint, Ptr{Uint8}) libnetcdf
-@c Cint nc_inq_compound_fieldindex (Cint, nc_type, Ptr{Uint8}, Ptr{Cint}) libnetcdf
+@c Cint nc_inq_compound_field (Cint, nc_type, Cint, Ptr{UInt8}, Ptr{Csize_t}, Ptr{nc_type}, Ptr{Cint}, Ptr{Cint}) libnetcdf
+@c Cint nc_inq_compound_fieldname (Cint, nc_type, Cint, Ptr{UInt8}) libnetcdf
+@c Cint nc_inq_compound_fieldindex (Cint, nc_type, Ptr{UInt8}, Ptr{Cint}) libnetcdf
 @c Cint nc_inq_compound_fieldoffset (Cint, nc_type, Cint, Ptr{Csize_t}) libnetcdf
 @c Cint nc_inq_compound_fieldtype (Cint, nc_type, Cint, Ptr{nc_type}) libnetcdf
 @c Cint nc_inq_compound_fieldndims (Cint, nc_type, Cint, Ptr{Cint}) libnetcdf
 @c Cint nc_inq_compound_fielddim_sizes (Cint, nc_type, Cint, Ptr{Cint}) libnetcdf
-@c Cint nc_def_vlen (Cint, Ptr{Uint8}, nc_type, Ptr{nc_type}) libnetcdf
-@c Cint nc_inq_vlen (Cint, nc_type, Ptr{Uint8}, Ptr{Csize_t}, Ptr{nc_type}) libnetcdf
+@c Cint nc_def_vlen (Cint, Ptr{UInt8}, nc_type, Ptr{nc_type}) libnetcdf
+@c Cint nc_inq_vlen (Cint, nc_type, Ptr{UInt8}, Ptr{Csize_t}, Ptr{nc_type}) libnetcdf
 @c Cint nc_free_vlen (Ptr{nc_vlen_t},) libnetcdf
 @c Cint nc_free_vlens (Csize_t, Ptr{nc_vlen_t}) libnetcdf
 @c Cint nc_put_vlen_element (Cint, Cint, Ptr{Void}, Csize_t, Ptr{Void}) libnetcdf
 @c Cint nc_get_vlen_element (Cint, Cint, Ptr{Void}, Ptr{Csize_t}, Ptr{Void}) libnetcdf
-@c Cint nc_free_string (Csize_t, Ptr{Ptr{Uint8}}) libnetcdf
-@c Cint nc_inq_user_type (Cint, nc_type, Ptr{Uint8}, Ptr{Csize_t}, Ptr{nc_type}, Ptr{Csize_t}, Ptr{Cint}) libnetcdf
-@c Cint nc_put_att (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Void}) libnetcdf
-@c Cint nc_get_att (Cint, Cint, Ptr{Uint8}, Ptr{Void}) libnetcdf
-@c Cint nc_def_enum (Cint, nc_type, Ptr{Uint8}, Ptr{nc_type}) libnetcdf
-@c Cint nc_insert_enum (Cint, nc_type, Ptr{Uint8}, Ptr{Void}) libnetcdf
-@c Cint nc_inq_enum (Cint, nc_type, Ptr{Uint8}, Ptr{nc_type}, Ptr{Csize_t}, Ptr{Csize_t}) libnetcdf
-@c Cint nc_inq_enum_member (Cint, nc_type, Cint, Ptr{Uint8}, Ptr{Void}) libnetcdf
-@c Cint nc_inq_enum_ident (Cint, nc_type, Clonglong, Ptr{Uint8}) libnetcdf
-@c Cint nc_def_opaque (Cint, Csize_t, Ptr{Uint8}, Ptr{nc_type}) libnetcdf
-@c Cint nc_inq_opaque (Cint, nc_type, Ptr{Uint8}, Ptr{Csize_t}) libnetcdf
+@c Cint nc_free_string (Csize_t, Ptr{Ptr{UInt8}}) libnetcdf
+@c Cint nc_inq_user_type (Cint, nc_type, Ptr{UInt8}, Ptr{Csize_t}, Ptr{nc_type}, Ptr{Csize_t}, Ptr{Cint}) libnetcdf
+@c Cint nc_put_att (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Void}) libnetcdf
+@c Cint nc_get_att (Cint, Cint, Ptr{UInt8}, Ptr{Void}) libnetcdf
+@c Cint nc_def_enum (Cint, nc_type, Ptr{UInt8}, Ptr{nc_type}) libnetcdf
+@c Cint nc_insert_enum (Cint, nc_type, Ptr{UInt8}, Ptr{Void}) libnetcdf
+@c Cint nc_inq_enum (Cint, nc_type, Ptr{UInt8}, Ptr{nc_type}, Ptr{Csize_t}, Ptr{Csize_t}) libnetcdf
+@c Cint nc_inq_enum_member (Cint, nc_type, Cint, Ptr{UInt8}, Ptr{Void}) libnetcdf
+@c Cint nc_inq_enum_ident (Cint, nc_type, Clonglong, Ptr{UInt8}) libnetcdf
+@c Cint nc_def_opaque (Cint, Csize_t, Ptr{UInt8}, Ptr{nc_type}) libnetcdf
+@c Cint nc_inq_opaque (Cint, nc_type, Ptr{UInt8}, Ptr{Csize_t}) libnetcdf
 @c Cint nc_put_var (Cint, Cint, Ptr{Void}) libnetcdf
 @c Cint nc_get_var (Cint, Cint, Ptr{Void}) libnetcdf
 @c Cint nc_put_var1 (Cint, Cint, Ptr{Csize_t}, Ptr{Void}) libnetcdf
@@ -262,62 +262,62 @@ typealias nclong Cint
 @c Cint nc_inq_unlimdim (Cint, Ptr{Cint}) libnetcdf
 @c Cint nc_inq_unlimdims (Cint, Ptr{Cint}, Ptr{Cint}) libnetcdf
 @c Cint nc_inq_format (Cint, Ptr{Cint}) libnetcdf
-@c Cint nc_def_dim (Cint, Ptr{Uint8}, Csize_t, Ptr{Cint}) libnetcdf
-@c Cint nc_inq_dimid (Cint, Ptr{Uint8}, Ptr{Cint}) libnetcdf
-@c Cint nc_inq_dim (Cint, Cint, Ptr{Uint8}, Ptr{Csize_t}) libnetcdf
-@c Cint nc_inq_dimname (Cint, Cint, Ptr{Uint8}) libnetcdf
+@c Cint nc_def_dim (Cint, Ptr{UInt8}, Csize_t, Ptr{Cint}) libnetcdf
+@c Cint nc_inq_dimid (Cint, Ptr{UInt8}, Ptr{Cint}) libnetcdf
+@c Cint nc_inq_dim (Cint, Cint, Ptr{UInt8}, Ptr{Csize_t}) libnetcdf
+@c Cint nc_inq_dimname (Cint, Cint, Ptr{UInt8}) libnetcdf
 @c Cint nc_inq_dimlen (Cint, Cint, Ptr{Csize_t}) libnetcdf
-@c Cint nc_rename_dim (Cint, Cint, Ptr{Uint8}) libnetcdf
-@c Cint nc_inq_att (Cint, Cint, Ptr{Uint8}, Ptr{nc_type}, Ptr{Csize_t}) libnetcdf
-@c Cint nc_inq_attid (Cint, Cint, Ptr{Uint8}, Ptr{Cint}) libnetcdf
-@c Cint nc_inq_atttype (Cint, Cint, Ptr{Uint8}, Ptr{nc_type}) libnetcdf
-@c Cint nc_inq_attlen (Cint, Cint, Ptr{Uint8}, Ptr{Csize_t}) libnetcdf
-@c Cint nc_inq_attname (Cint, Cint, Cint, Ptr{Uint8}) libnetcdf
-@c Cint nc_copy_att (Cint, Cint, Ptr{Uint8}, Cint, Cint) libnetcdf
-@c Cint nc_rename_att (Cint, Cint, Ptr{Uint8}, Ptr{Uint8}) libnetcdf
-@c Cint nc_del_att (Cint, Cint, Ptr{Uint8}) libnetcdf
-@c Cint nc_put_att_text (Cint, Cint, Ptr{Uint8}, Csize_t, Ptr{Uint8}) libnetcdf
-@c Cint nc_get_att_text (Cint, Cint, Ptr{Uint8}, Ptr{Uint8}) libnetcdf
-@c Cint nc_put_att_uchar (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Cuchar}) libnetcdf
-@c Cint nc_get_att_uchar (Cint, Cint, Ptr{Uint8}, Ptr{Cuchar}) libnetcdf
-@c Cint nc_put_att_schar (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Int8}) libnetcdf
-@c Cint nc_get_att_schar (Cint, Cint, Ptr{Uint8}, Ptr{Int8}) libnetcdf
-@c Cint nc_put_att_short (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Int16}) libnetcdf
-@c Cint nc_get_att_short (Cint, Cint, Ptr{Uint8}, Ptr{Int16}) libnetcdf
-@c Cint nc_put_att_int (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Cint}) libnetcdf
-@c Cint nc_get_att_int (Cint, Cint, Ptr{Uint8}, Ptr{Cint}) libnetcdf
-@c Cint nc_put_att_long (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Clong}) libnetcdf
-@c Cint nc_get_att_long (Cint, Cint, Ptr{Uint8}, Ptr{Clong}) libnetcdf
-@c Cint nc_put_att_float (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Cfloat}) libnetcdf
-@c Cint nc_get_att_float (Cint, Cint, Ptr{Uint8}, Ptr{Cfloat}) libnetcdf
-@c Cint nc_put_att_double (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Cdouble}) libnetcdf
-@c Cint nc_get_att_double (Cint, Cint, Ptr{Uint8}, Ptr{Cdouble}) libnetcdf
-@c Cint nc_put_att_ushort (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Uint16}) libnetcdf
-@c Cint nc_get_att_ushort (Cint, Cint, Ptr{Uint8}, Ptr{Uint16}) libnetcdf
-@c Cint nc_put_att_uint (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Uint32}) libnetcdf
-@c Cint nc_get_att_uint (Cint, Cint, Ptr{Uint8}, Ptr{Uint32}) libnetcdf
-@c Cint nc_put_att_longlong (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Clonglong}) libnetcdf
-@c Cint nc_get_att_longlong (Cint, Cint, Ptr{Uint8}, Ptr{Clonglong}) libnetcdf
-@c Cint nc_put_att_ulonglong (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Culonglong}) libnetcdf
-@c Cint nc_get_att_ulonglong (Cint, Cint, Ptr{Uint8}, Ptr{Culonglong}) libnetcdf
-@c Cint nc_put_att_string (Cint, Cint, Ptr{Uint8}, Csize_t, Ptr{Ptr{Uint8}}) libnetcdf
-@c Cint nc_get_att_string (Cint, Cint, Ptr{Uint8}, Ptr{Ptr{Uint8}}) libnetcdf
-@c Cint nc_def_var (Cint, Ptr{Uint8}, nc_type, Cint, Ptr{Cint}, Ptr{Cint}) libnetcdf
-@c Cint nc_inq_var (Cint, Cint, Ptr{Uint8}, Ptr{nc_type}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}) libnetcdf
-@c Cint nc_inq_varid (Cint, Ptr{Uint8}, Ptr{Cint}) libnetcdf
-@c Cint nc_inq_varname (Cint, Cint, Ptr{Uint8}) libnetcdf
+@c Cint nc_rename_dim (Cint, Cint, Ptr{UInt8}) libnetcdf
+@c Cint nc_inq_att (Cint, Cint, Ptr{UInt8}, Ptr{nc_type}, Ptr{Csize_t}) libnetcdf
+@c Cint nc_inq_attid (Cint, Cint, Ptr{UInt8}, Ptr{Cint}) libnetcdf
+@c Cint nc_inq_atttype (Cint, Cint, Ptr{UInt8}, Ptr{nc_type}) libnetcdf
+@c Cint nc_inq_attlen (Cint, Cint, Ptr{UInt8}, Ptr{Csize_t}) libnetcdf
+@c Cint nc_inq_attname (Cint, Cint, Cint, Ptr{UInt8}) libnetcdf
+@c Cint nc_copy_att (Cint, Cint, Ptr{UInt8}, Cint, Cint) libnetcdf
+@c Cint nc_rename_att (Cint, Cint, Ptr{UInt8}, Ptr{UInt8}) libnetcdf
+@c Cint nc_del_att (Cint, Cint, Ptr{UInt8}) libnetcdf
+@c Cint nc_put_att_text (Cint, Cint, Ptr{UInt8}, Csize_t, Ptr{UInt8}) libnetcdf
+@c Cint nc_get_att_text (Cint, Cint, Ptr{UInt8}, Ptr{UInt8}) libnetcdf
+@c Cint nc_put_att_uchar (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Cuchar}) libnetcdf
+@c Cint nc_get_att_uchar (Cint, Cint, Ptr{UInt8}, Ptr{Cuchar}) libnetcdf
+@c Cint nc_put_att_schar (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Int8}) libnetcdf
+@c Cint nc_get_att_schar (Cint, Cint, Ptr{UInt8}, Ptr{Int8}) libnetcdf
+@c Cint nc_put_att_short (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Int16}) libnetcdf
+@c Cint nc_get_att_short (Cint, Cint, Ptr{UInt8}, Ptr{Int16}) libnetcdf
+@c Cint nc_put_att_int (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Cint}) libnetcdf
+@c Cint nc_get_att_int (Cint, Cint, Ptr{UInt8}, Ptr{Cint}) libnetcdf
+@c Cint nc_put_att_long (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Clong}) libnetcdf
+@c Cint nc_get_att_long (Cint, Cint, Ptr{UInt8}, Ptr{Clong}) libnetcdf
+@c Cint nc_put_att_float (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Cfloat}) libnetcdf
+@c Cint nc_get_att_float (Cint, Cint, Ptr{UInt8}, Ptr{Cfloat}) libnetcdf
+@c Cint nc_put_att_double (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Cdouble}) libnetcdf
+@c Cint nc_get_att_double (Cint, Cint, Ptr{UInt8}, Ptr{Cdouble}) libnetcdf
+@c Cint nc_put_att_ushort (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{UInt16}) libnetcdf
+@c Cint nc_get_att_ushort (Cint, Cint, Ptr{UInt8}, Ptr{UInt16}) libnetcdf
+@c Cint nc_put_att_uint (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{UInt32}) libnetcdf
+@c Cint nc_get_att_uint (Cint, Cint, Ptr{UInt8}, Ptr{UInt32}) libnetcdf
+@c Cint nc_put_att_longlong (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Clonglong}) libnetcdf
+@c Cint nc_get_att_longlong (Cint, Cint, Ptr{UInt8}, Ptr{Clonglong}) libnetcdf
+@c Cint nc_put_att_ulonglong (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Culonglong}) libnetcdf
+@c Cint nc_get_att_ulonglong (Cint, Cint, Ptr{UInt8}, Ptr{Culonglong}) libnetcdf
+@c Cint nc_put_att_string (Cint, Cint, Ptr{UInt8}, Csize_t, Ptr{Ptr{UInt8}}) libnetcdf
+@c Cint nc_get_att_string (Cint, Cint, Ptr{UInt8}, Ptr{Ptr{UInt8}}) libnetcdf
+@c Cint nc_def_var (Cint, Ptr{UInt8}, nc_type, Cint, Ptr{Cint}, Ptr{Cint}) libnetcdf
+@c Cint nc_inq_var (Cint, Cint, Ptr{UInt8}, Ptr{nc_type}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}) libnetcdf
+@c Cint nc_inq_varid (Cint, Ptr{UInt8}, Ptr{Cint}) libnetcdf
+@c Cint nc_inq_varname (Cint, Cint, Ptr{UInt8}) libnetcdf
 @c Cint nc_inq_vartype (Cint, Cint, Ptr{nc_type}) libnetcdf
 @c Cint nc_inq_varndims (Cint, Cint, Ptr{Cint}) libnetcdf
 @c Cint nc_inq_vardimid (Cint, Cint, Ptr{Cint}) libnetcdf
 @c Cint nc_inq_varnatts (Cint, Cint, Ptr{Cint}) libnetcdf
-@c Cint nc_rename_var (Cint, Cint, Ptr{Uint8}) libnetcdf
+@c Cint nc_rename_var (Cint, Cint, Ptr{UInt8}) libnetcdf
 @c Cint nc_copy_var (Cint, Cint, Cint) libnetcdf
-@c Cint nc_put_var1_text (Cint, Cint, Ptr{Csize_t}, Ptr{Uint8}) libnetcdf
-@c Cint nc_get_var1_text (Cint, Cint, Ptr{Csize_t}, Ptr{Uint8}) libnetcdf
+@c Cint nc_put_var1_text (Cint, Cint, Ptr{Csize_t}, Ptr{UInt8}) libnetcdf
+@c Cint nc_get_var1_text (Cint, Cint, Ptr{Csize_t}, Ptr{UInt8}) libnetcdf
 @c Cint nc_put_var1_uchar (Cint, Cint, Ptr{Csize_t}, Ptr{Cuchar}) libnetcdf
 @c Cint nc_get_var1_uchar (Cint, Cint, Ptr{Csize_t}, Ptr{Cuchar}) libnetcdf
-@c Cint nc_put_var1_schar (Cint, Cint, Ptr{Csize_t}, Ptr{Uint8}) libnetcdf
-@c Cint nc_get_var1_schar (Cint, Cint, Ptr{Csize_t}, Ptr{Uint8}) libnetcdf
+@c Cint nc_put_var1_schar (Cint, Cint, Ptr{Csize_t}, Ptr{UInt8}) libnetcdf
+@c Cint nc_get_var1_schar (Cint, Cint, Ptr{Csize_t}, Ptr{UInt8}) libnetcdf
 @c Cint nc_put_var1_short (Cint, Cint, Ptr{Csize_t}, Ptr{Int16}) libnetcdf
 @c Cint nc_get_var1_short (Cint, Cint, Ptr{Csize_t}, Ptr{Int16}) libnetcdf
 @c Cint nc_put_var1_int (Cint, Cint, Ptr{Csize_t}, Ptr{Cint}) libnetcdf
@@ -328,18 +328,18 @@ typealias nclong Cint
 @c Cint nc_get_var1_float (Cint, Cint, Ptr{Csize_t}, Ptr{Cfloat}) libnetcdf
 @c Cint nc_put_var1_double (Cint, Cint, Ptr{Csize_t}, Ptr{Cdouble}) libnetcdf
 @c Cint nc_get_var1_double (Cint, Cint, Ptr{Csize_t}, Ptr{Cdouble}) libnetcdf
-@c Cint nc_put_var1_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{Uint16}) libnetcdf
-@c Cint nc_get_var1_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{Uint16}) libnetcdf
-@c Cint nc_put_var1_uint (Cint, Cint, Ptr{Csize_t}, Ptr{Uint32}) libnetcdf
-@c Cint nc_get_var1_uint (Cint, Cint, Ptr{Csize_t}, Ptr{Uint32}) libnetcdf
+@c Cint nc_put_var1_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{UInt16}) libnetcdf
+@c Cint nc_get_var1_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{UInt16}) libnetcdf
+@c Cint nc_put_var1_uint (Cint, Cint, Ptr{Csize_t}, Ptr{UInt32}) libnetcdf
+@c Cint nc_get_var1_uint (Cint, Cint, Ptr{Csize_t}, Ptr{UInt32}) libnetcdf
 @c Cint nc_put_var1_longlong (Cint, Cint, Ptr{Csize_t}, Ptr{Clonglong}) libnetcdf
 @c Cint nc_get_var1_longlong (Cint, Cint, Ptr{Csize_t}, Ptr{Clonglong}) libnetcdf
 @c Cint nc_put_var1_ulonglong (Cint, Cint, Ptr{Csize_t}, Ptr{Culonglong}) libnetcdf
 @c Cint nc_get_var1_ulonglong (Cint, Cint, Ptr{Csize_t}, Ptr{Culonglong}) libnetcdf
-@c Cint nc_put_var1_string (Cint, Cint, Ptr{Csize_t}, Ptr{Ptr{Uint8}}) libnetcdf
-@c Cint nc_get_var1_string (Cint, Cint, Ptr{Csize_t}, Ptr{Ptr{Uint8}}) libnetcdf
-@c Cint nc_put_vara_text (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Uint8}) libnetcdf
-@c Cint nc_get_vara_text (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Uint8}) libnetcdf
+@c Cint nc_put_var1_string (Cint, Cint, Ptr{Csize_t}, Ptr{Ptr{UInt8}}) libnetcdf
+@c Cint nc_get_var1_string (Cint, Cint, Ptr{Csize_t}, Ptr{Ptr{UInt8}}) libnetcdf
+@c Cint nc_put_vara_text (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt8}) libnetcdf
+@c Cint nc_get_vara_text (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt8}) libnetcdf
 @c Cint nc_put_vara_uchar (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cuchar}) libnetcdf
 @c Cint nc_get_vara_uchar (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cuchar}) libnetcdf
 @c Cint nc_put_vara_schar (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Int8}) libnetcdf
@@ -354,22 +354,22 @@ typealias nclong Cint
 @c Cint nc_get_vara_float (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cfloat}) libnetcdf
 @c Cint nc_put_vara_double (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cdouble}) libnetcdf
 @c Cint nc_get_vara_double (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cdouble}) libnetcdf
-@c Cint nc_put_vara_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Uint16}) libnetcdf
-@c Cint nc_get_vara_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Uint16}) libnetcdf
-@c Cint nc_put_vara_uint (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Uint32}) libnetcdf
-@c Cint nc_get_vara_uint (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Uint32}) libnetcdf
+@c Cint nc_put_vara_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt16}) libnetcdf
+@c Cint nc_get_vara_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt16}) libnetcdf
+@c Cint nc_put_vara_uint (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt32}) libnetcdf
+@c Cint nc_get_vara_uint (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt32}) libnetcdf
 @c Cint nc_put_vara_longlong (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Clonglong}) libnetcdf
 @c Cint nc_get_vara_longlong (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Clonglong}) libnetcdf
 @c Cint nc_put_vara_ulonglong (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Culonglong}) libnetcdf
 @c Cint nc_get_vara_ulonglong (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Culonglong}) libnetcdf
-@c Cint nc_put_vara_string (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Ptr{Uint8}}) libnetcdf
-@c Cint nc_get_vara_string (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Ptr{Uint8}}) libnetcdf
-@c Cint nc_put_vars_text (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Uint8}) libnetcdf
-@c Cint nc_get_vars_text (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Uint8}) libnetcdf
+@c Cint nc_put_vara_string (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Ptr{UInt8}}) libnetcdf
+@c Cint nc_get_vara_string (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Ptr{UInt8}}) libnetcdf
+@c Cint nc_put_vars_text (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{UInt8}) libnetcdf
+@c Cint nc_get_vars_text (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{UInt8}) libnetcdf
 @c Cint nc_put_vars_uchar (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Cuchar}) libnetcdf
 @c Cint nc_get_vars_uchar (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Cuchar}) libnetcdf
-@c Cint nc_put_vars_schar (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Uint8}) libnetcdf
-@c Cint nc_get_vars_schar (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Uint8}) libnetcdf
+@c Cint nc_put_vars_schar (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{UInt8}) libnetcdf
+@c Cint nc_get_vars_schar (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{UInt8}) libnetcdf
 @c Cint nc_put_vars_short (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Int16}) libnetcdf
 @c Cint nc_get_vars_short (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Int16}) libnetcdf
 @c Cint nc_put_vars_int (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Cint}) libnetcdf
@@ -380,22 +380,22 @@ typealias nclong Cint
 @c Cint nc_get_vars_float (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Cfloat}) libnetcdf
 @c Cint nc_put_vars_double (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Cdouble}) libnetcdf
 @c Cint nc_get_vars_double (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Cdouble}) libnetcdf
-@c Cint nc_put_vars_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Uint16}) libnetcdf
-@c Cint nc_get_vars_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Uint16}) libnetcdf
-@c Cint nc_put_vars_uint (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Uint32}) libnetcdf
-@c Cint nc_get_vars_uint (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Uint32}) libnetcdf
+@c Cint nc_put_vars_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{UInt16}) libnetcdf
+@c Cint nc_get_vars_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{UInt16}) libnetcdf
+@c Cint nc_put_vars_uint (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{UInt32}) libnetcdf
+@c Cint nc_get_vars_uint (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{UInt32}) libnetcdf
 @c Cint nc_put_vars_longlong (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Clonglong}) libnetcdf
 @c Cint nc_get_vars_longlong (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Clonglong}) libnetcdf
 @c Cint nc_put_vars_ulonglong (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Culonglong}) libnetcdf
 @c Cint nc_get_vars_ulonglong (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Culonglong}) libnetcdf
-@c Cint nc_put_vars_string (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Ptr{Uint8}}) libnetcdf
-@c Cint nc_get_vars_string (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Ptr{Uint8}}) libnetcdf
-@c Cint nc_put_varm_text (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Uint8}) libnetcdf
-@c Cint nc_get_varm_text (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Uint8}) libnetcdf
+@c Cint nc_put_vars_string (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Ptr{UInt8}}) libnetcdf
+@c Cint nc_get_vars_string (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{Ptr{UInt8}}) libnetcdf
+@c Cint nc_put_varm_text (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{UInt8}) libnetcdf
+@c Cint nc_get_varm_text (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{UInt8}) libnetcdf
 @c Cint nc_put_varm_uchar (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Cuchar}) libnetcdf
 @c Cint nc_get_varm_uchar (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Cuchar}) libnetcdf
-@c Cint nc_put_varm_schar (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Uint8}) libnetcdf
-@c Cint nc_get_varm_schar (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Uint8}) libnetcdf
+@c Cint nc_put_varm_schar (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{UInt8}) libnetcdf
+@c Cint nc_get_varm_schar (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{UInt8}) libnetcdf
 @c Cint nc_put_varm_short (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Int16}) libnetcdf
 @c Cint nc_get_varm_short (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Int16}) libnetcdf
 @c Cint nc_put_varm_int (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Cint}) libnetcdf
@@ -406,22 +406,22 @@ typealias nclong Cint
 @c Cint nc_get_varm_float (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Cfloat}) libnetcdf
 @c Cint nc_put_varm_double (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Cdouble}) libnetcdf
 @c Cint nc_get_varm_double (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Cdouble}) libnetcdf
-@c Cint nc_put_varm_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Uint16}) libnetcdf
-@c Cint nc_get_varm_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Uint16}) libnetcdf
-@c Cint nc_put_varm_uint (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Uint32}) libnetcdf
-@c Cint nc_get_varm_uint (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Uint32}) libnetcdf
+@c Cint nc_put_varm_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{UInt16}) libnetcdf
+@c Cint nc_get_varm_ushort (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{UInt16}) libnetcdf
+@c Cint nc_put_varm_uint (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{UInt32}) libnetcdf
+@c Cint nc_get_varm_uint (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{UInt32}) libnetcdf
 @c Cint nc_put_varm_longlong (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Clonglong}) libnetcdf
 @c Cint nc_get_varm_longlong (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Clonglong}) libnetcdf
 @c Cint nc_put_varm_ulonglong (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Culonglong}) libnetcdf
 @c Cint nc_get_varm_ulonglong (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Culonglong}) libnetcdf
-@c Cint nc_put_varm_string (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Ptr{Uint8}}) libnetcdf
-@c Cint nc_get_varm_string (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Ptr{Uint8}}) libnetcdf
-@c Cint nc_put_var_text (Cint, Cint, Ptr{Uint8}) libnetcdf
-@c Cint nc_get_var_text (Cint, Cint, Ptr{Uint8}) libnetcdf
+@c Cint nc_put_varm_string (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Ptr{UInt8}}) libnetcdf
+@c Cint nc_get_varm_string (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{ptrdiff_t}, Ptr{ptrdiff_t}, Ptr{Ptr{UInt8}}) libnetcdf
+@c Cint nc_put_var_text (Cint, Cint, Ptr{UInt8}) libnetcdf
+@c Cint nc_get_var_text (Cint, Cint, Ptr{UInt8}) libnetcdf
 @c Cint nc_put_var_uchar (Cint, Cint, Ptr{Cuchar}) libnetcdf
 @c Cint nc_get_var_uchar (Cint, Cint, Ptr{Cuchar}) libnetcdf
-@c Cint nc_put_var_schar (Cint, Cint, Ptr{Uint8}) libnetcdf
-@c Cint nc_get_var_schar (Cint, Cint, Ptr{Uint8}) libnetcdf
+@c Cint nc_put_var_schar (Cint, Cint, Ptr{UInt8}) libnetcdf
+@c Cint nc_get_var_schar (Cint, Cint, Ptr{UInt8}) libnetcdf
 @c Cint nc_put_var_short (Cint, Cint, Ptr{Int16}) libnetcdf
 @c Cint nc_get_var_short (Cint, Cint, Ptr{Int16}) libnetcdf
 @c Cint nc_put_var_int (Cint, Cint, Ptr{Cint}) libnetcdf
@@ -432,18 +432,18 @@ typealias nclong Cint
 @c Cint nc_get_var_float (Cint, Cint, Ptr{Cfloat}) libnetcdf
 @c Cint nc_put_var_double (Cint, Cint, Ptr{Cdouble}) libnetcdf
 @c Cint nc_get_var_double (Cint, Cint, Ptr{Cdouble}) libnetcdf
-@c Cint nc_put_var_ushort (Cint, Cint, Ptr{Uint16}) libnetcdf
-@c Cint nc_get_var_ushort (Cint, Cint, Ptr{Uint16}) libnetcdf
-@c Cint nc_put_var_uint (Cint, Cint, Ptr{Uint32}) libnetcdf
-@c Cint nc_get_var_uint (Cint, Cint, Ptr{Uint32}) libnetcdf
+@c Cint nc_put_var_ushort (Cint, Cint, Ptr{UInt16}) libnetcdf
+@c Cint nc_get_var_ushort (Cint, Cint, Ptr{UInt16}) libnetcdf
+@c Cint nc_put_var_uint (Cint, Cint, Ptr{UInt32}) libnetcdf
+@c Cint nc_get_var_uint (Cint, Cint, Ptr{UInt32}) libnetcdf
 @c Cint nc_put_var_longlong (Cint, Cint, Ptr{Clonglong}) libnetcdf
 @c Cint nc_get_var_longlong (Cint, Cint, Ptr{Clonglong}) libnetcdf
 @c Cint nc_put_var_ulonglong (Cint, Cint, Ptr{Culonglong}) libnetcdf
 @c Cint nc_get_var_ulonglong (Cint, Cint, Ptr{Culonglong}) libnetcdf
-@c Cint nc_put_var_string (Cint, Cint, Ptr{Ptr{Uint8}}) libnetcdf
-@c Cint nc_get_var_string (Cint, Cint, Ptr{Ptr{Uint8}}) libnetcdf
-@c Cint nc_put_att_ubyte (Cint, Cint, Ptr{Uint8}, nc_type, Csize_t, Ptr{Cuchar}) libnetcdf
-@c Cint nc_get_att_ubyte (Cint, Cint, Ptr{Uint8}, Ptr{Cuchar}) libnetcdf
+@c Cint nc_put_var_string (Cint, Cint, Ptr{Ptr{UInt8}}) libnetcdf
+@c Cint nc_get_var_string (Cint, Cint, Ptr{Ptr{UInt8}}) libnetcdf
+@c Cint nc_put_att_ubyte (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Cuchar}) libnetcdf
+@c Cint nc_get_att_ubyte (Cint, Cint, Ptr{UInt8}, Ptr{Cuchar}) libnetcdf
 @c Cint nc_put_var1_ubyte (Cint, Cint, Ptr{Csize_t}, Ptr{Cuchar}) libnetcdf
 @c Cint nc_get_var1_ubyte (Cint, Cint, Ptr{Csize_t}, Ptr{Cuchar}) libnetcdf
 @c Cint nc_put_vara_ubyte (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cuchar}) libnetcdf
@@ -455,16 +455,16 @@ typealias nclong Cint
 @c Cint nc_put_var_ubyte (Cint, Cint, Ptr{Cuchar}) libnetcdf
 @c Cint nc_get_var_ubyte (Cint, Cint, Ptr{Cuchar}) libnetcdf
 @c Cint nc_show_metadata (Cint,) libnetcdf
-@c Cint nc__create_mp (Ptr{Uint8}, Cint, Csize_t, Cint, Ptr{Csize_t}, Ptr{Cint}) libnetcdf
-@c Cint nc__open_mp (Ptr{Uint8}, Cint, Cint, Ptr{Csize_t}, Ptr{Cint}) libnetcdf
-@c Cint nc_delete (Ptr{Uint8},) libnetcdf
-@c Cint nc_delete_mp (Ptr{Uint8}, Cint) libnetcdf
+@c Cint nc__create_mp (Ptr{UInt8}, Cint, Csize_t, Cint, Ptr{Csize_t}, Ptr{Cint}) libnetcdf
+@c Cint nc__open_mp (Ptr{UInt8}, Cint, Cint, Ptr{Csize_t}, Ptr{Cint}) libnetcdf
+@c Cint nc_delete (Ptr{UInt8},) libnetcdf
+@c Cint nc_delete_mp (Ptr{UInt8}, Cint) libnetcdf
 @c Cint nc_set_base_pe (Cint, Cint) libnetcdf
 @c Cint nc_inq_base_pe (Cint, Ptr{Cint}) libnetcdf
 @c Cint nctypelen (nc_type,) libnetcdf
-@c None nc_advise (Ptr{Uint8}, Cint, Ptr{Uint8}) libnetcdf
-@c Cint nccreate (Ptr{Uint8}, Cint) libnetcdf
-@c Cint ncopen (Ptr{Uint8}, Cint) libnetcdf
+@c None nc_advise (Ptr{UInt8}, Cint, Ptr{UInt8}) libnetcdf
+@c Cint nccreate (Ptr{UInt8}, Cint) libnetcdf
+@c Cint ncopen (Ptr{UInt8}, Cint) libnetcdf
 @c Cint ncsetfill (Cint, Cint) libnetcdf
 @c Cint ncredef (Cint,) libnetcdf
 @c Cint ncendef (Cint,) libnetcdf
@@ -472,20 +472,20 @@ typealias nclong Cint
 @c Cint ncabort (Cint,) libnetcdf
 @c Cint ncclose (Cint,) libnetcdf
 @c Cint ncinquire (Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}) libnetcdf
-@c Cint ncdimdef (Cint, Ptr{Uint8}, Clong) libnetcdf
-@c Cint ncdimid (Cint, Ptr{Uint8}) libnetcdf
-@c Cint ncdiminq (Cint, Cint, Ptr{Uint8}, Ptr{Clong}) libnetcdf
-@c Cint ncdimrename (Cint, Cint, Ptr{Uint8}) libnetcdf
-@c Cint ncattput (Cint, Cint, Ptr{Uint8}, nc_type, Cint, Ptr{Void}) libnetcdf
-@c Cint ncattinq (Cint, Cint, Ptr{Uint8}, Ptr{nc_type}, Ptr{Cint}) libnetcdf
-@c Cint ncattget (Cint, Cint, Ptr{Uint8}, Ptr{Void}) libnetcdf
-@c Cint ncattcopy (Cint, Cint, Ptr{Uint8}, Cint, Cint) libnetcdf
-@c Cint ncattname (Cint, Cint, Cint, Ptr{Uint8}) libnetcdf
-@c Cint ncattrename (Cint, Cint, Ptr{Uint8}, Ptr{Uint8}) libnetcdf
-@c Cint ncattdel (Cint, Cint, Ptr{Uint8}) libnetcdf
-@c Cint ncvardef (Cint, Ptr{Uint8}, nc_type, Cint, Ptr{Cint}) libnetcdf
-@c Cint ncvarid (Cint, Ptr{Uint8}) libnetcdf
-@c Cint ncvarinq (Cint, Cint, Ptr{Uint8}, Ptr{nc_type}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}) libnetcdf
+@c Cint ncdimdef (Cint, Ptr{UInt8}, Clong) libnetcdf
+@c Cint ncdimid (Cint, Ptr{UInt8}) libnetcdf
+@c Cint ncdiminq (Cint, Cint, Ptr{UInt8}, Ptr{Clong}) libnetcdf
+@c Cint ncdimrename (Cint, Cint, Ptr{UInt8}) libnetcdf
+@c Cint ncattput (Cint, Cint, Ptr{UInt8}, nc_type, Cint, Ptr{Void}) libnetcdf
+@c Cint ncattinq (Cint, Cint, Ptr{UInt8}, Ptr{nc_type}, Ptr{Cint}) libnetcdf
+@c Cint ncattget (Cint, Cint, Ptr{UInt8}, Ptr{Void}) libnetcdf
+@c Cint ncattcopy (Cint, Cint, Ptr{UInt8}, Cint, Cint) libnetcdf
+@c Cint ncattname (Cint, Cint, Cint, Ptr{UInt8}) libnetcdf
+@c Cint ncattrename (Cint, Cint, Ptr{UInt8}, Ptr{UInt8}) libnetcdf
+@c Cint ncattdel (Cint, Cint, Ptr{UInt8}) libnetcdf
+@c Cint ncvardef (Cint, Ptr{UInt8}, nc_type, Cint, Ptr{Cint}) libnetcdf
+@c Cint ncvarid (Cint, Ptr{UInt8}) libnetcdf
+@c Cint ncvarinq (Cint, Cint, Ptr{UInt8}, Ptr{nc_type}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}) libnetcdf
 @c Cint ncvarput1 (Cint, Cint, Ptr{Clong}, Ptr{Void}) libnetcdf
 @c Cint ncvarget1 (Cint, Cint, Ptr{Clong}, Ptr{Void}) libnetcdf
 @c Cint ncvarput (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Void}) libnetcdf
@@ -494,8 +494,7 @@ typealias nclong Cint
 @c Cint ncvargets (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Void}) libnetcdf
 @c Cint ncvarputg (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Void}) libnetcdf
 @c Cint ncvargetg (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Void}) libnetcdf
-@c Cint ncvarrename (Cint, Cint, Ptr{Uint8}) libnetcdf
+@c Cint ncvarrename (Cint, Cint, Ptr{UInt8}) libnetcdf
 @c Cint ncrecinq (Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Clong}) libnetcdf
 @c Cint ncrecget (Cint, Clong, Ptr{Ptr{Void}}) libnetcdf
 @c Cint ncrecput (Cint, Clong, Ptr{Ptr{Void}}) libnetcdf
-
