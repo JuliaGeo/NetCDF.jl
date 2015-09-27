@@ -617,7 +617,7 @@ function create_var(nc,v,mode)
     
     v.dimids=Int32[v.dim[i].dimid for i=1:length(v.dim)]
     for i=1:v.ndim dumids[i]=v.dimids[v.ndim+1-i] end
-    
+ 
     nc_def_var(nc.ncid,v.name,v.nctype,v.ndim,dumids,vara)
     
     v.varid=vara[1];
@@ -641,7 +641,7 @@ Possible optional arguments are:
 - **t** variable type, currently supported types are: const NC_BYTE, NC_CHAR, NC_SHORT, NC_INT, NC_FLOAT, NC_LONG, NC_DOUBLE
 - **mode** file creation mode, only valid when new file is created, choose one of: NC_NETCDF4, NC_CLASSIC_MODEL, NC_64BIT_OFFSET
 """
-function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Union(Integer,Type)=NC_DOUBLE,mode::UInt16=NC_NETCDF4)
+function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Union(DataType,Integer)=NC_DOUBLE,mode::UInt16=NC_NETCDF4)
     # Checking dims argument for correctness
     dim=parsedimargs(dims)
     # open the file

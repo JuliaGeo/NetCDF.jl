@@ -8,6 +8,7 @@ end
 
 nccreate(fn1,"v1","Dim1",[1,2],@Compat.AnyDict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,@Compat.AnyDict("max"=>10),
 mode=NC_NETCDF4)
+nccreate(fn1,"vstr","Dim2",collect(1:10),t=String)
 nccreate(fn2,"v2","Dim1",[1,2,3],@Compat.AnyDict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,@Compat.AnyDict("max"=>10),
 atts=@Compat.AnyDict("a1"=>"varatts"),gatts=@Compat.AnyDict("Some global attributes"=>2010),mode=NC_64BIT_OFFSET)
 nccreate(fn3,"v3","Dim1",3,mode=NC_CLASSIC_MODEL)
@@ -36,6 +37,17 @@ xt=Array(Any,length(tlist))
 for i=1:length(tlist)
     xt[i]=rand(tlist[i],10)
 end
+xs=Array(AbstractString,10)
+xs[1]="a"
+xs[2]="bb"
+xs[3]="ccc"
+xs[4]="dddd"
+xs[5]="eeeee"
+xs[6]="ffffff"
+xs[7]="ggggggg"
+xs[8]="hhhhhhhh"
+xs[9]="iiiiiiiii"
+xs[10]="jjjjjjjjjj"
 #
 # And write it
 #
@@ -44,6 +56,7 @@ ncwrite(x1,fn1,"v1")
 for i=1:10
   ncwrite(x2[:,i,:],fn2,"v2",start=[1,i,1],count=[-1,1,-1])
 end
+ncwrite(xs,fn1,"vstr")
 #Test automatic type conversion
 x4=[1,2,3]
 ncwrite(x4,fn3,"v3")
@@ -51,7 +64,6 @@ ncwrite(x4,fn3,"v3")
 for i=1:length(tlist)
   ncwrite(xt[i],fn3,"vt$i")
 end
-
 
 ncclose()
 
