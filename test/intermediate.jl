@@ -12,7 +12,8 @@ d3 = NcDim("Dim3",20;atts=@Compat.AnyDict("max"=>10));
 # Test Variable creation
 v1 = NcVar("v1",[d1,d2,d3],compress=5) 						# With several dims in an Array, and compressed
 v2 = NcVar("v2",[d1,d2,d3],atts=@Compat.AnyDict("a1"=>"varatts"))  # with given attributes
-v3 = NcVar("v3",d1) 								# with a single dimension
+v3 = NcVar("v3",d1)
+vs = NcVar("vstr",d2,t=String) 								# with a single dimension
 tlist = [Float64, Float32, Int32, Int16, Int8]
 vt = Array(NcVar, length(tlist))
 for i= 1:length(tlist)
@@ -20,7 +21,7 @@ for i= 1:length(tlist)
 end
 
 # Creating Files
-nc1 = NetCDF.create(fn1,v1,mode=NC_NETCDF4);
+nc1 = NetCDF.create(fn1,v1,vs,mode=NC_NETCDF4);
 nc2 = NetCDF.create(fn2,v2,v3,gatts=@Compat.AnyDict("Some global attributes"=>2010),mode=NC_64BIT_OFFSET);
 nc3 = NetCDF.create(fn3,vt,mode=NC_CLASSIC_MODEL);
 
@@ -48,10 +49,22 @@ xt=Array(Any,length(tlist))
 for i=1:length(tlist)
     xt[i]=rand(tlist[i],10)
 end
+xs=Array(AbstractString,10)
+xs[1]="a"
+xs[2]="bb"
+xs[3]="ccc"
+xs[4]="dddd"
+xs[5]="eeeee"
+xs[6]="ffffff"
+xs[7]="ggggggg"
+xs[8]="hhhhhhhh"
+xs[9]="iiiiiiiii"
+xs[10]="jjjjjjjjjj"
 #
 # And write it
 #
 NetCDF.putvar(nc1,"v1",x1)
+NetCDF.putvar(nc1,"vstr",xs)
 #Test sequential writing along one dimension
 for i=1:10
   NetCDF.putvar(nc2,"v2",x2[:,i,:],start=[1,i,1],count=[-1,1,-1])
@@ -75,5 +88,6 @@ nc2 = NetCDF.open(fn2,mode=NC_NOWRITE);
 nc3 = NetCDF.open(fn3,mode=NC_NOWRITE);
 
 @test x1==NetCDF.readvar(nc1,"v1")
+@test xs==NetCDF.readvar(nc1,"vstr")
 @test x2==NetCDF.readvar(nc2,"v2")
 @test x4==NetCDF.readvar(nc2,"v3")

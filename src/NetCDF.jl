@@ -4,7 +4,7 @@ using Formatting
 using Base.Cartesian
 include("netcdf_c.jl")
 import Base.show
-export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE, ncgetatt,NC_NOWRITE,NC_WRITE,NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4
+export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE,NC_STRING,ncgetatt,NC_NOWRITE,NC_WRITE,NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4
 NC_VERBOSE=false
 #Some constants
 
@@ -15,7 +15,8 @@ function __init__()
                    Int64=>NC_INT64,
                    Float32=>NC_FLOAT,
                    Float64=>NC_DOUBLE,
-                   UInt8=>NC_CHAR)
+                   Uint8=>NC_CHAR,
+                   String=>NC_STRING)
 
   global const nctype2jltype=@Compat.Dict(NC_BYTE=>Int8,
                     NC_SHORT=>Int16, 
@@ -23,15 +24,16 @@ function __init__()
                     NC_LONG=>Int64,
                     NC_FLOAT=>Float32,
                     NC_DOUBLE=>Float64,
-                    NC_CHAR=>UInt8,
-                    NC_STRING=>Ptr{UInt8})
+                    NC_CHAR=>Uint8,
+                    NC_STRING=>String)
 
   global const nctype2string=@Compat.Dict(NC_BYTE=>"BYTE",
                    NC_SHORT=>"SHORT",
                    NC_INT=>"INT",
                    NC_FLOAT=>"FLOAT",
                    NC_DOUBLE=>"DOUBLE",
-                   NC_INT64=>"INT64")
+                   NC_INT64=>"INT64",
+                   NC_STRING=>"STRING")
 end
 
 
@@ -247,6 +249,23 @@ for (t,ending,arname) in funext
     @eval nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Type{$t})=begin $fname1(ncid,varid,start,$(arsym)); $(arsym)[1] end
 end
 
+function nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{Uint},count::Vector{Uint},retvalsa::Array{String})
+  retvalsa_c=Array(Ptr{Uint8},length(retvalsa))
+  nc_get_vara_string(ncid,varid,start,count,retvalsa_c)
+  for i=1:length(retvalsa)
+    retvalsa[i]=bytestring(retvalsa_c[i])
+  end
+  nc_free_string(length(retvalsa_c),retvalsa_c)
+  retvalsa
+end
+
+function nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{Uint},::Type{String})
+  retvalsa_c=Array(Ptr{Uint8},1)
+  nc_get_var1_string(ncid,varid,start,retvalsa_c)
+  retval=bytestring(retvalsa_c[1])
+  nc_free_string(1,retvalsa_c)
+  retval
+end
 
 function putatt(ncid::Integer,varid::Integer,atts::Dict)
   for a in atts
@@ -333,7 +352,15 @@ for (t,ending,arname) in funext
     @eval nc_put_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},val::$t)=begin $(arsym)[1]=val; $fname1(ncid,varid,start,$(arsym)) end
 end
 
+function nc_put_vara_x(ncid::Integer, varid::Integer, start, count,vals::Array{String})
+  vals_p=map(x->pointer(x.data),vals)
+  nc_put_vara_string(ncid,varid,start,count,vals_p)
+end
 
+function nc_put_var1_x(ncid::Integer,varid::Integer,start::Vector{Uint},val::String)
+  val_p=fill(pointer(val.data),1)
+  nc_put_var1_string(ncid,varid,start,val_p)
+end
 
 "Synchronizes the changes made to the file and writes changes to the disk. If the argument is omitted, all open files are synchronized. "
 function ncsync()
@@ -590,7 +617,7 @@ function create_var(nc,v,mode)
     
     v.dimids=Int32[v.dim[i].dimid for i=1:length(v.dim)]
     for i=1:v.ndim dumids[i]=v.dimids[v.ndim+1-i] end
-    
+ 
     nc_def_var(nc.ncid,v.name,v.nctype,v.ndim,dumids,vara)
     
     v.varid=vara[1];
@@ -614,7 +641,7 @@ Possible optional arguments are:
 - **t** variable type, currently supported types are: const NC_BYTE, NC_CHAR, NC_SHORT, NC_INT, NC_FLOAT, NC_LONG, NC_DOUBLE
 - **mode** file creation mode, only valid when new file is created, choose one of: NC_NETCDF4, NC_CLASSIC_MODEL, NC_64BIT_OFFSET
 """
-function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Union(Integer,Type)=NC_DOUBLE,mode::UInt16=NC_NETCDF4)
+function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Union(DataType,Integer)=NC_DOUBLE,mode::UInt16=NC_NETCDF4)
     # Checking dims argument for correctness
     dim=parsedimargs(dims)
     # open the file
