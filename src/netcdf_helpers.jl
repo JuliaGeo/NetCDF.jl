@@ -58,7 +58,7 @@ const dumids       = zeros(Int32,NC_MAX_DIMS)
 const gstart       = zeros(UInt,NC_MAX_DIMS)
 const gcount       = zeros(UInt,NC_MAX_DIMS)
 
-for (t,ending,aname) in funext 
+for (t,ending,aname) in funext
     @eval const $(symbol(aname)) = zeros($t,1)
 end
 
@@ -131,7 +131,7 @@ nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int64}) 
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Float32}) = nc_put_att_float(ncid,varid,name,NC_FLOAT,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Float64}) = nc_put_att_double(ncid,varid,name,NC_DOUBLE,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::AbstractString)         = nc_put_att_text(ncid,varid,name,length(val)+1,val)
-nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Any})     = error("Writing attribute array of type Any is not possible") 
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Any})     = error("Writing attribute array of type Any is not possible")
 
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Int8) = begin int8a[1] = val; nc_put_att(ncid,varid,name,int8a) end
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Int16) = begin int16a[1] = val; nc_put_att(ncid,varid,name,int16a) end
@@ -139,7 +139,7 @@ nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Int32) = begin
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Int64) = begin int64a[1] = val; nc_put_att(ncid,varid,name,int64a) end
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Float32) = begin float32a[1] = val; nc_put_att(ncid,varid,name,float32a) end
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Float64) = begin float64a[1] = val; nc_put_att(ncid,varid,name,float64a) end
-nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val) = error("Writing attribute of type $(typeof(val)) is currently not possible.") 
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val) = error("Writing attribute of type $(typeof(val)) is currently not possible.")
 
 
 
@@ -211,13 +211,13 @@ function readdimvars(nc::NcFile)
 end
 
 function preparestartcount(start,count,v::NcVar)
-    
+
     length(start) == v.ndim || error("Length of start ($(length(start))) must equal the number of variable dimensions ($(v.ndim))")
     length(count) == v.ndim || error("Length of start ($(length(count))) must equal the number of variable dimensions ($(v.ndim))")
-    
+
     p  = one(eltype(gcount))
     nd = length(start)
-    
+
     for i=1:nd
         ci             = nd+1-i
         gstart[ci] = start[i] - 1
@@ -226,12 +226,12 @@ function preparestartcount(start,count,v::NcVar)
         gstart[ci] + gcount[ci] > v.dim[i].dimlen && error("Start + Count exceeds dimension length in dimension $(v.dim[i].name)")
         p=p*gcount[ci]
     end
-    
+
     return p
 end
-   
+
 defaultstart(v::NcVar)=ones(Int,v.ndim)
-defaultcount(v::NcVar)=Int[i for i in size(v)] 
+defaultcount(v::NcVar)=Int[i for i in size(v)]
 
 function parsedimargs(dim)
   idim=0
