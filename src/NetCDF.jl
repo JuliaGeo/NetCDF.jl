@@ -417,7 +417,8 @@ function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict{Any,Any}=
   id = nc_create(name,mode)
 
   # Collect Dimensions and set NetCDF ID
-  vars=Dict{ASCIIString,NcVar}();
+  # vars=Dict{ASCIIString,NcVar}();
+  vars = Dict{AbstractString,NcVar}();
   dims=Set{NcDim}();
   for v in varlist
       v.ncid=id
