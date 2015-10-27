@@ -25,7 +25,7 @@ function __init__()
                     NC_FLOAT=>Float32,
                     NC_DOUBLE=>Float64,
                     NC_CHAR=>UInt8,
-                    NC_STRING=>ASCIIString)
+                    NC_STRING=>Ptr{UInt8})
 
   global const nctype2string=@Compat.Dict(NC_BYTE=>"BYTE",
                    NC_SHORT=>"SHORT",
@@ -56,7 +56,7 @@ end
     NcDim(name::String,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict{Any,Any}=Dict{Any,Any}())`
 This constructor creates an NcDim object with the name `name` and length `dimlength`.
 """
-function NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict{Any,Any}=Dict{Any,Any}())
+function NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict=Dict{Any,Any}())
     (length(values)>0 && length(values)!=dimlength) ? error("Dimension value vector must have the same length as dimlength!") : nothing
     NcDim(-1,-1,-1,ascii(name),dimlength,values,atts)
   end
@@ -100,7 +100,7 @@ holding pairs of attribute names and values. t is the data type that should be u
 You can also set the compression level of the variable by setting compress to a number in the range 1..9 This has only an effect in NetCDF4 files.
 """
 #Some additional constructors
-function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict{Any,Any}=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1)
+function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1)
   dim = isa(dimin,NcDim) ? NcDim[dimin] : dimin
   return NcVar{typeof(t)==DataType ? t : nctype2jltype[t],length(dim)}(-1,-1,length(dim),length(atts), typeof(t)==DataType ? jltype2nctype[t] : t,name,Array(Int32,length(dim)),dim,atts,compress)
 end
@@ -414,7 +414,6 @@ function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict{Any,Any}=
 
   #Create the file
   id = nc_create(name,mode)
-
   # Collect Dimensions and set NetCDF ID
   # vars=Dict{ASCIIString,NcVar}();
   vars = Dict{AbstractString,NcVar}();
@@ -434,9 +433,7 @@ function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict{Any,Any}=
   for d in dims
 
       create_dim(nc,d)
-
-    #Create dimension variable, if necessary
-    if (length(d.vals)>0) & (!haskey(vars,d.name))
+    if (length(d.vals)>0) & (!haskey(nc.vars,d.name))
       push!(varlist,NcVar{Float64,1}(id,varida[1],1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1))
     end
 
@@ -611,19 +608,17 @@ function create_dim(nc,dim)
       nc_def_var(nc.ncid,dim.name,NC_DOUBLE,1,dumids,vara)
       nc.vars[dim.name]=NcVar{Float64,1}(nc.ncid,vara[1],1,0,NC_DOUBLE,dim.name,Int32[dim.dimid],NcDim[dim],Dict{Any,Any}(),-1)
     end
+    putatt(nc.ncid,dim.dimid,dim.atts)
     nc.dim[dim.name]=dim;
 end
 
 
 function create_var(nc,v,mode)
-
     nc_redef(nc)
 
     v.dimids=Int32[v.dim[i].dimid for i=1:length(v.dim)]
     for i=1:v.ndim dumids[i]=v.dimids[v.ndim+1-i] end
-
     nc_def_var(nc.ncid,v.name,v.nctype,v.ndim,dumids,vara)
-
     v.varid=vara[1];
     nc.vars[v.name]=v;
     putatt(nc.ncid,v.varid,v.atts)
@@ -663,6 +658,7 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict
         haskey(nc.vars,varname) ? error("Variable $varname already exists in file fil") : nothing
         # Check if dimensions exist, if not, create
         # Remember if dimension was created
+
         dcreate=Array(Bool,length(dim))
         for i=1:length(dim)
             if !haskey(nc.dim,dim[i].name)
@@ -675,6 +671,7 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict
                 dcreate[i] = false
             end
         end
+
         # Create variable
         create_var(nc,v,mode)
         nc_enddef(nc)
