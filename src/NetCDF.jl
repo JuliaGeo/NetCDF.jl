@@ -16,8 +16,7 @@ function __init__()
                    Float32=>NC_FLOAT,
                    Float64=>NC_DOUBLE,
                    UInt8=>NC_CHAR,
-                   AbstractString=>NC_STRING
-                   )
+                   ASCIIString=>NC_STRING)
 
   global const nctype2jltype=@Compat.Dict(NC_BYTE=>Int8,
                     NC_SHORT=>Int16,
@@ -26,7 +25,7 @@ function __init__()
                     NC_FLOAT=>Float32,
                     NC_DOUBLE=>Float64,
                     NC_CHAR=>UInt8,
-                    NC_STRING=>AbstractString)
+                    NC_STRING=>ASCIIString)
 
   global const nctype2string=@Compat.Dict(NC_BYTE=>"BYTE",
                    NC_SHORT=>"SHORT",
@@ -54,7 +53,7 @@ end
 
 """
 
-    NcDim(name::String,dimlength::Integer;values::Union(AbstractArray,Number)=[],atts::Dict{Any,Any}=Dict{Any,Any}())`
+    NcDim(name::String,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict{Any,Any}=Dict{Any,Any}())`
 This constructor creates an NcDim object with the name `name` and length `dimlength`.
 """
 function NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict{Any,Any}=Dict{Any,Any}())
@@ -64,7 +63,7 @@ function NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArr
 
 
 """
-    NcDim(name::String,dimlength::Integer;values::Union(AbstractArray,Number)=[],atts::Dict{Any,Any}=Dict{Any,Any}())
+    NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict{Any,Any}=Dict{Any,Any}())
 This constructor creates an NcDim object with the name `name` and and associated values `values`. Upon creation of the NetCDF file a
 dimension variable will be generated and the values be written to this variable. Optionally a Dict of attributes can be supplied.
 """
@@ -94,7 +93,7 @@ end
 Base.convert{S,T,N}(::Type{NcVar{T,N}},v::NcVar{S,N})=NcVar{T,N}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress)
 
 """
-    NcVar(name::String,dimin::Union(NcDim,Array{NcDim,1});atts::Dict{Any,Any}=Dict{Any,Any}(),t::Union(DataType,Integer)=Float64,compress::Integer=-1)
+    NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict{Any,Any}=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1)
 Here varname is the name of the variable, dimlist an array of type NcDim holding the dimensions associated to the variable, varattributes is a Dict
 holding pairs of attribute names and values. t is the data type that should be used for storing the variable. You can either specify a julia type
 (Int16, Int32, Float32, Float64) which will be translated to (NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE) or directly specify one of the latter list.
@@ -355,7 +354,7 @@ for (t,ending,arname) in funext
     @eval nc_put_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},val::$t)=begin $(arsym)[1]=val; $fname1(ncid,varid,start,$(arsym)) end
 end
 
-function nc_put_vara_x(ncid::Integer, varid::Integer, start, count,vals::Array{AbstractString})
+function nc_put_vara_x{T<:AbstractString}(ncid::Integer, varid::Integer, start, count,vals::Array{T})
   vals_p=map(x->pointer(x.data),vals)
   nc_put_vara_string(ncid,varid,start,count,vals_p)
 end
@@ -482,7 +481,7 @@ function close(nco::NcFile)
 end
 
 """
-    NetCDF.open(fil::String,v::String; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
+    NetCDF.open(fil::AbstractString,v::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
 opens a NetCDF variable `v` in the NetCDF file `fil` and returns an `NcVar` handle that implements the AbstractArray interface for reading and writing.
 """
 function open(fil::AbstractString,v::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
@@ -491,7 +490,7 @@ function open(fil::AbstractString,v::AbstractString; mode::Integer=NC_NOWRITE, r
 end
 
 """
-    open(fil::String; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
+    open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
 opens the NetCDF file `fil` and returns a `NcFile` handle. The optional argument mode determines the `mode` in which the files is opened (`NC_NOWRITE` or `NC_WRITE`).
 If you set `readdimvar=true`, then the dimension variables will be read when opening the file and added to the NcFIle object.
 """
@@ -575,7 +574,7 @@ iswritable(nc::NcFile)=(nc.omode & NC_WRITE) != zero(UInt16)
 
 #High-level functions for writing data to a file
 """
-    ncwrite{T<:Integer}(x::Array,fil::String,vname::String;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...])
+    ncwrite{T<:Integer}(x::Array,fil::AbstractString,vname::AbstractString;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...])
 Writes the array `x` to the file `fil` and variable `vname`. If no `start` argument is supplied, writing starts at index 1 in each dimension.
 You can supply the argument `start`, a vector that has the same number as the number of variable dimensions, that provides the indices where to start writing the data.
 As default the number of values written along each dimension equals the dimension of the input array. However you can specify the along which dimension the data will be
@@ -646,7 +645,7 @@ Possible optional arguments are:
 - **t** variable type, currently supported types are: const NC_BYTE, NC_CHAR, NC_SHORT, NC_INT, NC_FLOAT, NC_LONG, NC_DOUBLE
 - **mode** file creation mode, only valid when new file is created, choose one of: NC_NETCDF4, NC_CLASSIC_MODEL, NC_64BIT_OFFSET
 """
-function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Union{Integer,Type}=NC_DOUBLE,mode::UInt16=NC_NETCDF4)
+function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Union{DataType,Integer}=NC_DOUBLE,mode::UInt16=NC_NETCDF4)
     # Checking dims argument for correctness
     dim=parsedimargs(dims)
     # open the file
