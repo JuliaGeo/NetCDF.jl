@@ -4,7 +4,7 @@ macro c(ret_type, func, arg_types, lib)
     local args_in = Any[ symbol(string('a',x)) for x in 1:length(arg_types.args) ]
     quote
         function $(esc(func))($(args_in...))
-            retval=ccall( Libdl.dlsym(libnc,$(Expr(:quote,func))), $ret_type, $arg_types, $(args_in...) )
+            retval=ccall(($(Expr(:quote,func)),$lib), $ret_type, $arg_types, $(args_in...) )
             if retval!=NC_NOERR
                 haskey(error_description,retval) ? error("NetCDF library error: $(error_description[retval])") : error("NetCDF library error: $(retval)")
             end
@@ -13,8 +13,12 @@ macro c(ret_type, func, arg_types, lib)
 end
 
 using BinDeps
-@BinDeps.load_dependencies [:libnetcdf]
-const libnc = Libdl.dlopen(libnetcdf[1][2])
+const depfile = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
+if isfile(depfile)
+  include(depfile)
+else
+  error("libnetcdf not properly installed. Please run Pkg.build(\"NetCDF\")")
+end
 
 const NC_NAT = 0
 const NC_BYTE = 1
