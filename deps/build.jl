@@ -1,7 +1,7 @@
 using BinDeps
 
 @BinDeps.setup
-libnetcdf = library_dependency("libnetcdf", aliases = ["libnetcdf4","libnetcdf-7"])
+libnetcdf = library_dependency("libnetcdf", aliases = ["libnetcdf4","libnetcdf-7,netcdf"])
 
 using Conda
 provides(Conda.Manager, "libnetcdf", libnetcdf)
