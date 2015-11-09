@@ -148,6 +148,7 @@ end
 Base.getindex(nc::NcFile,i::AbstractString)=haskey(nc.vars,i) ? nc.vars[i] : error("NetCDF file $(nc.name) does not have a variable named $(i)")
 
 include("netcdf_helpers.jl")
+include("multinc.jl")
 
 const currentNcFiles=Dict{ASCIIString,NcFile}()
 
