@@ -4,7 +4,7 @@ using Formatting
 using Base.Cartesian
 include("netcdf_c.jl")
 import Base.show
-export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE, ncgetatt,NC_NOWRITE,NC_WRITE,NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4
+export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE,NC_STRING,ncgetatt,NC_NOWRITE,NC_WRITE,NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4
 NC_VERBOSE=false
 #Some constants
 
@@ -157,7 +157,7 @@ readvar!(nc::NcFile, varname::AbstractString, retvalsa::Array;start::Vector=defa
 
 
 """
-readvar!(v::NcVar, d::Array;start::Vector=ones(Uint,ndims(d)),count::Vector=size(d))
+readvar!(v::NcVar, d::Array;start::Vector=ones(UInt,ndims(d)),count::Vector=size(d))
 is the mutating form of `readvar` which expects a pre-allocated array d, where the data are written to. It reads the values of the NcVar object `v`
 writing the values to the preallocated array `d`.
 If only parts of the variable are to be read, you can provide optionally `start` and `count`, which enable you to read blocks of data. `start` and `count` have the same
@@ -250,7 +250,8 @@ for (t,ending,arname) in funext
     @eval nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Type{$t})=begin $fname1(ncid,varid,start,$(arsym)); $(arsym)[1] end
 end
 
-function nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::Array{AbstractString})
+function nc_get_vara_x!{T<:Union{UTF8String,ASCIIString}}(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::Array{T})
+#function nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::Array{AbstractString})
   retvalsa_c=Array(Ptr{UInt8},length(retvalsa))
   nc_get_vara_string(ncid,varid,start,count,retvalsa_c)
   for i=1:length(retvalsa)
@@ -260,7 +261,8 @@ function nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{UInt},count::
   retvalsa
 end
 
-function nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Type{AbstractString})
+function nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Union{Type{ASCIIString},Type{UTF8String}})
+#function nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Type{AbstractString})
   retvalsa_c=Array(Ptr{UInt8},1)
   nc_get_var1_string(ncid,varid,start,retvalsa_c)
   retval=bytestring(retvalsa_c[1])
@@ -405,7 +407,7 @@ function setcompression(v::NcVar,mode)
     end
 end
 """
-    NetCDF.create(name::String,varlist::Array{NcVar};gatts::Dict{Any,Any}=Dict{Any,Any}(),mode::Uint16=NC_NETCDF4)
+    NetCDF.create(name::String,varlist::Array{NcVar};gatts::Dict{Any,Any}=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
 This creates a new NetCDF file. Here, `filename`
  is the name of the file to be created and `varlist` an array of `NcVar` holding the variables that should appear in the file. In the optional
 argument `gatts` you can specify a Dict containing global attributes and `mode` is the file type you want to create (NC_NETCDF4, NC_CLASSIC_MODEL or NC_64BIT_OFFSET).
@@ -643,6 +645,8 @@ Possible optional arguments are:
 function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Union{DataType,Integer}=NC_DOUBLE,mode::UInt16=NC_NETCDF4)
     # Checking dims argument for correctness
     dim=parsedimargs(dims)
+    println(dim[1])
+    println(dim[3])
     # open the file
     # create the NcVar object
     v=NcVar(varname,dim,atts=atts,compress=compress,t=t)

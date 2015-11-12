@@ -1,17 +1,12 @@
 using BinDeps
 
 @BinDeps.setup
-netcdf = library_dependency("libnetcdf", aliases = ["libnetcdf4","libnetcdf-7"])
+libnetcdf = library_dependency("libnetcdf", aliases = ["libnetcdf4","libnetcdf-7,netcdf"])
 
 using Conda
-provides(Conda.Manager, "libnetcdf", netcdf)
+provides(Conda.Manager, "libnetcdf", libnetcdf)
 
-@osx_only begin
-    using Homebrew
-		provides(Homebrew.HB, "netcdf", netcdf, os = :Darwin )
-end
+provides(AptGet, Dict("libnetcdf-dev"=>libnetcdf), os = :Linux)
+provides(Yum, Dict("netcdf-devel"=>libnetcdf), os = :Linux)
 
-provides(AptGet, Dict("libnetcdf-dev"=>netcdf), os = :Linux)
-provides(Yum, Dict("netcdf-devel"=>netcdf), os = :Linux)
-
-@BinDeps.install
+@BinDeps.install Dict(:libnetcdf => :libnetcdf)

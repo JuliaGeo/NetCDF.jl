@@ -149,7 +149,6 @@ function nc_get_att(ncid::Integer,varid::Integer,name::AbstractString,attype::In
 end
 
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{UInt8}) = begin nc_get_att_text(ncid,varid,name,valsa); ascii(valsa) end
-nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Ptr{UInt8}}) = begin nc_get_att_string(ncid,varid,name,valsa); [bytestring(pointer(valsa[i])) for i=1:length(valsa)] end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int8})  = begin nc_get_att_schar(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int16})  = begin nc_get_att_short(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int32})  = begin nc_get_att_int(ncid,varid,name,valsa); valsa end
@@ -157,6 +156,13 @@ nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int64
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float32})  = begin nc_get_att_float(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float64})  = begin nc_get_att_double(ncid,varid,name,valsa); valsa end
 
+nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Ptr{UInt8}}) = begin nc_get_att_string(ncid,varid,name,valsa); [bytestring(pointer(valsa[i])) for i=1:length(valsa)] end
+
+function nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{ASCIIString})
+  valsa_c=Array(Ptr{UInt8},length(valsa))
+  nc_get_att_string(ncid,varid,name,valsa_c)
+  map!(bytestring,valsa,valsa_c)
+end
 
 function nc_inq_var(nc::NcFile,varid::Integer)
   # Inquire variables in the file
@@ -278,7 +284,7 @@ function parsedimargs(dim)
       #Assume attributes are given
       dimatts= dimatts==nothing ? a : error("Dimension attributes of $name defined more than once")
     end
-  end
+    end
   d[idim]=finalizedim(dimlen,dimvals,dimatts,name)
   return(d)
 end
@@ -293,5 +299,6 @@ function finalizedim(dimlen,dimvals,dimatts,name)
   if (dimatts==nothing)
     dimatts=@Compat.AnyDict("missval"=>-9999)
   end
+  println(dimlen,dimvals)
   return(NcDim(name,dimlen,atts=dimatts,values=dimvals))
 end
