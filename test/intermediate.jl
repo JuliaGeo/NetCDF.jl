@@ -13,7 +13,7 @@ d3 = NcDim("Dim3",20;atts=@Compat.AnyDict("max"=>10));
 v1 = NcVar("v1",[d1,d2,d3],compress=5) 						# With several dims in an Array, and compressed
 v2 = NcVar("v2",[d1,d2,d3],atts=@Compat.AnyDict("a1"=>"varatts"))  # with given attributes
 v3 = NcVar("v3",d1)
-vs = NcVar("vstr",d2,t=String) 								# with a single dimension
+vs = NcVar("vstr",d2,t=ASCIIString) 								# with a single dimension
 tlist = [Float64, Float32, Int32, Int16, Int8]
 vt = Array(NcVar, length(tlist))
 for i= 1:length(tlist)
@@ -49,7 +49,7 @@ xt=Array(Any,length(tlist))
 for i=1:length(tlist)
     xt[i]=rand(tlist[i],10)
 end
-xs=Array(AbstractString,10)
+xs=Array(ASCIIString,10)
 xs[1]="a"
 xs[2]="bb"
 xs[3]="ccc"
