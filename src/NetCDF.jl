@@ -16,27 +16,32 @@ function __init__()
                    Float32=>NC_FLOAT,
                    Float64=>NC_DOUBLE,
                    UInt8=>NC_CHAR,
-                   ASCIIString=>NC_STRING)
+                   AbstractString=>NC_STRING)
 
-  global const nctype2jltype=@Compat.Dict(NC_BYTE=>Int8,
+  global const nctype2jltype=@Compat.Dict(
+                    NC_BYTE=>Int8,
                     NC_SHORT=>Int16,
                     NC_INT=>Int32,
-                    NC_LONG=>Int64,
+                    NC_INT64=>Int64,
                     NC_FLOAT=>Float32,
                     NC_DOUBLE=>Float64,
                     NC_CHAR=>UInt8,
-                    NC_STRING=>Ptr{UInt8})
+                    NC_STRING=>AbstractString)
 
-  global const nctype2string=@Compat.Dict(NC_BYTE=>"BYTE",
+  global const nctype2string=@Compat.Dict(
+                   NC_BYTE=>"BYTE",
                    NC_SHORT=>"SHORT",
                    NC_INT=>"INT",
+                   NC_INT64=>"INT64",
                    NC_FLOAT=>"FLOAT",
                    NC_DOUBLE=>"DOUBLE",
                    NC_STRING=>"STRING",
-                   NC_INT64=>"INT64",
                    )
 end
 
+function jl2nc(t::DataType)
+  shift!(collect(keys(nctype2jltype))[find(e->(t <: e), collect(values(nctype2jltype)))])
+end
 
 """The type `NcDim` Represents an NcDim object representing a NetCDF dimension of name `name` with dimension values.
 """
@@ -250,8 +255,8 @@ for (t,ending,arname) in funext
     @eval nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Type{$t})=begin $fname1(ncid,varid,start,$(arsym)); $(arsym)[1] end
 end
 
-function nc_get_vara_x!{T<:Union{UTF8String,ASCIIString}}(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::Array{T})
-#function nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::Array{AbstractString})
+#function nc_get_vara_x!{T<:AbstractString}(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::Array{T})
+function nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::Array{AbstractString})
   retvalsa_c=Array(Ptr{UInt8},length(retvalsa))
   nc_get_vara_string(ncid,varid,start,count,retvalsa_c)
   for i=1:length(retvalsa)
@@ -261,8 +266,8 @@ function nc_get_vara_x!{T<:Union{UTF8String,ASCIIString}}(ncid::Integer,varid::I
   retvalsa
 end
 
-function nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Union{Type{ASCIIString},Type{UTF8String}})
-#function nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Type{AbstractString})
+#function nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Union{Type{ASCIIString},Type{UTF8String}})
+function nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Type{AbstractString})
   retvalsa_c=Array(Ptr{UInt8},1)
   nc_get_var1_string(ncid,varid,start,retvalsa_c)
   retval=bytestring(retvalsa_c[1])
@@ -434,7 +439,7 @@ function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict{Any,Any}=
 
   for d in dims
 
-      create_dim(nc,d)
+    create_dim(nc,d)
     if (length(d.vals)>0) & (!haskey(nc.vars,d.name))
       push!(varlist,NcVar{Float64,1}(id,varida[1],1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1))
     end
@@ -606,9 +611,10 @@ function create_dim(nc,dim)
     nc_def_dim(nc.ncid,dim.name,dim.dimlen,dima);
     dim.dimid=dima[1];
     if !isempty(dim.vals)
+      nctype = jl2nc(eltype(dim.vals))
       dumids[1]=dim.dimid
-      nc_def_var(nc.ncid,dim.name,NC_DOUBLE,1,dumids,vara)
-      nc.vars[dim.name]=NcVar{Float64,1}(nc.ncid,vara[1],1,0,NC_DOUBLE,dim.name,Int32[dim.dimid],NcDim[dim],Dict{Any,Any}(),-1)
+      nc_def_var(nc.ncid,dim.name,nctype,1,dumids,vara)
+      nc.vars[dim.name]=NcVar{Float64,1}(nc.ncid,vara[1],1,0,nctype,dim.name,Int32[dim.dimid],NcDim[dim],Dict{Any,Any}(),-1)
     end
     putatt(nc.ncid,dim.dimid,dim.atts)
     nc.dim[dim.name]=dim;
@@ -645,8 +651,6 @@ Possible optional arguments are:
 function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Union{DataType,Integer}=NC_DOUBLE,mode::UInt16=NC_NETCDF4)
     # Checking dims argument for correctness
     dim=parsedimargs(dims)
-    println(dim[1])
-    println(dim[3])
     # open the file
     # create the NcVar object
     v=NcVar(varname,dim,atts=atts,compress=compress,t=t)

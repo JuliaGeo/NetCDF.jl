@@ -275,7 +275,7 @@ function parsedimargs(dim)
     elseif (typeof(a)<:AbstractArray)
       #Assume dimension values are given
       if dimvals==nothing
-        dimvals=map(Float64,a)
+        dimvals=a #map(Float64,a)
         dimlen=length(dimvals)
       else
         error("Dimension values of $name defined more than once")
@@ -294,11 +294,10 @@ function finalizedim(dimlen,dimvals,dimatts,name)
     dimlen=1
   end
   if ((dimlen!=nothing) & (dimvals==nothing))
-    dimvals=Float64[]
+    dimvals=Array{Float64}(dimlen)
   end
   if (dimatts==nothing)
     dimatts=@Compat.AnyDict("missval"=>-9999)
   end
-  println(dimlen,dimvals)
   return(NcDim(name,dimlen,atts=dimatts,values=dimvals))
 end
