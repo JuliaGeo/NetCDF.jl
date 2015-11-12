@@ -256,7 +256,7 @@ for (t,ending,arname) in funext
     @eval nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Type{$t})=begin $fname1(ncid,varid,start,$(arsym)); $(arsym)[1] end
 end
 
-function nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::Array{AbstractString})
+function nc_get_vara_x!{T<:Union{UTF8String,ASCIIString}}(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::Array{T})
   retvalsa_c=Array(Ptr{UInt8},length(retvalsa))
   nc_get_vara_string(ncid,varid,start,count,retvalsa_c)
   for i=1:length(retvalsa)
@@ -266,7 +266,7 @@ function nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{UInt},count::
   retvalsa
 end
 
-function nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Type{AbstractString})
+function nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Union{Type{ASCIIString},Type{UTF8String}})
   retvalsa_c=Array(Ptr{UInt8},1)
   nc_get_var1_string(ncid,varid,start,retvalsa_c)
   retval=bytestring(retvalsa_c[1])
@@ -421,8 +421,7 @@ function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict{Any,Any}=
   #Create the file
   id = nc_create(name,mode)
   # Collect Dimensions and set NetCDF ID
-  # vars=Dict{ASCIIString,NcVar}();
-  vars = Dict{AbstractString,NcVar}();
+  vars=Dict{ASCIIString,NcVar}();
   dims=Set{NcDim}();
   for v in varlist
       v.ncid=id
