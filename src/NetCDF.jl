@@ -189,7 +189,8 @@ length as the number of variable dimensions. start gives the initial index for e
 As a special case, setting a value in count to -1 will cause the function to read all values along this dimension.
 """
 function readvar{T,N}(v::NcVar{T,N};start::Vector=defaultstart(v),count::Vector=defaultcount(v))
-    retvalsa = Array(T,count...)
+    s = [count[i]==-1 ? size(v,i)-start[i]+1 : count[i] for i=1:length(count)]
+    retvalsa = Array(T,s...)
     readvar!(v, retvalsa, start=start, count=count)
     return retvalsa
 end

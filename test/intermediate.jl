@@ -91,3 +91,6 @@ nc3 = NetCDF.open(fn3,mode=NC_NOWRITE);
 @test xs==NetCDF.readvar(nc1,"vstr")
 @test x2==NetCDF.readvar(nc2,"v2")
 @test x4==NetCDF.readvar(nc2,"v3")
+
+#Test -1 reading full dimension
+NetCDF.readvar(nc1,"v1",start=[1,1,1],count=[-1,-1,-1])
