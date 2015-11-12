@@ -235,6 +235,18 @@ function preparestartcount(start,count,v::NcVar)
     return p
 end
 
+function _readdimvars(nc::NcFile)
+  for d in nc.dim
+    for v in nc.vars
+      if (d[2].name==v[2].name)
+        NC_VERBOSE ?println(d[2].name," ",v[2].name) : nothing
+        d[2].vals=readvar(nc,v[2].name)
+        d[2].atts=v[2].atts
+      end
+    end
+  end
+end
+
 defaultstart(v::NcVar)=ones(Int,v.ndim)
 defaultcount(v::NcVar)=Int[i for i in size(v)]
 
