@@ -162,7 +162,6 @@ function nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Ar
   map!(bytestring,valsa,valsa_c)
 end
 
-
 function nc_inq_var(nc::NcFile,varid::Integer)
   # Inquire variables in the file
   nc_inq_var(nc.ncid,varid,namea,typea,ndima,dimida,natta)
@@ -286,7 +285,7 @@ function parsedimargs(dim)
     elseif (typeof(a)<:AbstractArray)
       #Assume dimension values are given
       if dimvals==nothing
-        dimvals=map(Float64,a)
+        dimvals=a #map(Float64,a)
         dimlen=length(dimvals)
       else
         error("Dimension values of $name defined more than once")
@@ -295,7 +294,7 @@ function parsedimargs(dim)
       #Assume attributes are given
       dimatts= dimatts==nothing ? a : error("Dimension attributes of $name defined more than once")
     end
-  end
+    end
   d[idim]=finalizedim(dimlen,dimvals,dimatts,name)
   return(d)
 end
@@ -305,7 +304,7 @@ function finalizedim(dimlen,dimvals,dimatts,name)
     dimlen=1
   end
   if ((dimlen!=nothing) & (dimvals==nothing))
-    dimvals=Float64[]
+    dimvals=Array{Float64}(dimlen)
   end
   if (dimatts==nothing)
     dimatts=@Compat.AnyDict("missval"=>-9999)
