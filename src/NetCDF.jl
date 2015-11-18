@@ -374,12 +374,12 @@ end
 "Synchronizes the changes made to the file and writes changes to the disk. If the argument is omitted, all open files are synchronized. "
 function ncsync()
   for ncf in currentNcFiles
-    _nc_sync_c(ncf[2].ncid)
+    nc_sync(ncf[2].ncid)
   end
 end
 
 function sync(nc::NcFile)
-  _nc_sync_c(nc.ncid)
+  nc_sync(nc.ncid)
 end
 
 #Function to close netcdf files
