@@ -5,10 +5,10 @@ os:
   - osx
 julia:
   - 0.4
-  - nightly
 notifications:
   email: false
 # uncomment the following lines to override the default test script
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'Pkg.clone(pwd()); Pkg.build("NetCDF"); Pkg.test("NetCDF"; coverage=true)'
+  - julia -e 'Pkg.clone(pwd()); Pkg.build("NetCDF"); Pkg.build("NetCDF")'
+  - julia -e 'Pkg.test("NetCDF"; coverage=true)'

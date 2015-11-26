@@ -9,15 +9,6 @@ NC_VERBOSE=false
 #Some constants
 
 function __init__()
-  global const jltype2nctype=@Compat.Dict(Int8=>NC_BYTE,
-                   Int16=>NC_SHORT,
-                   Int32=>NC_INT,
-                   Int64=>NC_INT64,
-                   Float32=>NC_FLOAT,
-                   Float64=>NC_DOUBLE,
-                   UInt8=>NC_CHAR,
-                   AbstractString=>NC_STRING)
-
   global const nctype2jltype=@Compat.Dict(
                     NC_BYTE=>Int8,
                     NC_SHORT=>Int16,
@@ -107,9 +98,9 @@ You can also set the compression level of the variable by setting compress to a 
 #Some additional constructors
 function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1)
   dim = isa(dimin,NcDim) ? NcDim[dimin] : dimin
-  return NcVar{typeof(t)==DataType ? t : nctype2jltype[t],length(dim)}(-1,-1,length(dim),length(atts), typeof(t)==DataType ? jltype2nctype[t] : t,name,Array(Int32,length(dim)),dim,atts,compress)
+  return NcVar{isa(t,DataType) ? t : nctype2jltype[t],length(dim)}(-1,-1,length(dim),length(atts), isa(t,DataType) ? jl2nc(t) : t,name,Array(Int32,length(dim)),dim,atts,compress)
 end
-NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}},atts::Dict{Any,Any},t::Union{DataType,Integer}=Float64)=NcVar{typeof(t)==DataType ? t : nctype2jltype[t],length(dimin)}(-1,-1,length(dimin),length(atts), typeof(t)==DataType ? jltype2nctype[t] : t,name,Array(Int,length(dimin)),dimin,atts,-1)
+NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}},atts::Dict{Any,Any},t::Union{DataType,Integer}=Float64)=NcVar{isa(t,DataType) ? t : nctype2jltype[t],length(dimin)}(-1,-1,length(dimin),length(atts), isa(t,DataType) ? jl2nc(t) : t,name,Array(Int,length(dimin)),dimin,atts,-1)
 
 #Array methods
 @generated function Base.size{T,N}(a::NcVar{T,N})
@@ -608,11 +599,6 @@ function create_dim(nc,dim)
     nc_redef(nc)
     nc_def_dim(nc.ncid,dim.name,dim.dimlen,dima);
     dim.dimid=dima[1];
-      nctype = jl2nc(eltype(dim.vals))
-      dumids[1]=dim.dimid
-      nc_def_var(nc.ncid,dim.name,nctype,1,dumids,vara)
-      nc.vars[dim.name]=NcVar{Float64,1}(nc.ncid,vara[1],1,0,nctype,dim.name,Int32[dim.dimid],NcDim[dim],Dict{Any,Any}(),-1)
-    putatt(nc.ncid,dim.dimid,dim.atts)
     nc.dim[dim.name]=dim;
 end
 
@@ -668,6 +654,7 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict
             if !haskey(nc.dim,dim[i].name)
                 create_dim(nc,dim[i])
                 v.dimids[i]=dim[i].dimid;
+                create_var(nc,NcVar{Float64,1}(nc.ncid,0,1,length(dim[i].atts),NC_DOUBLE,dim[i].name,[dim[i].dimid],[dim[i]],dim[i].atts,-1),mode)
                 dcreate[i] = true
             else
                 v.dimids[i]=nc.dim[dim[i].name].dimid;
