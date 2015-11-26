@@ -654,7 +654,7 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict
             if !haskey(nc.dim,dim[i].name)
                 create_dim(nc,dim[i])
                 v.dimids[i]=dim[i].dimid;
-                isempty(dim[i].vals) || create_var(nc,NcVar{Float64,1}(nc.ncid,0,1,length(dim[i].atts),NC_DOUBLE,dim[i].name,[dim[i].dimid],[dim[i]],dim[i].atts,-1),mode)
+                create_var(nc,NcVar{Float64,1}(nc.ncid,0,1,length(dim[i].atts),NC_DOUBLE,dim[i].name,[dim[i].dimid],[dim[i]],dim[i].atts,-1),mode)
                 dcreate[i] = true
             else
                 v.dimids[i]=nc.dim[dim[i].name].dimid;
