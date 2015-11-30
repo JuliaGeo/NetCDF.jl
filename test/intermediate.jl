@@ -2,12 +2,14 @@
 fn1=tempname()
 fn2=tempname()
 fn3=tempname()
+fn4=tempname()
 
 # Test Medium level Interface
 # Test Dimension Creation
 d1 = NcDim("Dim1",2;values=[5.0,10.0],atts=@Compat.AnyDict("units"=>"deg C"));
 d2 = NcDim("Dim2",collect(1:10));
 d3 = NcDim("Dim3",20;atts=@Compat.AnyDict("max"=>10));
+d4 = NcDim("DimUnlim")
 
 # Test Variable creation
 v1 = NcVar("v1",[d1,d2,d3],compress=5) 						# With several dims in an Array, and compressed

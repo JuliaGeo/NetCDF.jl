@@ -45,29 +45,30 @@ type NcDim
   dimlen::UInt
   vals::AbstractArray
   atts::Dict
+  unlim::Bool
 end
 
 
 """
 
-    NcDim(name::String,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict{Any,Any}=Dict{Any,Any}())`
+    NcDim(name::String,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict{Any,Any}=Dict{Any,Any}(),unlimited=false)`
 This constructor creates an NcDim object with the name `name` and length `dimlength`.
 """
-function NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict=Dict{Any,Any}())
+function NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict=Dict{Any,Any}(),unlimited=false)
     (length(values)>0 && length(values)!=dimlength) ? error("Dimension value vector must have the same length as dimlength!") : nothing
-    NcDim(-1,-1,-1,utf8(name),dimlength,values,atts)
+    NcDim(-1,-1,-1,utf8(name),dimlength,values,atts,unlimited)
 end
 
 
 """
-    NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict{Any,Any}=Dict{Any,Any}())
+    NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict{Any,Any}=Dict{Any,Any}();unlimited=false)
 This constructor creates an NcDim object with the name `name` and and associated values `values`. Upon creation of the NetCDF file a
 dimension variable will be generated and the values be written to this variable. Optionally a Dict of attributes can be supplied.
 """
-NcDim(name::AbstractString,values::AbstractArray;atts::Dict=Dict{Any,Any}())=
-  NcDim(name,length(values),values=values,atts=atts)
-NcDim(name::AbstractString,values::AbstractArray,atts::Dict)=
-  NcDim(name,length(values),values=values,atts=atts)
+NcDim(name::AbstractString,values::AbstractArray;atts::Dict=Dict{Any,Any}(),unlimited=false)=
+  NcDim(name,length(values),values=values,atts=atts,unlimited=unlimited)
+NcDim(name::AbstractString,values::AbstractArray,atts::Dict;unlimited=false)=
+  NcDim(name,length(values),values=values,atts=atts,unlimited=unlimited)
 
 """
 The type `NcVar{T,N}` represents a NetCDF variable. It is a subtype of AbstractArray{T,N}, so normal indexing using `[]`
@@ -504,7 +505,7 @@ function open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=fa
   #Read dimensions
   for dimid = 0:ndim-1
     (name,dimlen)=nc_inq_dim(ncid,dimid)
-    ncf.dim[name]=NcDim(ncid,dimid,-1,name,dimlen,[],Dict{Any,Any}())
+    ncf.dim[name]=NcDim(ncid,dimid,-1,name,dimlen,[],Dict{Any,Any}(),dimid==nunlimdimid ? true : false)
   end
 
   #Read variable information

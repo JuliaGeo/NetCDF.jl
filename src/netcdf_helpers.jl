@@ -231,7 +231,7 @@ function preparestartcount(start,count,v::NcVar)
         gstart[ci] = start[i] - 1
         gcount[ci] = count[i] < 0 ? v.dim[i].dimlen - gstart[ci] : count[i]
         gstart[ci] < 0 && error("Start index must not be smaller than 1")
-        gstart[ci] + gcount[ci] > v.dim[i].dimlen && error("Start + Count exceeds dimension length in dimension $(v.dim[i].name)")
+        gstart[ci] + gcount[ci] > v.dim[i].dimlen && !(v.dim[i].unlim) && error("Start + Count exceeds dimension length in dimension $(v.dim[i].name)")
         p=p*gcount[ci]
     end
 
@@ -259,23 +259,14 @@ function parsedimargs(dim)
   dimvals=nothing
   dimatts=nothing
   name=nothing
-  #Determine number of dimensions
-  ndim=0
-  for a in dim
-    if (typeof(a)<:AbstractString)
-      ndim=ndim+1
-    end
-    NC_VERBOSE ? println(a) : nothing
-  end
-  d=Array(NcDim,ndim)
-  idim=1
+  d=Array(NcDim,0)
   for a in dim
     NC_VERBOSE ? println(a,idim) : nothing
-    if (typeof(a)<:AbstractString)
+    if isa(a,AbstractString)
       #Assume a name is given
       #first create an NcDim object from the last dim
       if (name!=nothing)
-        d[idim]=finalizedim(dimlen,dimvals,dimatts,name)
+        push!(d,finalizedim(dimlen,dimvals,dimatts,name))
         idim=idim+1
         dimlen=nothing
         dimvals=nothing
@@ -283,23 +274,27 @@ function parsedimargs(dim)
         name=nothing
       end
       name=a
-    elseif (typeof(a)<:Integer)
+    elseif isa(a,Integer)
       #Assume a dimension length is given
+      a>0 || error("Dimension length must be greater than 0 (or Inf for unlimited dimension)")
       dimlen=a
-    elseif (typeof(a)<:AbstractArray)
+  elseif isa(a,AbstractFloat) && isinf(a)
+      #Generate unlimited dimension
+      dimlen=0
+    elseif isa(a,AbstractArray)
       #Assume dimension values are given
       if dimvals==nothing
-        dimvals=a #map(Float64,a)
+        dimvals=a
         dimlen=length(dimvals)
       else
         error("Dimension values of $name defined more than once")
       end
-    elseif (typeof(a)<:Dict)
+    elseif isa(a,Dict)
       #Assume attributes are given
       dimatts= dimatts==nothing ? a : error("Dimension attributes of $name defined more than once")
     end
-    end
-  d[idim]=finalizedim(dimlen,dimvals,dimatts,name)
+  end
+  push!(d,finalizedim(dimlen,dimvals,dimatts,name))
   return(d)
 end
 
@@ -308,10 +303,10 @@ function finalizedim(dimlen,dimvals,dimatts,name)
     dimlen=1
   end
   if ((dimlen!=nothing) & (dimvals==nothing))
-    dimvals=Array{Float64}(dimlen)
+    dimvals=Array{Float64}(0)
   end
   if (dimatts==nothing)
     dimatts=@Compat.AnyDict("missval"=>-9999)
   end
-  return(NcDim(name,dimlen,atts=dimatts,values=dimvals))
+  return(NcDim(name,dimlen,atts=dimatts,values=dimvals,unlimited=(dimlen==0 ? true : false)))
 end
