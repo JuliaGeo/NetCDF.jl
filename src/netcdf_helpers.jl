@@ -231,7 +231,14 @@ function preparestartcount(start,count,v::NcVar)
         gstart[ci] = start[i] - 1
         gcount[ci] = count[i] < 0 ? v.dim[i].dimlen - gstart[ci] : count[i]
         gstart[ci] < 0 && error("Start index must not be smaller than 1")
-        gstart[ci] + gcount[ci] > v.dim[i].dimlen && !(v.dim[i].unlim) && error("Start + Count exceeds dimension length in dimension $(v.dim[i].name)")
+        if gstart[ci] + gcount[ci] > v.dim[i].dimlen
+          if v.dim[i].unlim
+            #Reset length of unlimited dimension
+            v.dim[i].dimlen=gstart[ci] + gcount[ci]
+          else
+            error("Start + Count exceeds dimension length in dimension $(v.dim[i].name)")
+          end
+        end
         p=p*gcount[ci]
     end
 

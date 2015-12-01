@@ -9,7 +9,7 @@ fn4=tempname()
 d1 = NcDim("Dim1",2;values=[5.0,10.0],atts=@Compat.AnyDict("units"=>"deg C"));
 d2 = NcDim("Dim2",collect(1:10));
 d3 = NcDim("Dim3",20;atts=@Compat.AnyDict("max"=>10));
-d4 = NcDim("DimUnlim")
+d4 = NcDim("DimUnlim",0,unlimited=true)
 
 # Test Variable creation
 v1 = NcVar("v1",[d1,d2,d3],compress=5) 						# With several dims in an Array, and compressed
@@ -21,11 +21,13 @@ vt = Array(NcVar, length(tlist))
 for i= 1:length(tlist)
   vt[i]=NcVar("vt$i",d2,t = tlist[i])
 end
+vunlim = NcVar("vunlim",d4,t=Float64)
 
 # Creating Files
 nc1 = NetCDF.create(fn1,v1,vs,mode=NC_NETCDF4);
 nc2 = NetCDF.create(fn2,v2,v3,gatts=@Compat.AnyDict("Some global attributes"=>2010),mode=NC_64BIT_OFFSET);
 nc3 = NetCDF.create(fn3,vt,mode=NC_CLASSIC_MODEL);
+ncunlim = NetCDF.create(fn4,vunlim)
 
 #Test Adding attributes
 NetCDF.putatt(nc1,"v1",@Compat.Dict("Additional String attribute"=>"att"))
@@ -79,6 +81,7 @@ for i=1:length(tlist)
   NetCDF.putvar(nc3,"vt$i",xt[i])
 end
 
+NetCDF.putvar(ncunlim,"vunlim",collect(1:10))
 
 NetCDF.close(nc1)
 NetCDF.close(nc2)

@@ -334,10 +334,11 @@ end
   end
 end
 
-function putvar{T,N}(v::NcVar{T,N},val::Any,I::Integer...)
+@generated function putvar{T,N}(v::NcVar{T,N},val::Any,I::Integer...)
 
     N==length(I) || error("Dimension mismatch")
     quote
+      println(I)
       checkbounds(v,I...)
       @nexprs $N i->gstart[v.ndim+1-i]=I[i]-1
       nc_put_var1_x(v.ncid,v.varid,gstart,val)
@@ -698,7 +699,7 @@ function show(io::IO,nc::NcFile)
     println(io,tolen("Name",l2),tolen("Length",l1))
     println(hline)
   for d in nc.dim
-    println(io,tolen(d[2].name,l2),tolen(d[2].dimlen,l1))
+    println(io,tolen(d[2].name,l2),tolen(d[2].unlim ? string("UNLIMITED (" ,d[2].dimlen," currently)") : d[2].dimlen,l1))
   end
   l1=div(ncol,5)
   l2=2*l1
