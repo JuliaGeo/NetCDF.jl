@@ -27,6 +27,7 @@ function __init__()
                    NC_FLOAT=>"FLOAT",
                    NC_DOUBLE=>"DOUBLE",
                    NC_STRING=>"STRING",
+                   NC_CHAR=>"CHAR",
                    )
 end
 
