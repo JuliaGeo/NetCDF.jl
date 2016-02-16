@@ -283,9 +283,13 @@ function parsedimargs(dim)
       name=a
     elseif isa(a,Integer)
       #Assume a dimension length is given
-      a>0 || error("Dimension length must be greater than 0 (or Inf for unlimited dimension)")
-      dimlen=a
-  elseif isa(a,AbstractFloat) && isinf(a)
+      if a>0
+        dimlen=a
+      else
+        #Assume unlimited dimension
+        dimlen=0
+      end
+    elseif isa(a,AbstractFloat) && isinf(a)
       #Generate unlimited dimension
       dimlen=0
     elseif isa(a,AbstractArray)
@@ -299,6 +303,8 @@ function parsedimargs(dim)
     elseif isa(a,Dict)
       #Assume attributes are given
       dimatts= dimatts==nothing ? a : error("Dimension attributes of $name defined more than once")
+    else
+      error("Could not parse argument $a in nccreate")
     end
   end
   push!(d,finalizedim(dimlen,dimvals,dimatts,name))
