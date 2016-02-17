@@ -324,9 +324,10 @@ end
   N==length(I) || error("Dimension mismatch")
 
   quote
-    checkbounds(v,I...)
+
     @nexprs $N i->gstart[v.ndim+1-i]=firsti(I[i],v.dim[i].dimlen)
     @nexprs $N i->gcount[v.ndim+1-i]=counti(I[i],v.dim[i].dimlen)
+    checkboundsNC(v)
     p=1
     @nexprs $N i->p=p*gcount[v.ndim+1-i]
     length(val) != p && error(string("Size of output array ($(length(retvalsa))) does not equal number of elements to be read (",p,")!"))
@@ -338,9 +339,8 @@ end
 
     N==length(I) || error("Dimension mismatch")
     quote
-      println(I)
-      checkbounds(v,I...)
       @nexprs $N i->gstart[v.ndim+1-i]=I[i]-1
+      @nall($N,d->((I[d]<=v.dim[d].dimlen && I[d]>0) || v.dim[d].unlim)) || throw(BoundsError(v,I)) 
       nc_put_var1_x(v.ncid,v.varid,gstart,val)
     end
 
@@ -362,6 +362,27 @@ end
 function nc_put_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},val::AbstractString)
   val_p=fill(pointer(val.data),1)
   nc_put_var1_string(ncid,varid,start,val_p)
+end
+
+function Base.push!(v::NcVar,a::AbstractArray)
+    sold=size(v)
+    N=ndims(v)
+    iunlim=find(map(x->x.unlim,v.dim))
+    length(iunlim)==1 || error("You can only push to a NetCDF variable with one unlimited dimension")
+    st=fill(1,N);st[iunlim[1]]=sold[iunlim[1]]+1
+    co=fill(-1,N)
+    if ndims(v)==ndims(a)
+        co[iunlim[1]]=size(a,iunlim[1])
+    elseif ndims(v)==ndims(a)+1
+        co[iunlim[1]]=1
+    else
+        error("You can only push variables that have equal or one fewer dimension than the NetCDF Variable")
+    end
+    NetCDF.putvar(v,a,start=st,count=co)
+end
+
+function Base.push!{T}(v::NcVar{T,1},a::Number)
+    push!(v,collect(a))
 end
 
 
@@ -680,6 +701,7 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict
             !isempty(d.vals) && ncwrite(d.vals,fil,d.name)
         end
     end
+    return v
 end
 
 #show{T<:Any,N}(io::IO,a::NcVar{T,N})=println(io,a.name)
