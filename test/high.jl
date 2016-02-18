@@ -1,6 +1,6 @@
 ##High-level syntax
 #First delete any existing nc-files
-for fn in (fn1,fn2,fn3)
+for fn in (fn1,fn2,fn3,fn4)
   if (isfile(fn))
     rm(fn)
   end
@@ -64,5 +64,13 @@ ncwrite(x4,fn3,"v3")
 for i=1:length(tlist)
   ncwrite(xt[i],fn3,"vt$i")
 end
+
+# Test creating unlimited dimension file
+nccreate(fn4,"myvar","time",Inf)
+nccreate(fn4,"myvar2","dinf",Inf,"d1",10,"d2",20)
+ncwrite(collect(1:10),fn4,"myvar")
+ncwrite(collect(1:5),fn4,"myvar",start=[11;])
+ncwrite(ones(5,10,20),fn4,"myvar2")
+ncwrite(zeros(1,10,20),fn4,"myvar2")
 
 ncclose()

@@ -4,7 +4,7 @@ using Formatting
 using Base.Cartesian
 include("netcdf_c.jl")
 import Base.show
-export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE,NC_STRING,ncgetatt,NC_NOWRITE,NC_WRITE,NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4
+export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE,NC_STRING,ncgetatt,NC_NOWRITE,NC_WRITE,NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4,NC_UNLIMITED
 NC_VERBOSE=false
 #Some constants
 
@@ -45,29 +45,30 @@ type NcDim
   dimlen::UInt
   vals::AbstractArray
   atts::Dict
+  unlim::Bool
 end
 
 
 """
 
-    NcDim(name::String,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict{Any,Any}=Dict{Any,Any}())`
+    NcDim(name::String,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict{Any,Any}=Dict{Any,Any}(),unlimited=false)`
 This constructor creates an NcDim object with the name `name` and length `dimlength`.
 """
-function NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict=Dict{Any,Any}())
+function NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict=Dict{Any,Any}(),unlimited=false)
     (length(values)>0 && length(values)!=dimlength) ? error("Dimension value vector must have the same length as dimlength!") : nothing
-    NcDim(-1,-1,-1,utf8(name),dimlength,values,atts)
+    NcDim(-1,-1,-1,utf8(name),dimlength,values,atts,unlimited)
 end
 
 
 """
-    NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict{Any,Any}=Dict{Any,Any}())
+    NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict{Any,Any}=Dict{Any,Any}();unlimited=false)
 This constructor creates an NcDim object with the name `name` and and associated values `values`. Upon creation of the NetCDF file a
 dimension variable will be generated and the values be written to this variable. Optionally a Dict of attributes can be supplied.
 """
-NcDim(name::AbstractString,values::AbstractArray;atts::Dict=Dict{Any,Any}())=
-  NcDim(name,length(values),values=values,atts=atts)
-NcDim(name::AbstractString,values::AbstractArray,atts::Dict)=
-  NcDim(name,length(values),values=values,atts=atts)
+NcDim(name::AbstractString,values::AbstractArray;atts::Dict=Dict{Any,Any}(),unlimited=false)=
+  NcDim(name,length(values),values=values,atts=atts,unlimited=unlimited)
+NcDim(name::AbstractString,values::AbstractArray,atts::Dict;unlimited=false)=
+  NcDim(name,length(values),values=values,atts=atts,unlimited=unlimited)
 
 """
 The type `NcVar{T,N}` represents a NetCDF variable. It is a subtype of AbstractArray{T,N}, so normal indexing using `[]`
@@ -323,9 +324,10 @@ end
   N==length(I) || error("Dimension mismatch")
 
   quote
-    checkbounds(v,I...)
+
     @nexprs $N i->gstart[v.ndim+1-i]=firsti(I[i],v.dim[i].dimlen)
     @nexprs $N i->gcount[v.ndim+1-i]=counti(I[i],v.dim[i].dimlen)
+    checkboundsNC(v)
     p=1
     @nexprs $N i->p=p*gcount[v.ndim+1-i]
     length(val) != p && error(string("Size of output array ($(length(retvalsa))) does not equal number of elements to be read (",p,")!"))
@@ -333,12 +335,12 @@ end
   end
 end
 
-function putvar{T,N}(v::NcVar{T,N},val::Any,I::Integer...)
+@generated function putvar{T,N}(v::NcVar{T,N},val::Any,I::Integer...)
 
     N==length(I) || error("Dimension mismatch")
     quote
-      checkbounds(v,I...)
       @nexprs $N i->gstart[v.ndim+1-i]=I[i]-1
+      @nall($N,d->((I[d]<=v.dim[d].dimlen && I[d]>0) || v.dim[d].unlim)) || throw(BoundsError(v,I)) 
       nc_put_var1_x(v.ncid,v.varid,gstart,val)
     end
 
@@ -360,6 +362,27 @@ end
 function nc_put_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},val::AbstractString)
   val_p=fill(pointer(val.data),1)
   nc_put_var1_string(ncid,varid,start,val_p)
+end
+
+function Base.push!(v::NcVar,a::AbstractArray)
+    sold=size(v)
+    N=ndims(v)
+    iunlim=find(map(x->x.unlim,v.dim))
+    length(iunlim)==1 || error("You can only push to a NetCDF variable with one unlimited dimension")
+    st=fill(1,N);st[iunlim[1]]=sold[iunlim[1]]+1
+    co=fill(-1,N)
+    if ndims(v)==ndims(a)
+        co[iunlim[1]]=size(a,iunlim[1])
+    elseif ndims(v)==ndims(a)+1
+        co[iunlim[1]]=1
+    else
+        error("You can only push variables that have equal or one fewer dimension than the NetCDF Variable")
+    end
+    NetCDF.putvar(v,a,start=st,count=co)
+end
+
+function Base.push!{T}(v::NcVar{T,1},a::Number)
+    push!(v,collect(a))
 end
 
 
@@ -504,7 +527,7 @@ function open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=fa
   #Read dimensions
   for dimid = 0:ndim-1
     (name,dimlen)=nc_inq_dim(ncid,dimid)
-    ncf.dim[name]=NcDim(ncid,dimid,-1,name,dimlen,[],Dict{Any,Any}())
+    ncf.dim[name]=NcDim(ncid,dimid,-1,name,dimlen,[],Dict{Any,Any}(),dimid==nunlimdimid ? true : false)
   end
 
   #Read variable information
@@ -678,6 +701,7 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict
             !isempty(d.vals) && ncwrite(d.vals,fil,d.name)
         end
     end
+    return v
 end
 
 #show{T<:Any,N}(io::IO,a::NcVar{T,N})=println(io,a.name)
@@ -697,7 +721,7 @@ function show(io::IO,nc::NcFile)
     println(io,tolen("Name",l2),tolen("Length",l1))
     println(hline)
   for d in nc.dim
-    println(io,tolen(d[2].name,l2),tolen(d[2].dimlen,l1))
+    println(io,tolen(d[2].name,l2),tolen(d[2].unlim ? string("UNLIMITED (" ,d[2].dimlen," currently)") : d[2].dimlen,l1))
   end
   l1=div(ncol,5)
   l2=2*l1
