@@ -86,6 +86,7 @@ type NcVar{T,N} <: AbstractArray{T,N}
   dim::Vector{NcDim}
   atts::Dict
   compress::Int32
+  chunksize::NTuple{N,Int32}
 end
 
 Base.convert{S,T,N}(::Type{NcVar{T,N}},v::NcVar{S,N})=NcVar{T,N}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress)
@@ -98,11 +99,11 @@ holding pairs of attribute names and values. t is the data type that should be u
 You can also set the compression level of the variable by setting compress to a number in the range 1..9 This has only an effect in NetCDF4 files.
 """
 #Some additional constructors
-function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1)
+function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1,chunksize=ntuple(i->zero(Int32),isa(dimin,NcDim) ? 1 : length(dimin)))
   dim = isa(dimin,NcDim) ? NcDim[dimin] : dimin
-  return NcVar{isa(t,DataType) ? t : nctype2jltype[t],length(dim)}(-1,-1,length(dim),length(atts), isa(t,DataType) ? jl2nc(t) : t,name,Array(Int32,length(dim)),dim,atts,compress)
+  return NcVar{isa(t,DataType) ? t : nctype2jltype[t],length(dim)}(-1,-1,length(dim),length(atts), isa(t,DataType) ? jl2nc(t) : t,name,Array(Int32,length(dim)),dim,atts,compress,chunksize)
 end
-NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}},atts::Dict{Any,Any},t::Union{DataType,Integer}=Float64)=NcVar{isa(t,DataType) ? t : nctype2jltype[t],length(dimin)}(-1,-1,length(dimin),length(atts), isa(t,DataType) ? jl2nc(t) : t,name,Array(Int,length(dimin)),dimin,atts,-1)
+NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}},atts::Dict{Any,Any},t::Union{DataType,Integer}=Float64)=NcVar{isa(t,DataType) ? t : nctype2jltype[t],length(dimin)}(-1,-1,length(dimin),length(atts), isa(t,DataType) ? jl2nc(t) : t,name,Array(Int,length(dimin)),dimin,atts,-1,ntuple(i->zero(Int32),length(dimin)))
 
 #Array methods
 @generated function Base.size{T,N}(a::NcVar{T,N})
@@ -340,7 +341,7 @@ end
     N==length(I) || error("Dimension mismatch")
     quote
       @nexprs $N i->gstart[v.ndim+1-i]=I[i]-1
-      @nall($N,d->((I[d]<=v.dim[d].dimlen && I[d]>0) || v.dim[d].unlim)) || throw(BoundsError(v,I)) 
+      @nall($N,d->((I[d]<=v.dim[d].dimlen && I[d]>0) || v.dim[d].unlim)) || throw(BoundsError(v,I))
       nc_put_var1_x(v.ncid,v.varid,gstart,val)
     end
 
@@ -454,7 +455,7 @@ function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict{Any,Any}=
 
     create_dim(nc,d)
     if (length(d.vals)>0) & (!haskey(nc.vars,d.name))
-      push!(varlist,NcVar{Float64,1}(id,varida[1],1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1))
+      push!(varlist,NcVar{Float64,1}(id,varida[1],1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1,(zero(Int32),)))
     end
 
   end
@@ -532,7 +533,7 @@ function open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=fa
 
   #Read variable information
   for varid = 0:(nvar-1)
-    (name,nctype,dimids,natts,vndim,isdimvar)=nc_inq_var(ncf,varid)
+    (name,nctype,dimids,natts,vndim,isdimvar,chunksize)=nc_inq_var(ncf,varid)
     if (isdimvar)
       ncf.dim[name].varid=varid
     end
@@ -543,7 +544,7 @@ function open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=fa
       vdim[i]=ncf.dim[getdimnamebyid(ncf,did)]
       i=i+1
     end
-    ncf.vars[name]=NcVar{nctype2jltype[nctype],Int(vndim)}(ncid,Int32(varid),vndim,natts,nctype,name,dimids[vndim:-1:1],vdim[vndim:-1:1],atts,0)
+    ncf.vars[name]=NcVar{nctype2jltype[nctype],Int(vndim)}(ncid,Int32(varid),vndim,natts,nctype,name,dimids[vndim:-1:1],vdim[vndim:-1:1],atts,0,chunksize)
   end
   readdimvar==true ? _readdimvars(ncf) : nothing
   currentNcFiles[abspath(ncf.name)]=ncf
@@ -634,6 +635,10 @@ function create_var(nc,v,mode)
     for i=1:v.ndim dumids[i]=v.dimids[v.ndim+1-i] end
     nc_def_var(nc.ncid,v.name,v.nctype,v.ndim,dumids,vara)
     v.varid=vara[1];
+    if v.chunksize[1]>0
+      for i=1:v.ndim chunk_sizea[i]=v.chunksize[i] end
+      nc_def_var_chunking(nc.ncid, v.varid, NC_CHUNKED, chunk_sizea)
+    end
     nc.vars[v.name]=v;
     putatt(nc.ncid,v.varid,v.atts)
     setcompression(v,mode)
@@ -654,12 +659,13 @@ Possible optional arguments are:
 - **t** variable type, currently supported types are: const NC_BYTE, NC_CHAR, NC_SHORT, NC_INT, NC_FLOAT, NC_LONG, NC_DOUBLE
 - **mode** file creation mode, only valid when new file is created, choose one of: NC_NETCDF4, NC_CLASSIC_MODEL, NC_64BIT_OFFSET
 """
-function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Union{DataType,Integer}=NC_DOUBLE,mode::UInt16=NC_NETCDF4)
+function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Union{DataType,Integer}=NC_DOUBLE,mode::UInt16=NC_NETCDF4,chunksize=(0,))
     # Checking dims argument for correctness
     dim=parsedimargs(dims)
-    # open the file
+    # Check chunksize
+    chunksize=chunksize[1]==0 ? ntuple(i->0,length(dim)) : chunksize
     # create the NcVar object
-    v=NcVar(varname,dim,atts=atts,compress=compress,t=t)
+    v=NcVar(varname,dim,atts=atts,compress=compress,t=t,chunksize=chunksize)
     # Test if the file already exists
     if (isfile(fil))
         nc=haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,mode=NC_WRITE)
@@ -678,7 +684,7 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict
             if !haskey(nc.dim,dim[i].name)
                 create_dim(nc,dim[i])
                 v.dimids[i]=dim[i].dimid;
-                isempty(dim[i].vals) || create_var(nc,NcVar{Float64,1}(nc.ncid,0,1,length(dim[i].atts),NC_DOUBLE,dim[i].name,[dim[i].dimid],[dim[i]],dim[i].atts,-1),mode)
+                isempty(dim[i].vals) || create_var(nc,NcVar{Float64,1}(nc.ncid,0,1,length(dim[i].atts),NC_DOUBLE,dim[i].name,[dim[i].dimid],[dim[i]],dim[i].atts,-1,(0,)),mode)
                 dcreate[i] = true
             else
                 v.dimids[i]=nc.dim[dim[i].name].dimid;

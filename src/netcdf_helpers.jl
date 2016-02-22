@@ -44,6 +44,8 @@ const ida          = zeros(Int32,1)
 const namea        = zeros(UInt8,NC_MAX_NAME+1)
 const lengtha      = zeros(Csize_t,1)
 const dimida       = zeros(Int32,NC_MAX_VAR_DIMS)
+const chunk_sizea  = zeros(Csize_t,NC_MAX_VAR_DIMS)
+const storagep     = zeros(Int32,1)
 const ndima        = zeros(Int32,1)
 const nvara        = zeros(Int32,1)
 const ngatta       = zeros(Int32,1)
@@ -53,7 +55,7 @@ const natta        = zeros(Int32,1)
 const nvals        = zeros(Csize_t,1)
 const dima         = zeros(Int32,1)
 const varida       = zeros(Int32,1)
-const vara         = zeros(Int32,1);
+const vara         = zeros(Int32,1)
 const dumids       = zeros(Int32,NC_MAX_DIMS)
 const gstart       = zeros(UInt,NC_MAX_DIMS)
 const gcount       = zeros(UInt,NC_MAX_DIMS)
@@ -171,7 +173,10 @@ function nc_inq_var(nc::NcFile,varid::Integer)
   nc_inq_var(nc.ncid,varid,namea,typea,ndima,dimida,natta)
   dimids=ndima[1]>0 ? dimida[1:ndima[1]] : Int32[]
   name=bytestring(pointer(namea))
-  return (name,typea[1],dimids,natta[1],ndima[1],isdimvar(nc,name))
+  #Find out chunks
+  nc_inq_var_chunking(nc.ncid,varid,storagep,chunk_sizea)
+  chunksize=storagep[1]==NC_CONTIGUOUS ? ntuple(i->0,ndima[1]) : ntuple(i->chunk_sizea[i],ndima[1])
+  return (name,typea[1],dimids,natta[1],ndima[1],isdimvar(nc,name),chunksize)
 end
 
 #Test if a variable name is also a dimension name
@@ -268,8 +273,11 @@ function _readdimvars(nc::NcFile)
   end
 end
 
+ischunked(v::NcVar)=v.chunksize[1]>0
+
 defaultstart(v::NcVar)=ones(Int,v.ndim)
 defaultcount(v::NcVar)=Int[i for i in size(v)]
+
 
 function parsedimargs(dim)
   idim=0
