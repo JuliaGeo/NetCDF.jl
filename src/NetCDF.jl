@@ -89,7 +89,7 @@ type NcVar{T,N} <: AbstractArray{T,N}
   chunksize::NTuple{N,Int32}
 end
 
-Base.convert{S,T,N}(::Type{NcVar{T,N}},v::NcVar{S,N})=NcVar{T,N}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress)
+Base.convert{S,T,N}(::Type{NcVar{T,N}},v::NcVar{S,N})=NcVar{T,N}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize)
 
 """
     NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict{Any,Any}=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1)
