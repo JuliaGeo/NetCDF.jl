@@ -11,6 +11,7 @@ NC_VERBOSE=false
 function __init__()
   global const nctype2jltype=@Compat.Dict(
                     NC_BYTE=>Int8,
+                    NC_UBYTE=>UInt8,
                     NC_SHORT=>Int16,
                     NC_INT=>Int32,
                     NC_INT64=>Int64,
@@ -21,6 +22,7 @@ function __init__()
 
   global const nctype2string=@Compat.Dict(
                    NC_BYTE=>"BYTE",
+                   NC_UBYTE=>"UBYTE",
                    NC_SHORT=>"SHORT",
                    NC_INT=>"INT",
                    NC_INT64=>"INT64",
@@ -152,7 +154,7 @@ include("netcdf_helpers.jl")
 const currentNcFiles=Dict{UTF8String,NcFile}()
 
 
-readvar!(nc::NcFile, varname::AbstractString, retvalsa::Array;start::Vector=defaultstart(nc[varname]),count::Vector=defaultcount(nc[varname]))=readvar!(nc[varname],retvalsa,start=start,count=count)
+readvar!(nc::NcFile, varname::AbstractString, retvalsa::AbstractArray;start::Vector=defaultstart(nc[varname]),count::Vector=defaultcount(nc[varname]))=readvar!(nc[varname],retvalsa,start=start,count=count)
 
 
 """
@@ -163,7 +165,9 @@ If only parts of the variable are to be read, you can provide optionally `start`
 length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension.
 As a special case, setting a value in count to -1 will cause the function to read all values along this dimension.
 """
-function readvar!(v::NcVar, retvalsa::Array;start::Vector=defaultstart(v),count::Vector=defaultcount(v))
+function readvar!(v::NcVar, retvalsa::AbstractArray;start::Vector=defaultstart(v),count::Vector=defaultcount(v))
+
+  isa(retvalsa,Array) || Base.iscontiguous(retvalsa) || error("Can only read into contiguous pieces of memory")
 
   length(start) == v.ndim || error("Length of start ($(length(start))) must equal the number of variable dimensions ($(v.ndim))")
   length(count) == v.ndim || error("Length of start ($(length(count))) must equal the number of variable dimensions ($(v.ndim))")
@@ -225,12 +229,13 @@ counti(r::UnitRange,l::Integer)=length(r)
 firsti(r::Colon,l::Integer)=0
 counti(r::Colon,l::Integer)=Int(l)
 # For ranges
-@generated function readvar!{T,N}(v::NcVar{T,N}, retvalsa::Array,I::IndR...)
+@generated function readvar!{T,N}(v::NcVar{T,N}, retvalsa::AbstractArray,I::IndR...)
 
   N==length(I) || error("Dimension mismatch")
 
   quote
     checkbounds(v,I...)
+    isa(retvalsa,Array) || Base.iscontiguous(retvalsa) || error("NetCDF can only read into contiguous pieces of memory")
     @nexprs $N i->gstart[v.ndim+1-i]=firsti(I[i],v.dim[i].dimlen)
     @nexprs $N i->gcount[v.ndim+1-i]=counti(I[i],v.dim[i].dimlen)
     p=1
@@ -246,11 +251,11 @@ for (t,ending,arname) in funext
     fname = symbol("nc_get_vara_$ending")
     fname1 = symbol("nc_get_var1_$ending")
     arsym=symbol(arname)
-    @eval nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::Array{$t})=$fname(ncid,varid,start,count,retvalsa)
+    @eval nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{$t})=$fname(ncid,varid,start,count,retvalsa)
     @eval nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Type{$t})=begin $fname1(ncid,varid,start,$(arsym)); $(arsym)[1] end
 end
 
-function nc_get_vara_x!{T<:AbstractString}(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::Array{T})
+function nc_get_vara_x!{T<:AbstractString}(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{T})
   retvalsa_c=Array(Ptr{UInt8},length(retvalsa))
   nc_get_vara_string(ncid,varid,start,count,retvalsa_c)
   for i=1:length(retvalsa)
@@ -455,7 +460,7 @@ function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict{Any,Any}=
 
     create_dim(nc,d)
     if (length(d.vals)>0) & (!haskey(nc.vars,d.name))
-      push!(varlist,NcVar{Float64,1}(id,varida[1],1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1,(zero(Int32),)))
+      push!(varlist,NcVar{Float64,1}(id,varida[1],1,length(d.atts),jl2nc(eltype(d.vals)),d.name,[d.dimid],[d],d.atts,-1,(zero(Int32),)))
     end
 
   end
@@ -576,7 +581,7 @@ If only parts of the variable are to be read, you can provide optionally `start`
 length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension.
 As a special case, setting a value in count to -1 will cause the function to read all values along this dimension.
 """
-function ncread!{T<:Integer}(fil::AbstractString,vname::AbstractString,vals::Array;start::Array{T}=ones(Int,ndims(vals)),count::Array{T}=Array(Int,size(vals)))
+function ncread!{T,N}(fil::AbstractString,vname::AbstractString,vals::AbstractArray{T,N};start::Vector{Int}=ones(Int,ndims(vals)),count::Vector{Int}=Int[size(vals,i) for i=1:N])
   nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
   x  = readvar!(nc,vname,vals,start=start,count=count)
   return x
