@@ -72,12 +72,14 @@ NcDim(name::AbstractString,values::AbstractArray;atts::Dict=Dict{Any,Any}(),unli
 NcDim(name::AbstractString,values::AbstractArray,atts::Dict;unlimited=false)=
   NcDim(name,length(values),values=values,atts=atts,unlimited=unlimited)
 
+abstract NcVars{T,N} <: AbstractArray{T,N}
+
 """
 The type `NcVar{T,N}` represents a NetCDF variable. It is a subtype of AbstractArray{T,N}, so normal indexing using `[]`
 will work for reding and writing data to and from a NetCDF file. `NcVar` objects can be returned by the `open` function , by
 indexing an `NcFIle` object (e.g. `myfile["temperature"]`) or, when creating a new file, constructing it directly.
 """
-type NcVar{T,N} <: AbstractArray{T,N}
+type NcVar{T,N} <: NcVars{T,N}
   ncid::Int32
   varid::Int32
   ndim::Int32
@@ -114,20 +116,20 @@ end
 typealias IndR Union{Integer,UnitRange,Colon}
 typealias ArNum Union{AbstractArray,Number}
 
-Base.linearindexing(::NcVar)=Base.LinearSlow()
-Base.getindex{T}(v::NcVar{T,1},i1::IndR)=readvar(v,i1)
-Base.getindex{T}(v::NcVar{T,2},i1::IndR,i2::IndR)=readvar(v,i1,i2)
-Base.getindex{T}(v::NcVar{T,3},i1::IndR,i2::IndR,i3::IndR)=readvar(v,i1,i2,i3)
-Base.getindex{T}(v::NcVar{T,4},i1::IndR,i2::IndR,i3::IndR,i4::IndR)=readvar(v,i1,i2,i3,i4)
-Base.getindex{T}(v::NcVar{T,5},i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR)=readvar(v,i1,i2,i3,i4,i5)
-Base.getindex{T}(v::NcVar{T,6},i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR,i6::IndR)=readvar(v,i1,i2,i3,i4,i5,i6)
+Base.linearindexing(::NcVars)=Base.LinearSlow()
+Base.getindex{T}(v::NcVars{T,1},i1::IndR)=readvar(v,i1)
+Base.getindex{T}(v::NcVars{T,2},i1::IndR,i2::IndR)=readvar(v,i1,i2)
+Base.getindex{T}(v::NcVars{T,3},i1::IndR,i2::IndR,i3::IndR)=readvar(v,i1,i2,i3)
+Base.getindex{T}(v::NcVars{T,4},i1::IndR,i2::IndR,i3::IndR,i4::IndR)=readvar(v,i1,i2,i3,i4)
+Base.getindex{T}(v::NcVars{T,5},i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR)=readvar(v,i1,i2,i3,i4,i5)
+Base.getindex{T}(v::NcVars{T,6},i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR,i6::IndR)=readvar(v,i1,i2,i3,i4,i5,i6)
 
-Base.setindex!{T}(v::NcVar{T,1},x::ArNum,i1::IndR)=putvar(v,x,i1)
-Base.setindex!{T}(v::NcVar{T,2},x::ArNum,i1::IndR,i2::IndR)=putvar(v,x,i1,i2)
-Base.setindex!{T}(v::NcVar{T,3},x::ArNum,i1::IndR,i2::IndR,i3::IndR)=putvar(v,x,i1,i2,i3)
-Base.setindex!{T}(v::NcVar{T,4},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR)=putvar(v,x,i1,i2,i3,i4)
-Base.setindex!{T}(v::NcVar{T,5},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR)=putvar(v,x,i1,i2,i3,i4,i5)
-Base.setindex!{T}(v::NcVar{T,6},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR,i6::IndR)=putvar(v,x,i1,i2,i3,i4,i5,i6)
+Base.setindex!{T}(v::NcVars{T,1},x::ArNum,i1::IndR)=putvar(v,x,i1)
+Base.setindex!{T}(v::NcVars{T,2},x::ArNum,i1::IndR,i2::IndR)=putvar(v,x,i1,i2)
+Base.setindex!{T}(v::NcVars{T,3},x::ArNum,i1::IndR,i2::IndR,i3::IndR)=putvar(v,x,i1,i2,i3)
+Base.setindex!{T}(v::NcVars{T,4},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR)=putvar(v,x,i1,i2,i3,i4)
+Base.setindex!{T}(v::NcVars{T,5},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR)=putvar(v,x,i1,i2,i3,i4,i5)
+Base.setindex!{T}(v::NcVars{T,6},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR,i6::IndR)=putvar(v,x,i1,i2,i3,i4,i5,i6)
 
 
 """
@@ -778,5 +780,7 @@ function tolen(s::AbstractString,l::Integer)
     return s
   end
 end
+
+include("mappednc.jl")
 
 end # Module

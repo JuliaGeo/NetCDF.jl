@@ -59,6 +59,7 @@ const vara         = zeros(Int32,1)
 const dumids       = zeros(Int32,NC_MAX_DIMS)
 const gstart       = zeros(UInt,NC_MAX_DIMS)
 const gcount       = zeros(UInt,NC_MAX_DIMS)
+const gstridea     = ones(Cptrdiff_t,NC_MAX_VAR_DIMS)
 
 for (t,ending,aname) in funext
     @eval const $(symbol(aname)) = zeros($t,1)
@@ -273,10 +274,10 @@ function _readdimvars(nc::NcFile)
   end
 end
 
-ischunked(v::NcVar)=v.chunksize[1]>0
+ischunked(v::NcVars)=v.chunksize[1]>0
 
-defaultstart(v::NcVar)=ones(Int,v.ndim)
-defaultcount(v::NcVar)=Int[i for i in size(v)]
+defaultstart(v::NcVars)=ones(Int,v.ndim)
+defaultcount(v::NcVars)=collect(size(v))
 
 
 function parsedimargs(dim)
