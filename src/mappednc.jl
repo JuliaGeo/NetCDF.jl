@@ -27,13 +27,13 @@ function MappedNcVar{T,N}(v::NcVar{T,N},stride,perm,imap)
    MappedNcVar{T,N}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,perm,iperm,stride,imap,v.chunksize)
 end
 function getimap(sold,perm)
-    imap=zeros(Int,length(sold))
+    imap=zeros(Cptrdiff_t,length(sold))
     imap[perm[1]]=1
     for i=2:length(sold)
         imap[perm[i]]=imap[perm[i-1]]*sold[perm[i-1]]
         imap[perm[i]]=imap[perm[i-1]]*sold[perm[i-1]]
     end
-    imap
+    reverse(imap)
 end
 function getiperm(perm)
     iperm = Array(Int,length(perm))
@@ -55,15 +55,17 @@ Base.permutedims(v::NcVar,p)=MappedNcVar(v,ones(ndims(v)),p,getimap(size(v),p))
   N==length(I) || error("Dimension mismatch")
 
   quote
-    checkbounds(v,I...)
+    #checkbounds(v,I...)
     imap=v.imap
     iperm=v.iperm
+    perm=v.perm
     @nexprs $N i->gstart[v.ndim+1-i]=firsti(I[iperm[i]],v.dim[i].dimlen)
     @nexprs $N i->gcount[v.ndim+1-i]=counti(I[iperm[i]],v.dim[i].dimlen)
     p=1
     @nexprs $N i->p=p*gcount[v.ndim+1-i]
-    length(retvalsa) != p && error(string("Size of output array ($(length(retvalsa))) does not equal number of elements to be read (",p,")!"))
-    nc_get_varm_x!(v.ncid,v.varid,gstart,gcount,gstridea,reverse(imap),retvalsa)
+    println(gcount[1:N])
+    #length(retvalsa) != p && error(string("Size of output array ($(length(retvalsa))) does not equal number of elements to be read (",p,")!"))
+    nc_get_varm_x!(v.ncid,v.varid,gstart,gcount,gstridea,imap,retvalsa)
     retvalsa
   end
 end
@@ -88,7 +90,7 @@ function readvar!(v::MappedNcVar, retvalsa::Array;start::Vector=defaultstart(v),
 
   length(retvalsa) != p && error("Size of output array ($(length(retvalsa))) does not equal number of elements to be read ($p)!")
 
-  nc_get_varm_x!(v.ncid,v.varid,gstart,gcount,gstridea,reverse(v.imap),retvalsa)
+  nc_get_varm_x!(v.ncid,v.varid,gstart,gcount,gstridea,v.imap,retvalsa)
 
   retvalsa
 end
