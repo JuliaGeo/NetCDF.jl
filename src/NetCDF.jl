@@ -509,7 +509,7 @@ end
     NetCDF.open(fil::AbstractString,v::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
 opens a NetCDF variable `v` in the NetCDF file `fil` and returns an `NcVar` handle that implements the AbstractArray interface for reading and writing.
 """
-function open(fil::AbstractString,v::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
+function open(fil::AbstractString,v::AbstractString; mode::UInt16=NC_NOWRITE, readdimvar::Bool=false)
     nc=open(fil,mode=mode,readdimvar=readdimvar)
     nc.vars[v]
 end
@@ -520,6 +520,18 @@ opens the NetCDF file `fil` and returns a `NcFile` handle. The optional argument
 If you set `readdimvar=true`, then the dimension variables will be read when opening the file and added to the NcFIle object.
 """
 function open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
+
+  if haskey(currentNcFiles,abspath(fil))
+    if currentNcFiles[abspath(fil)].omode==mode
+      return(currentNcFiles[abspath(fil)])
+    else
+      nc=currentNcFiles[abspath(fil)]
+      nc_close(nc.ncid)
+      id=nc_open(fil,mode)
+      nc.ncid=id
+      return(nc)
+    end
+  end
   # Open netcdf file
   ncid=nc_open(fil,mode)
 

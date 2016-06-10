@@ -64,15 +64,30 @@ const gstridea     = ones(Cptrdiff_t,NC_MAX_VAR_DIMS)
 for (t,ending,aname) in funext
     @eval const $(symbol(aname)) = zeros($t,1)
 end
-
+#const all_openids=Int[]
 function nc_open(fname::AbstractString,omode::UInt16)
     # Function to open file fname, returns a NetCDF file ID
     nc_open(fname,omode,ida)
+    #push!(all_openids,ida[1])
     return ida[1]
 end
-
+#const all_createids=Int[]
+#isncid(id)=ccall((:nc_sync,NetCDF.libnetcdf),Cint,(Cint,),id)!=-33
+#function testopen()
+#    t1=Bool[isncid(id) for id in all_openids]
+#    if any(t1)
+#        println("We have open files")
+#        println(all_openids[t1])
+#    end
+#    t1=Bool[isncid(id) for id in all_createids]
+#    if any(t1)
+#        println("We have created files")
+#        println(all_createids[t1])
+#    end
+#end
 function nc_create(name,mode)
     nc_create(name,mode,ida);
+#    push!(all_createids,ida[1])
     return ida[1]
 end
 
