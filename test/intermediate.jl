@@ -25,8 +25,8 @@ vunlim = NcVar("vunlim",d4,t=Float64)
 
 # Creating Files
 nc1 = NetCDF.create(fn1,v1,vs,mode=NC_NETCDF4);
-nc2 = NetCDF.create(fn2,v2,v3,gatts=@Compat.AnyDict("Some global attributes"=>2010),mode=NC_64BIT_OFFSET);
-nc3 = NetCDF.create(fn3,vt,mode=NC_CLASSIC_MODEL);
+nc2 = NetCDF.create(fn2,NcVar[v2,v3],gatts=@Compat.AnyDict("Some global attributes"=>2010));
+nc3 = NetCDF.create(fn3,vt);
 ncunlim = NetCDF.create(fn4,vunlim)
 
 #Test Adding attributes

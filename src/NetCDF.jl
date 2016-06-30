@@ -1,3 +1,4 @@
+__precompile__()
 module NetCDF
 using Compat
 using Formatting
@@ -8,28 +9,28 @@ export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,
 NC_VERBOSE=false
 #Some constants
 
-function __init__()
-  global const nctype2jltype=@Compat.Dict(
-                    NC_BYTE=>Int8,
-                    NC_SHORT=>Int16,
-                    NC_INT=>Int32,
-                    NC_INT64=>Int64,
-                    NC_FLOAT=>Float32,
-                    NC_DOUBLE=>Float64,
-                    NC_CHAR=>UInt8,
-                    NC_STRING=>AbstractString)
+global const nctype2jltype=@Compat.Dict(
+  NC_BYTE=>Int8,
+  NC_UBYTE=>UInt8,
+  NC_SHORT=>Int16,
+  NC_INT=>Int32,
+  NC_INT64=>Int64,
+  NC_FLOAT=>Float32,
+  NC_DOUBLE=>Float64,
+  NC_CHAR=>UInt8,
+  NC_STRING=>AbstractString)
 
-  global const nctype2string=@Compat.Dict(
-                   NC_BYTE=>"BYTE",
-                   NC_SHORT=>"SHORT",
-                   NC_INT=>"INT",
-                   NC_INT64=>"INT64",
-                   NC_FLOAT=>"FLOAT",
-                   NC_DOUBLE=>"DOUBLE",
-                   NC_STRING=>"STRING",
-                   NC_CHAR=>"CHAR",
-                   )
-end
+global const nctype2string=@Compat.Dict(
+  NC_BYTE=>"BYTE",
+  NC_UBYTE=>"UBYTE",
+  NC_SHORT=>"SHORT",
+  NC_INT=>"INT",
+  NC_INT64=>"INT64",
+  NC_FLOAT=>"FLOAT",
+  NC_DOUBLE=>"DOUBLE",
+  NC_STRING=>"STRING",
+  NC_CHAR=>"CHAR")
+
 
 function jl2nc(t::DataType)
   shift!(collect(keys(nctype2jltype))[find(e->(t <: e), collect(values(nctype2jltype)))])
@@ -93,12 +94,12 @@ Base.convert{S,T,N}(::Type{NcVar{T,N}},v::NcVar{S,N})=NcVar{T,N}(v.ncid,v.varid,
 
 """
     NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict{Any,Any}=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1)
+
 Here varname is the name of the variable, dimlist an array of type NcDim holding the dimensions associated to the variable, varattributes is a Dict
 holding pairs of attribute names and values. t is the data type that should be used for storing the variable. You can either specify a julia type
 (Int16, Int32, Float32, Float64) which will be translated to (NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE) or directly specify one of the latter list.
 You can also set the compression level of the variable by setting compress to a number in the range 1..9 This has only an effect in NetCDF4 files.
 """
-#Some additional constructors
 function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1,chunksize=ntuple(i->zero(Int32),isa(dimin,NcDim) ? 1 : length(dimin)))
   dim = isa(dimin,NcDim) ? NcDim[dimin] : dimin
   return NcVar{isa(t,DataType) ? t : nctype2jltype[t],length(dim)}(-1,-1,length(dim),length(atts), isa(t,DataType) ? jl2nc(t) : t,name,Array(Int32,length(dim)),dim,atts,compress,chunksize)

@@ -10,8 +10,8 @@ nccreate(fn1,"v1","Dim1",[1,2],@Compat.AnyDict("units"=>"deg C"),"Dim2",collect(
 mode=NC_NETCDF4)
 nccreate(fn1,"vstr","Dim2",collect(1:10),t=ASCIIString)
 nccreate(fn2,"v2","Dim1",[1,2,3],@Compat.AnyDict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,@Compat.AnyDict("max"=>10),
-atts=@Compat.AnyDict("a1"=>"varatts"),gatts=@Compat.AnyDict("Some global attributes"=>2010),mode=NC_64BIT_OFFSET)
-nccreate(fn3,"v3","Dim1",3,mode=NC_CLASSIC_MODEL)
+atts=@Compat.AnyDict("a1"=>"varatts"),gatts=@Compat.AnyDict("Some global attributes"=>2010))
+nccreate(fn3,"v3","Dim1",3)
 tlist = [Float64, Float32, Int32, Int16, Int8]
 for i = 1:length(tlist)
 	nccreate(fn3,"vt$i","Dim2",collect(1:10),t=tlist[i])
