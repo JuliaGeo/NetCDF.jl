@@ -153,7 +153,7 @@ include("netcdf_helpers.jl")
 const currentNcFiles=Dict{UTF8String,NcFile}()
 
 
-readvar!(nc::NcFile, varname::AbstractString, retvalsa::Array;start::Vector=defaultstart(nc[varname]),count::Vector=defaultcount(nc[varname]))=readvar!(nc[varname],retvalsa,start=start,count=count)
+readvar!(nc::NcFile, varname::AbstractString, retvalsa::AbstractArray;start::Vector=defaultstart(nc[varname]),count::Vector=defaultcount(nc[varname]))=readvar!(nc[varname],retvalsa,start=start,count=count)
 
 
 """
@@ -164,7 +164,9 @@ If only parts of the variable are to be read, you can provide optionally `start`
 length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension.
 As a special case, setting a value in count to -1 will cause the function to read all values along this dimension.
 """
-function readvar!(v::NcVar, retvalsa::Array;start::Vector=defaultstart(v),count::Vector=defaultcount(v))
+function readvar!(v::NcVar, retvalsa::AbstractArray;start::Vector=defaultstart(v),count::Vector=defaultcount(v))
+
+  isa(retvalsa,Array) || Base.iscontiguous(retvalsa) || error("Can only read into contiguous pieces of memory")
 
   length(start) == v.ndim || error("Length of start ($(length(start))) must equal the number of variable dimensions ($(v.ndim))")
   length(count) == v.ndim || error("Length of start ($(length(count))) must equal the number of variable dimensions ($(v.ndim))")
@@ -226,12 +228,15 @@ counti(r::UnitRange,l::Integer)=length(r)
 firsti(r::Colon,l::Integer)=0
 counti(r::Colon,l::Integer)=Int(l)
 # For ranges
-@generated function readvar!{T,N}(v::NcVar{T,N}, retvalsa::Array,I::IndR...)
+@generated function readvar!{T,N}(v::NcVar{T,N}, retvalsa::AbstractArray,I::IndR...)
 
   N==length(I) || error("Dimension mismatch")
 
   quote
     checkbounds(v,I...)
+
+    isa(retvalsa,Array) || Base.iscontiguous(retvalsa) || error("Can only read into contiguous pieces of memory")
+
     @nexprs $N i->gstart[v.ndim+1-i]=firsti(I[i],v.dim[i].dimlen)
     @nexprs $N i->gcount[v.ndim+1-i]=counti(I[i],v.dim[i].dimlen)
     p=1
@@ -247,11 +252,11 @@ for (t,ending,arname) in funext
     fname = symbol("nc_get_vara_$ending")
     fname1 = symbol("nc_get_var1_$ending")
     arsym=symbol(arname)
-    @eval nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::Array{$t})=$fname(ncid,varid,start,count,retvalsa)
+    @eval nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{$t})=$fname(ncid,varid,start,count,retvalsa)
     @eval nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Type{$t})=begin $fname1(ncid,varid,start,$(arsym)); $(arsym)[1] end
 end
 
-function nc_get_vara_x!{T<:AbstractString}(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::Array{T})
+function nc_get_vara_x!{T<:AbstractString}(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{T})
   retvalsa_c=Array(Ptr{UInt8},length(retvalsa))
   nc_get_vara_string(ncid,varid,start,count,retvalsa_c)
   for i=1:length(retvalsa)
@@ -514,6 +519,18 @@ opens the NetCDF file `fil` and returns a `NcFile` handle. The optional argument
 If you set `readdimvar=true`, then the dimension variables will be read when opening the file and added to the NcFIle object.
 """
 function open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
+
+  if haskey(currentNcFiles,abspath(fil))
+    if currentNcFiles[abspath(fil)].omode==mode
+      return(currentNcFiles[abspath(fil)])
+    else
+      nc=currentNcFiles[abspath(fil)]
+      nc_close(nc.ncid)
+      id=nc_open(fil,mode)
+      nc.ncid=id
+      return(nc)
+    end
+  end
   # Open netcdf file
   ncid=nc_open(fil,mode)
 
@@ -577,7 +594,7 @@ If only parts of the variable are to be read, you can provide optionally `start`
 length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension.
 As a special case, setting a value in count to -1 will cause the function to read all values along this dimension.
 """
-function ncread!{T<:Integer}(fil::AbstractString,vname::AbstractString,vals::Array;start::Array{T}=ones(Int,ndims(vals)),count::Array{T}=Array(Int,size(vals)))
+function ncread!(fil::AbstractString,vname::AbstractString,vals::AbstractArray;start::Vector{Int}=ones(Int,ndims(vals)),count::Vector{Int}=[size(vals,i) for i=1:ndims(vals)])
   nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
   x  = readvar!(nc,vname,vals,start=start,count=count)
   return x
