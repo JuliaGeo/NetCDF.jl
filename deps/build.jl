@@ -1,12 +1,11 @@
 using BinDeps
+using Conda
 
 @BinDeps.setup
-libnetcdf = library_dependency("libnetcdf", aliases = ["libnetcdf4","libnetcdf-7,netcdf"])
+libnetcdf = library_dependency("libnetcdf", aliases = ["libnetcdf4","libnetcdf-7","netcdf"])
 
-using Conda
 provides(Conda.Manager, "libnetcdf", libnetcdf)
-
-provides(AptGet, Dict("libnetcdf-dev"=>libnetcdf), os = :Linux)
-provides(Yum, Dict("netcdf-devel"=>libnetcdf), os = :Linux)
+provides(AptGet, "libnetcdf-dev", libnetcdf, os = :Linux)
+provides(Yum, "netcdf-devel", libnetcdf, os = :Linux)
 
 @BinDeps.install Dict(:libnetcdf => :libnetcdf)
