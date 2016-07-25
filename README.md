@@ -11,6 +11,10 @@ NetCDF support for the julia programming language, there is a high-level and a m
 
 # Quickstart
 
+First, load the library:
+
+    using NetCDF
+    
 The high-level interface is quite similar to the Matlab NetCDF interface, reading files is done by:
 
     x = ncread("myfile.nc", "Radiation")
