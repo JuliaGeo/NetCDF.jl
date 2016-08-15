@@ -57,7 +57,7 @@ This constructor creates an NcDim object with the name `name` and length `dimlen
 """
 function NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict=Dict{Any,Any}(),unlimited=false)
     (length(values)>0 && length(values)!=dimlength) ? error("Dimension value vector must have the same length as dimlength!") : nothing
-    NcDim(-1,-1,-1,utf8(name),dimlength,values,atts,unlimited)
+    NcDim(-1,-1,-1,string(name),dimlength,values,atts,unlimited)
 end
 
 
