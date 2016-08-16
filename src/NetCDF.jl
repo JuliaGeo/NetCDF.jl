@@ -52,7 +52,7 @@ end
 
 """
 
-    NcDim(name::String,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict{Any,Any}=Dict{Any,Any}(),unlimited=false)`
+    NcDim(name::String,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts=Dict{Any,Any}(),unlimited=false)`
 This constructor creates an NcDim object with the name `name` and length `dimlength`.
 """
 function NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict=Dict{Any,Any}(),unlimited=false)
@@ -62,7 +62,7 @@ end
 
 
 """
-    NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict{Any,Any}=Dict{Any,Any}();unlimited=false)
+    NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts=Dict{Any,Any}();unlimited=false)
 This constructor creates an NcDim object with the name `name` and and associated values `values`. Upon creation of the NetCDF file a
 dimension variable will be generated and the values be written to this variable. Optionally a Dict of attributes can be supplied.
 """
@@ -93,7 +93,7 @@ end
 Base.convert{S,T,N}(::Type{NcVar{T,N}},v::NcVar{S,N})=NcVar{T,N}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize)
 
 """
-    NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict{Any,Any}=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1)
+    NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1)
 
 Here varname is the name of the variable, dimlist an array of type NcDim holding the dimensions associated to the variable, varattributes is a Dict
 holding pairs of attribute names and values. t is the data type that should be used for storing the variable. You can either specify a julia type
@@ -104,7 +104,7 @@ function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dic
   dim = isa(dimin,NcDim) ? NcDim[dimin] : dimin
   return NcVar{isa(t,DataType) ? t : nctype2jltype[t],length(dim)}(-1,-1,length(dim),length(atts), isa(t,DataType) ? jl2nc(t) : t,name,Array(Int32,length(dim)),dim,atts,compress,chunksize)
 end
-NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}},atts::Dict{Any,Any},t::Union{DataType,Integer}=Float64)=NcVar{isa(t,DataType) ? t : nctype2jltype[t],length(dimin)}(-1,-1,length(dimin),length(atts), isa(t,DataType) ? jl2nc(t) : t,name,Array(Int,length(dimin)),dimin,atts,-1,ntuple(i->zero(Int32),length(dimin)))
+NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}},atts,t::Union{DataType,Integer}=Float64)=NcVar{isa(t,DataType) ? t : nctype2jltype[t],length(dimin)}(-1,-1,length(dimin),length(atts), isa(t,DataType) ? jl2nc(t) : t,name,Array(Int,length(dimin)),dimin,atts,-1,ntuple(i->zero(Int32),length(dimin)))
 
 #Array methods
 @generated function Base.size{T,N}(a::NcVar{T,N})
@@ -249,9 +249,9 @@ end
 
 
 for (t,ending,arname) in funext
-    fname = symbol("nc_get_vara_$ending")
-    fname1 = symbol("nc_get_var1_$ending")
-    arsym=symbol(arname)
+    fname = Symbol("nc_get_vara_$ending")
+    fname1 = Symbol("nc_get_var1_$ending")
+    arsym=Symbol(arname)
     @eval nc_get_vara_x!(ncid::Integer,varid::Integer,start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{$t})=$fname(ncid,varid,start,count,retvalsa)
     @eval nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Type{$t})=begin $fname1(ncid,varid,start,$(arsym)); $(arsym)[1] end
 end
@@ -260,16 +260,16 @@ function nc_get_vara_x!{T<:AbstractString}(ncid::Integer,varid::Integer,start::V
   retvalsa_c=Array(Ptr{UInt8},length(retvalsa))
   nc_get_vara_string(ncid,varid,start,count,retvalsa_c)
   for i=1:length(retvalsa)
-    retvalsa[i]=bytestring(retvalsa_c[i])
+    retvalsa[i]=unsafe_string(retvalsa_c[i])
   end
   nc_free_string(length(retvalsa_c),retvalsa_c)
   retvalsa
 end
 
-function nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::Union{Type{ASCIIString},Type{String}})
+function nc_get_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},::String)
   retvalsa_c=Array(Ptr{UInt8},1)
   nc_get_var1_string(ncid,varid,start,retvalsa_c)
-  retval=bytestring(retvalsa_c[1])
+  retval=string(retvalsa_c[1])
   nc_free_string(1,retvalsa_c)
   retval
 end
@@ -354,9 +354,9 @@ end
 end
 
 for (t,ending,arname) in funext
-    fname = symbol("nc_put_vara_$ending")
-    fname1= symbol("nc_put_var1_$ending")
-    arsym=symbol(arname)
+    fname = Symbol("nc_put_vara_$ending")
+    fname1= Symbol("nc_put_var1_$ending")
+    arsym=Symbol(arname)
     @eval nc_put_vara_x(ncid::Integer, varid::Integer, start, count, vals::Array{$t})=$fname(ncid,varid,start,count,vals)
     @eval nc_put_var1_x(ncid::Integer,varid::Integer,start::Vector{UInt},val::$t)=begin $(arsym)[1]=val; $fname1(ncid,varid,start,$(arsym)) end
 end
@@ -433,12 +433,12 @@ function setcompression(v::NcVar,mode)
     end
 end
 """
-    NetCDF.create(name::String,varlist::Array{NcVar};gatts::Dict{Any,Any}=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
+    NetCDF.create(name::String,varlist::Array{NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
 This creates a new NetCDF file. Here, `filename`
  is the name of the file to be created and `varlist` an array of `NcVar` holding the variables that should appear in the file. In the optional
 argument `gatts` you can specify a Dict containing global attributes and `mode` is the file type you want to create (NC_NETCDF4, NC_CLASSIC_MODEL or NC_64BIT_OFFSET).
 """
-function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict{Any,Any}=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
+function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
 
   #Create the file
   id = nc_create(name,mode)
@@ -491,7 +491,7 @@ function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict{Any,Any}=
   return(nc)
 end
 
-create(name::AbstractString,varlist::NcVar...;gatts::Dict{Any,Any}=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)=create(name,NcVar[varlist[i] for i=1:length(varlist)];gatts=gatts,mode=mode)
+create(name::AbstractString,varlist::NcVar...;gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)=create(name,NcVar[varlist[i] for i=1:length(varlist)];gatts=gatts,mode=mode)
 
 """
     NetCDF.close(nc::NcFile)

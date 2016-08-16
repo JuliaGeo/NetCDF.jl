@@ -8,7 +8,7 @@ end
 
 nccreate(fn1,"v1","Dim1",[1,2],@Compat.AnyDict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,@Compat.AnyDict("max"=>10),
 mode=NC_NETCDF4)
-nccreate(fn1,"vstr","Dim2",collect(1:10),t=ASCIIString)
+nccreate(fn1,"vstr","Dim2",collect(1:10),t=String)
 nccreate(fn2,"v2","Dim1",[1,2,3],@Compat.AnyDict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,@Compat.AnyDict("max"=>10),
 atts=@Compat.AnyDict("a1"=>"varatts"),gatts=@Compat.AnyDict("Some global attributes"=>2010))
 nccreate(fn3,"v3","Dim1",3)

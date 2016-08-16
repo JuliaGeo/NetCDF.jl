@@ -61,7 +61,7 @@ const gstart       = zeros(UInt,NC_MAX_DIMS)
 const gcount       = zeros(UInt,NC_MAX_DIMS)
 
 for (t,ending,aname) in funext
-    @eval const $(symbol(aname)) = zeros($t,1)
+    @eval const $(Symbol(aname)) = zeros($t,1)
 end
 
 function nc_open(fname::AbstractString,omode::UInt16)
@@ -78,7 +78,8 @@ end
 function nc_inq_dim(id::Integer,idim::Integer)
     # File to inquire dimension idimm returns dimension name and length
     nc_inq_dim(id,idim,namea,lengtha)
-    name=bytestring(pointer(namea))
+    namea[end]=0
+    name=unsafe_string(pointer(namea))
     return (name,lengtha[1])
 end
 
@@ -113,7 +114,8 @@ end
 function nc_inq_attname(ncid::Integer,varid::Integer,attnum::Integer)
   # Get attribute name from attribute number
   nc_inq_attname(ncid,varid,attnum,namea)
-  name=bytestring(pointer(namea))
+  namea[end]=0
+  name=unsafe_string(pointer(namea))
   return name
 end
 
@@ -121,7 +123,7 @@ function nc_get_att(ncid::Integer,varid::Integer,attnum::Integer)
     #Reads attribute name, type and number of values
     name=nc_inq_attname(ncid,varid,attnum)
     nc_inq_att(ncid,varid,name,typea,nvals)
-    text=nc_get_att(ncid,varid,name,typea[1],nvals[1])
+    text=nc_get_att(ncid,varid,string(name),typea[1],nvals[1])
     return (name,text)
 end
 
@@ -144,7 +146,7 @@ nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Float64) = beg
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val) = error("Writing attribute of type $(typeof(val)) is currently not possible.")
 
 function nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::AbstractString)
-    val = bytestring(val)
+    val = string(val)
     len = sizeof(val)
     nc_put_att_text(ncid,varid,name,len+1,val)
 end
@@ -154,7 +156,7 @@ function nc_get_att(ncid::Integer,varid::Integer,name::AbstractString,attype::In
     nc_get_att!(ncid,varid,name,valsa)
 end
 
-nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{UInt8}) = begin nc_get_att_text(ncid,varid,name,valsa); utf8(valsa) end
+nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{UInt8}) = begin nc_get_att_text(ncid,varid,name,valsa); valsa[end]=0; unsafe_string(pointer(valsa)) end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int8})  = begin nc_get_att_schar(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int16})  = begin nc_get_att_short(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int32})  = begin nc_get_att_int(ncid,varid,name,valsa); valsa end
@@ -165,14 +167,15 @@ nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float
 function nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{AbstractString})
   valsa_c=Array(Ptr{UInt8},length(valsa))
   nc_get_att_string(ncid,varid,name,valsa_c)
-  map!(bytestring,valsa,valsa_c)
+  map!(string,valsa,valsa_c)
 end
 
 function nc_inq_var(nc::NcFile,varid::Integer)
   # Inquire variables in the file
   nc_inq_var(nc.ncid,varid,namea,typea,ndima,dimida,natta)
   dimids=ndima[1]>0 ? dimida[1:ndima[1]] : Int32[]
-  name=bytestring(pointer(namea))
+  namea[end]=0
+  name=unsafe_string(pointer(namea))
   #Find out chunks
   nc_inq_var_chunking(nc.ncid,varid,storagep,chunk_sizea)
   chunksize=storagep[1]==NC_CONTIGUOUS ? ntuple(i->0,ndima[1]) : ntuple(i->chunk_sizea[i],ndima[1])
