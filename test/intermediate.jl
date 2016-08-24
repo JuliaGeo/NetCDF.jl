@@ -6,16 +6,16 @@ fn4=tempname()
 
 # Test Medium level Interface
 # Test Dimension Creation
-d1 = NcDim("Dim1",2;values=[5.0,10.0],atts=@Compat.AnyDict("units"=>"deg C"));
+d1 = NcDim("Dim1",2;values=[5.0,10.0],atts=Dict("units"=>"deg C"));
 d2 = NcDim("Dim2",collect(1:10));
-d3 = NcDim("Dim3",20;atts=@Compat.AnyDict("max"=>10));
+d3 = NcDim("Dim3",20;atts=Dict("max"=>10));
 d4 = NcDim("DimUnlim",0,unlimited=true)
 
 # Test Variable creation
 v1 = NcVar("v1",[d1,d2,d3],compress=5) 						# With several dims in an Array, and compressed
-v2 = NcVar("v2",[d1,d2,d3],atts=@Compat.AnyDict("a1"=>"varatts"))  # with given attributes
+v2 = NcVar("v2",[d1,d2,d3],atts=Dict("a1"=>"varatts"))  # with given attributes
 v3 = NcVar("v3",d1)
-vs = NcVar("vstr",d2,t=ASCIIString) 								# with a single dimension
+vs = NcVar("vstr",d2,t=String) 								# with a single dimension
 tlist = [Float64, Float32, Int32, Int16, Int8]
 vt = Array(NcVar, length(tlist))
 for i= 1:length(tlist)
@@ -25,19 +25,19 @@ vunlim = NcVar("vunlim",d4,t=Float64)
 
 # Creating Files
 nc1 = NetCDF.create(fn1,v1,vs,mode=NC_NETCDF4);
-nc2 = NetCDF.create(fn2,NcVar[v2,v3],gatts=@Compat.AnyDict("Some global attributes"=>2010));
+nc2 = NetCDF.create(fn2,NcVar[v2,v3],gatts=Dict("Some global attributes"=>2010));
 nc3 = NetCDF.create(fn3,vt);
 ncunlim = NetCDF.create(fn4,vunlim)
 
 #Test Adding attributes
-NetCDF.putatt(nc1,"v1",@Compat.Dict("Additional String attribute"=>"att"))
-NetCDF.putatt(nc1,"global",@Compat.Dict("Additional global attribute"=>"gatt"))
-NetCDF.putatt(nc1,"global",@Compat.Dict("Additional Int8 attribute"=>Int8(20),
+NetCDF.putatt(nc1,"v1",Dict("Additional String attribute"=>"att"))
+NetCDF.putatt(nc1,"global",Dict("Additional global attribute"=>"gatt"))
+NetCDF.putatt(nc1,"global",Dict("Additional Int8 attribute"=>Int8(20),
 							"Additional Int16 attribute"=>Int16(20),
 							"Additional Int32 attribute"=>Int32(20),
 							"Additional Float32 attribute"=>Float32(20),
 							"Additional Float64 attribute"=>Float64(20)))
-NetCDF.putatt(nc1,"v1",    @Compat.Dict("Additional Int8 array attribute"=>Int8[i for i in 1:20],
+NetCDF.putatt(nc1,"v1",    Dict("Additional Int8 array attribute"=>Int8[i for i in 1:20],
 							"Additional Int16 array attribute"=>Int16[i for i in 1:20],
 							"Additional Int32 array attribute"=>Int32[i for i in 1:20],
 							"Additional Float32 array attribute"=>Float32[i for i in 1:20],
@@ -53,7 +53,7 @@ xt=Array(Any,length(tlist))
 for i=1:length(tlist)
     xt[i]=rand(tlist[i],10)
 end
-xs=Array(ASCIIString,10)
+xs=Array(String,10)
 xs[1]="a"
 xs[2]="bb"
 xs[3]="ccc"
