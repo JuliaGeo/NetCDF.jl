@@ -38,7 +38,7 @@ const funext = [  (Float64, "double","float64a"),
             (UInt8  , "uchar","uint8a"),
             (Int8   , "schar","int8a"),
             (Int16  , "short","int16a"),
-            (Int64  , "long","int64a")]
+            (Int64  , "longlong","int64a")]
 
 const ida          = zeros(Int32,1)
 const namea        = zeros(UInt8,NC_MAX_NAME+1)
