@@ -1,8 +1,8 @@
 #First delete any existing nc-files
-fn1=tempname()
-fn2=tempname()
-fn3=tempname()
-fn4=tempname()
+fn1=tempname2()
+fn2=tempname2()
+fn3=tempname2()
+fn4=tempname2()
 
 # Test Medium level Interface
 # Test Dimension Creation
