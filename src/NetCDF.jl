@@ -693,7 +693,7 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict
             open(fil,NC_WRITE)
         end
         v.ncid = nc.ncid
-        haskey(nc.vars,varname) ? error("Variable $varname already exists in file fil") : nothing
+        haskey(nc.vars,varname) ? error("Variable $varname already exists in file $fil") : nothing
         # Check if dimensions exist, if not, create
         # Remember if dimension was created
 

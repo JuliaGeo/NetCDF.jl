@@ -1,10 +1,8 @@
 ##High-level syntax
-#First delete any existing nc-files
-for fn in (fn1,fn2,fn3,fn4)
-  if (isfile(fn))
-    rm(fn)
-  end
-end
+fn1=tempname2()
+fn2=tempname2()
+fn3=tempname2()
+fn4=tempname2()
 
 nccreate(fn1,"v1","Dim1",[1,2],@Compat.AnyDict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,@Compat.AnyDict("max"=>10),
 mode=NC_NETCDF4)
