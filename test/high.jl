@@ -71,4 +71,10 @@ ncwrite(collect(1:5),fn4,"myvar",start=[11;])
 ncwrite(ones(5,10,20),fn4,"myvar2")
 ncwrite(zeros(1,10,20),fn4,"myvar2")
 
+# Test reading existing files
+myvar2 = ones(5,10,20)
+myvar2[1,:,:] = 0.0
+@test ncread(fn4, "myvar2") == myvar2
+@test_throws NetCDF.NetCDFError ncread("nonexistant file", "a var")
+
 ncclose()
