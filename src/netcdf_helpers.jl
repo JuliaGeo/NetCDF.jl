@@ -55,6 +55,34 @@ for (t,ending,aname) in funext
     @eval const $(Symbol(aname)) = zeros($t,1)
 end
 
+"""
+    nc_char2string(x::Array{UInt8})
+
+Convert a `UInt8` array read from a NetCDF variable of type `NC_CHAR` to a Julia array of Strings
+"""
+function nc_char2string(x::Array{UInt8})
+  y=copy(x)
+  y[end,:]=0
+  squeeze(mapslices(i->unsafe_string(pointer(i)),y,1),1)
+end
+
+"""
+    nc_string2char(x::Array{String})
+
+Convert a Julia `String` array to an `Array{UInt8}` so that it can be written to a
+NetCDF variable of type `NC_CHAR`.
+"""
+function nc_string2char(s::Array{String})
+  maxlen=maximum(length(i) for i in s)
+  c = zeros(UInt8,maxlen+1,size(s)...)
+  offs=1
+  for i=1:length(s)
+    copy!(c,offs,s[i],1)
+    offs+=maxlen+1
+  end
+  c
+end
+
 function nc_open(fname::AbstractString,omode::UInt16)
     # Function to open file fname, returns a NetCDF file ID
     nc_open(fname,omode,ida)
@@ -125,7 +153,7 @@ nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int32}) 
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int64})   = nc_put_att_long(ncid,varid,name,NC_LONG,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Float32}) = nc_put_att_float(ncid,varid,name,NC_FLOAT,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Float64}) = nc_put_att_double(ncid,varid,name,NC_DOUBLE,length(val),val)
-# nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::AbstractString)         = nc_put_att_text(ncid,varid,name,length(val)+1,val)
+#nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::AbstractString)         = nc_put_att_text(ncid,varid,name,length(val)+1,val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Any})     = error("Writing attribute array of type Any is not possible")
 
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Int8) = begin int8a[1] = val; nc_put_att(ncid,varid,name,int8a) end
@@ -143,11 +171,18 @@ function nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Abstr
 end
 
 function nc_get_att(ncid::Integer,varid::Integer,name::AbstractString,attype::Integer,attlen::Integer)
-    valsa=Array(nctype2jltype[attype],attlen)
-    nc_get_att!(ncid,varid,name,valsa)
+    if attype==NC_CHAR
+      valsa=Array(UInt8,attlen)
+      nc_get_att_text(ncid,varid,name,valsa)
+      valsa[end]=0
+      return unsafe_string(pointer(valsa))
+    else
+      valsa=Array(nctype2jltype[attype],attlen)
+      return nc_get_att!(ncid,varid,name,valsa)
+    end
 end
 
-nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{UInt8}) = begin nc_get_att_text(ncid,varid,name,valsa); valsa[end]=0; unsafe_string(pointer(valsa)) end
+nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{UInt8}) = begin nc_get_att_ubyte(ncid,varid,name,valsa);valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int8})  = begin nc_get_att_schar(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int16})  = begin nc_get_att_short(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int32})  = begin nc_get_att_int(ncid,varid,name,valsa); valsa end
@@ -158,7 +193,11 @@ nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float
 function nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{AbstractString})
   valsa_c=Array(Ptr{UInt8},length(valsa))
   nc_get_att_string(ncid,varid,name,valsa_c)
-  map!(string,valsa,valsa_c)
+  for i=1:length(valsa)
+    valsa[i]=unsafe_string(valsa_c[i])
+  end
+  nc_free_string(length(valsa_c),valsa_c)
+  valsa
 end
 
 function nc_inq_var(nc::NcFile,varid::Integer)

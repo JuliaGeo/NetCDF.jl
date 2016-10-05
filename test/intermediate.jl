@@ -10,12 +10,15 @@ d1 = NcDim("Dim1",2;values=[5.0,10.0],atts=Dict("units"=>"deg C"));
 d2 = NcDim("Dim2",collect(1:10));
 d3 = NcDim("Dim3",20;atts=Dict("max"=>10));
 d4 = NcDim("DimUnlim",0,unlimited=true)
+d5 = NcDim("str_len",15)
 
 # Test Variable creation
 v1 = NcVar("v1",[d1,d2,d3],compress=5) 						# With several dims in an Array, and compressed
 v2 = NcVar("v2",[d1,d2,d3],atts=Dict("a1"=>"varatts"))  # with given attributes
 v3 = NcVar("v3",d1)
-vs = NcVar("vstr",d2,t=String) 								# with a single dimension
+vs = NcVar("vstr",d2,t=String)
+vc = NcVar("vchar",[d5,d2],t=NetCDF.NC_CHAR)
+
 tlist = [Float64, Float32, Int32, Int16, Int8]
 vt = Array(NcVar, length(tlist))
 for i= 1:length(tlist)
@@ -24,7 +27,7 @@ end
 vunlim = NcVar("vunlim",d4,t=Float64)
 
 # Creating Files
-nc1 = NetCDF.create(fn1,v1,vs,mode=NC_NETCDF4);
+nc1 = NetCDF.create(fn1,[v1,vs,vc],mode=NC_NETCDF4);
 nc2 = NetCDF.create(fn2,NcVar[v2,v3],gatts=Dict("Some global attributes"=>2010));
 nc3 = NetCDF.create(fn3,vt);
 ncunlim = NetCDF.create(fn4,vunlim)
@@ -69,6 +72,7 @@ xs[10]="jjjjjjjjjj"
 #
 NetCDF.putvar(nc1,"v1",x1)
 NetCDF.putvar(nc1,"vstr",xs)
+NetCDF.putvar(nc1,"vchar",nc_string2char(xs))
 #Test sequential writing along one dimension
 for i=1:10
   NetCDF.putvar(nc2,"v2",x2[:,i,:],start=[1,i,1],count=[-1,1,-1])
@@ -96,6 +100,8 @@ nc3 = NetCDF.open(fn3,mode=NC_NOWRITE);
 @test xs==NetCDF.readvar(nc1,"vstr")
 @test x2==NetCDF.readvar(nc2,"v2")
 @test x4==NetCDF.readvar(nc2,"v3")
+
+@test all(xs.==NetCDF.nc_char2string(NetCDF.readvar(nc1,"vchar")))
 
 #Test -1 reading full dimension
 NetCDF.readvar(nc1,"v1",start=[1,1,1],count=[-1,-1,-1])
