@@ -1,36 +1,27 @@
-const error_description=
-     @Compat.Dict(Int32(-33)=> "Not a netcdf id",
-     Int32(-34)=> "Too many netcdfs open",
-     Int32(-35)=> "netcdf file exists && NC_NOCLOBBER",
-     Int32(-36)=> "Invalid Argument",
-     Int32(-37)=> "Write to read only",
-     Int32(-38)=> "Operation not allowed in data mode",
-     Int32(-39)=> "Operation not allowed in define mode",
-     Int32(-40)=> "Index exceeds dimension bound",
-     Int32(-41)=> "NC_MAX_DIMS exceeded",
-     Int32(-42)=> "String match to name in use",
-     Int32(-43)=> "Attribute not found",
-     Int32(-44)=> "NC_MAX_ATTRS exceeded",
-     Int32(-45)=> "Not a netcdf data type",
-     Int32(-46)=> "Invalid dimension id or name",
-     Int32(-47)=> "NC_UNLIMITED in the wrong index",
-     Int32(-48)=> "NC_MAX_VARS exceeded",
-     Int32(-49)=> "Variable not found",
-     Int32(-50)=> "Action prohibited on NC_GLOBAL varid",
-     Int32(-51)=> "Not a netcdf file",
-     Int32(-52)=> "In Fortran, string too short",
-     Int32(-53)=> "NC_MAX_NAME exceeded",
-     Int32(-54)=> "NC_UNLIMITED size already in use",
-     Int32(-55)=> "nc_rec op when there are no record vars",
-     Int32(-56)=> "Attempt to convert between text & numbers",
-     Int32(-57)=> "Edge+start exceeds dimension bound",
-     Int32(-58)=> "Illegal stride",
-     Int32(-59)=> "Attribute or variable name contains illegal characters",
-     Int32(-60)=> "Math result not representable",
-     Int32(-61)=> "Memory allocation (malloc) failure",
-     Int32(-62)=> "One or more variable sizes violate format constraints",
-     Int32(-63)=> "Invalid dimension size",
-     Int32(-64)=> "File likely truncated or possibly corrupted")
+
+"Exception type for error thrown by the NetCDF library"
+type NetCDFError <: Exception
+    code::Cint
+    msg::String
+end
+
+"Construct a NetCDFError from the error code"
+NetCDFError(code::Cint) = NetCDFError(code, unsafe_string(nc_strerror(code)))
+
+function Base.showerror(io::IO, err::NetCDFError)
+    print(io, "NetCDF error code $(err.code):\n\t$(err.msg)")
+end
+
+"Check the NetCDF error code, raising an error if nonzero"
+function check(code::Cint)
+    # zero means success, return
+    if code == Cint(0)
+        return
+    # otherwise throw an error message
+    else
+        throw(NetCDFError(code))
+    end
+end
 
 const funext = [  (Float64, "double","float64a"),
             (Float32, "float","float32a"),

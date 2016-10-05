@@ -1,4 +1,4 @@
-import Base.Test.@test
+using Base.Test
 using NetCDF
 "Function that returns a valid file name of a non-existing file for all OSs"
 function tempname2()

@@ -8,6 +8,7 @@
 # from netcdf.jl first ::Cint and ::nc_type in the type signature are loosened to ::Integer
 # then Cstring is replaced with Ptr{UInt8}
 # then it is copied entirely to the end of src/netcdf_c.jl
+# then all ccalls that return an error code are wrapped in the `check` function
 
 using Clang
 
