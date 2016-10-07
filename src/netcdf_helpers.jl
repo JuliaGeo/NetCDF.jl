@@ -172,7 +172,7 @@ end
 
 function nc_get_att(ncid::Integer,varid::Integer,name::AbstractString,attype::Integer,attlen::Integer)
     if attype==NC_CHAR
-      valsa=Array(UInt8,attlen)
+      valsa=Array(UInt8,attlen+1)
       nc_get_att_text(ncid,varid,name,valsa)
       valsa[end]=0
       return unsafe_string(pointer(valsa))

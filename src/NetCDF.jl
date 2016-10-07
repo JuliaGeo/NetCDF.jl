@@ -104,7 +104,7 @@ type NcVar{T,N,M} <: AbstractArray{T,N}
 end
 
 Base.convert{S,T,N,M}(::Type{NcVar{T,N,M}},v::NcVar{S,N,M})=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize)
-
+Base.convert{S,T,N,M}(::Type{NcVar{T}},v::NcVar{S,N,M})=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize)
 """
     NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1)
 
