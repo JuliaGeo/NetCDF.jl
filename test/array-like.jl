@@ -1,13 +1,9 @@
 ncclose()
 v1=NetCDF.open(fn1,"v1",mode=NC_WRITE)
-@test typeof(v1)==NetCDF.NcVar{Float64,3}
+@test isa(v1,NetCDF.NcVar{Float64,3,6})
 @test v1[1,1,1]==x1[1,1,1]
 
-if VERSION >= v"0.5-"
-  @test squeeze(v1[2,:,2],(1,3))==x1[2,:,2]
-else
-  @test squeeze(v1[2,:,2],3)==x1[2,:,2]
-end
+@test squeeze(v1[2,:,2],(1,3))==x1[2,:,2]
 
 @test squeeze(v1[1:end,3,1],(2,3))==x1[1:end,3,1]
 inds=bitrand(size(x1))
