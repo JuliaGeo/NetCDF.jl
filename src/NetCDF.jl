@@ -38,7 +38,7 @@ global const nctype2string=@Compat.Dict(
 function jl2nc(t::DataType)
   shift!(collect(keys(nctype2jltype))[find(e->(t <: e), collect(values(nctype2jltype)))])
 end
-jl2nc(t::Type{UInt8})=NC_BYTE
+jl2nc(t::Type{UInt8})=NC_UBYTE
 
 getJLType(t::DataType)=t
 getJLType(t::Int)=nctype2jltype[t]
