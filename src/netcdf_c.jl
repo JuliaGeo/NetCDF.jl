@@ -183,14 +183,14 @@ const NC_EXDR = -32
 const NC_SYSERR = -31
 const NC_FATAL = 1
 
-typealias nc_type Cint
+const nc_type=Cint
 
 type nc_vlen_t
     len::Integer
     p::Ptr{Void}
 end
 
-typealias nclong Cint
+const nclong=Cint
 
 
 function nc_inq_libvers()

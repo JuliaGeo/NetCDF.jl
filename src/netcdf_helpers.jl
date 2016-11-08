@@ -172,12 +172,12 @@ end
 
 function nc_get_att(ncid::Integer,varid::Integer,name::AbstractString,attype::Integer,attlen::Integer)
     if attype==NC_CHAR
-      valsa=Array(UInt8,attlen+1)
+      valsa=zeros(UInt8,attlen+1)
       nc_get_att_text(ncid,varid,name,valsa)
       valsa[end]=0
       return unsafe_string(pointer(valsa))
     else
-      valsa=Array(nctype2jltype[attype],attlen)
+      valsa=Array{nctype2jltype[attype]}(attlen)
       return nc_get_att!(ncid,varid,name,valsa)
     end
 end
@@ -191,7 +191,7 @@ nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float64})  = begin nc_get_att_double(ncid,varid,name,valsa); valsa end
 
 function nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{AbstractString})
-  valsa_c=Array(Ptr{UInt8},length(valsa))
+  valsa_c=Array{Ptr{UInt8}}(length(valsa))
   nc_get_att_string(ncid,varid,name,valsa_c)
   for i=1:length(valsa)
     valsa[i]=unsafe_string(valsa_c[i])
@@ -318,7 +318,7 @@ function parsedimargs(dim)
   dimvals=nothing
   dimatts=nothing
   name=nothing
-  d=Array(NcDim,0)
+  d=NcDim[]
   for a in dim
     NC_VERBOSE ? println(a,idim) : nothing
     if isa(a,AbstractString)
@@ -371,7 +371,7 @@ function finalizedim(dimlen,dimvals,dimatts,name)
     dimvals=Array{Float64}(0)
   end
   if (dimatts==nothing)
-    dimatts=@Compat.AnyDict("missval"=>-9999)
+    dimatts=Dict("missval"=>-9999)
   end
   return(NcDim(name,dimlen,atts=dimatts,values=dimvals,unlimited=(dimlen==0 ? true : false)))
 end

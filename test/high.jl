@@ -4,26 +4,26 @@ fn2=tempname2()
 fn3=tempname2()
 fn4=tempname2()
 
-nccreate(fn1,"v1","Dim1",[1,2],@Compat.AnyDict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,@Compat.AnyDict("max"=>10),
+nccreate(fn1,"v1","Dim1",[1,2],Dict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,Dict("max"=>10),
 mode=NC_NETCDF4)
 nccreate(fn1,"vstr","Dim2",collect(1:10),t=String)
 nccreate(fn1,"vchar","DimChar",20,"Dim2",t=NetCDF.NC_CHAR)
-nccreate(fn2,"v2","Dim1",[1,2,3],@Compat.AnyDict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,@Compat.AnyDict("max"=>10),
-atts=@Compat.AnyDict("a1"=>"varatts"),gatts=@Compat.AnyDict("Some global attributes"=>2010))
+nccreate(fn2,"v2","Dim1",[1,2,3],Dict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,Dict("max"=>10),
+atts=Dict("a1"=>"varatts"),gatts=Dict("Some global attributes"=>2010))
 nccreate(fn3,"v3","Dim1",3)
 tlist = [Float64, Float32, Int32, Int16, Int8]
 for i = 1:length(tlist)
 	nccreate(fn3,"vt$i","Dim2",collect(1:10),t=tlist[i])
 end
 
-ncputatt(fn1,"v1",@Compat.Dict("Additional String attribute"=>"att"))
-ncputatt(fn1,"global",@Compat.Dict("Additional global attribute"=>"gatt"))
-ncputatt(fn1,"global",@Compat.Dict("Additional Int8 attribute"=>Int8(20),
+ncputatt(fn1,"v1",Dict("Additional String attribute"=>"att"))
+ncputatt(fn1,"global",Dict("Additional global attribute"=>"gatt"))
+ncputatt(fn1,"global",Dict("Additional Int8 attribute"=>Int8(20),
 							"Additional Int16 attribute"=>Int16(20),
 							"Additional Int32 attribute"=>Int32(20),
 							"Additional Float32 attribute"=>Float32(20),
 							"Additional Float64 attribute"=>Float64(20)))
-ncputatt(fn1,"v1",    @Compat.Dict("Additional Int8 array attribute"=>Int8[i for i in 1:20],
+ncputatt(fn1,"v1",   Dict("Additional Int8 array attribute"=>Int8[i for i in 1:20],
 							"Additional Int16 array attribute"=>Int16[i for i in 1:20],
 							"Additional Int32 array attribute"=>Int32[i for i in 1:20],
 							"Additional Float32 array attribute"=>Float32[i for i in 1:20],
@@ -32,21 +32,8 @@ ncputatt(fn1,"v1",    @Compat.Dict("Additional Int8 array attribute"=>Int8[i for
 #First generate the data
 x1 = rand(2,10,20)
 x2 = rand(2,10,20)
-xt=Array(Any,length(tlist))
-for i=1:length(tlist)
-    xt[i]=rand(tlist[i],10)
-end
-xs=Array(String,10)
-xs[1]="a"
-xs[2]="bb"
-xs[3]="ccc"
-xs[4]="dddd"
-xs[5]="eeeee"
-xs[6]="ffffff"
-xs[7]="ggggggg"
-xs[8]="hhhhhhhh"
-xs[9]="iiiiiiiii"
-xs[10]="jjjjjjjjjj"
+xt = [rand(tl,10) for tl in tlist]
+xs=["a","bb","ccc","dddd","eeeee","ffffff","ggggggg","hhhhhhhh","iiiiiiiii","jjjjjjjjjj"]
 #
 # And write it
 #

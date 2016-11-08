@@ -1,6 +1,5 @@
 __precompile__()
 module NetCDF
-using Compat
 using Formatting
 using Base.Cartesian
 include("netcdf_c.jl")
@@ -12,7 +11,7 @@ export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,
 NC_VERBOSE=false
 #Some constants
 
-global const nctype2jltype=@Compat.Dict(
+global const nctype2jltype=Dict(
   NC_BYTE=>Int8,
   NC_UBYTE=>UInt8,
   NC_SHORT=>Int16,
@@ -23,7 +22,7 @@ global const nctype2jltype=@Compat.Dict(
   NC_CHAR=>UInt8,
   NC_STRING=>String)
 
-global const nctype2string=@Compat.Dict(
+global const nctype2string=Dict(
   NC_BYTE=>"BYTE",
   NC_UBYTE=>"UBYTE",
   NC_SHORT=>"SHORT",
@@ -115,18 +114,20 @@ You can also set the compression level of the variable by setting compress to a 
 """
 function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1,chunksize=ntuple(i->zero(Int32),isa(dimin,NcDim) ? 1 : length(dimin)))
   dim = isa(dimin,NcDim) ? NcDim[dimin] : dimin
-  return NcVar{getJLType(t),length(dim),getNCType(t)}(-1,-1,length(dim),length(atts), getNCType(t),name,Array(Int32,length(dim)),dim,atts,compress,chunksize)
+  return NcVar{getJLType(t),length(dim),getNCType(t)}(-1,-1,length(dim),length(atts), getNCType(t),name,Array{Int32}(length(dim)),dim,atts,compress,chunksize)
 end
-NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}},atts,t::Union{DataType,Integer}=Float64)=NcVar{getJLType(t),length(dimin),getNCType(t)}(-1,-1,length(dimin),length(atts), getNCType(t),name,Array(Int,length(dimin)),dimin,atts,-1,ntuple(i->zero(Int32),length(dimin)))
+NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}},atts,t::Union{DataType,Integer}=Float64)=NcVar{getJLType(t),length(dimin),getNCType(t)}(-1,-1,length(dimin),length(atts), getNCType(t),name,Array{Int}(length(dimin)),dimin,atts,-1,ntuple(i->zero(Int32),length(dimin)))
 
 #Array methods
 @generated function Base.size{T,N}(a::NcVar{T,N})
   :(@ntuple($N,i->Int(a.dim[i].dimlen)))
 end
-typealias IndR Union{Integer,UnitRange,Colon}
-typealias ArNum Union{AbstractArray,Number}
+const IndR  = Union{Integer,UnitRange,Colon}
+const ArNum = Union{AbstractArray,Number}
 
-Base.linearindexing(::NcVar)=Base.LinearSlow()
+import Compat: IndexStyle, IndexCartesian
+
+IndexStyle(::NcVar)=IndexCartesian()
 Base.getindex{T}(v::NcVar{T,1},i1::IndR)=readvar(v,i1)
 Base.getindex{T}(v::NcVar{T,2},i1::IndR,i2::IndR)=readvar(v,i1,i2)
 Base.getindex{T}(v::NcVar{T,3},i1::IndR,i2::IndR,i3::IndR)=readvar(v,i1,i2,i3)
@@ -205,7 +206,7 @@ As a special case, setting a value in count to -1 will cause the function to rea
 """
 function readvar{T,N}(v::NcVar{T,N};start::Vector=defaultstart(v),count::Vector=defaultcount(v))
     s = [count[i]==-1 ? size(v,i)-start[i]+1 : count[i] for i=1:length(count)]
-    retvalsa = Array(T,s...)
+    retvalsa = Array{T}(s...)
     readvar!(v, retvalsa, start=start, count=count)
     return retvalsa
 end
@@ -216,7 +217,7 @@ Reading data from NetCDF file with array-style indexing. Integers and UnitRanges
 """
 function readvar{T,N}(v::NcVar{T,N},I::IndR...)
     count=ntuple(i->counti(I[i],v.dim[i].dimlen),length(I))
-    retvalsa = Array(T,count...)
+    retvalsa = Array{T}(count...)
     readvar!(v, retvalsa, I...)
     return retvalsa
 end
@@ -272,7 +273,7 @@ nc_get_vara_x!{N}(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},count::Vector{UI
 nc_get_var1_x!{N}(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},retvalsa::AbstractArray{UInt8})=nc_get_var1_text(v.ncid,v.varid,start,retvalsa)
 
 function nc_get_vara_x!{N}(v::NcVar{String,N,NC_STRING},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{String})
-  retvalsa_c=Array(Ptr{UInt8},length(retvalsa))
+  retvalsa_c=Array{Ptr{UInt8}}(length(retvalsa))
   nc_get_vara_string(v.ncid,v.varid,start,count,retvalsa_c)
   for i=1:length(retvalsa)
     retvalsa[i]=unsafe_string(retvalsa_c[i])
@@ -282,7 +283,7 @@ function nc_get_vara_x!{N}(v::NcVar{String,N,NC_STRING},start::Vector{UInt},coun
 end
 
 function nc_get_var1_x{N}(v::NcVar{String,N,NC_STRING},start::Vector{UInt},::String)
-  retvalsa_c=Array(Ptr{UInt8},1)
+  retvalsa_c=Array{Ptr{UInt8}}(1)
   nc_get_var1_string(v.ncid,v.varid,start,retvalsa_c)
   retval=string(retvalsa_c[1])
   nc_free_string(1,retvalsa_c)
@@ -380,12 +381,12 @@ nc_put_vara_x{N}(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt}, count::Vector{UI
 nc_put_var1_x{N}(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},val::UInt8)=begin vals=UInt8[val]; nc_put_var1_text(v.ncid,v.varid,start,count,vals) end
 
 function nc_put_vara_x{N}(v::NcVar{String,N,NC_STRING}, start, count,vals::Array{String})
-  vals_p=map(x->pointer(x.data),vals)
+  vals_p=map(x->pointer(x),vals)
   nc_put_vara_string(v.ncid,v.varid,start,count,vals_p)
 end
 
 function nc_put_var1_x{N}(v::NcVar{String,N,NC_STRING},start::Vector{UInt},val::String)
-  val_p=[pointer(val.data)]
+  val_p=[pointer(val)]
   nc_put_var1_string(v.ncid,v.varid,start,val_p)
 end
 
@@ -577,7 +578,7 @@ function open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=fa
       ncf.dim[name].varid=varid
     end
     atts=getatts_all(ncid,varid,natts)
-    vdim=Array(NcDim,length(dimids))
+    vdim=Array{NcDim}(length(dimids))
     i=1;
     for did in dimids
       vdim[i]=ncf.dim[getdimnamebyid(ncf,did)]
@@ -599,7 +600,7 @@ If only parts of the variable are to be read, you can provide optionally `start`
 length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension.
 As a special case, setting a value in count to -1 will cause the function to read all values along this dimension.
 """
-function ncread{T<:Integer}(fil::AbstractString,vname::AbstractString;start::Array{T}=Array(Int,0),count::Array{T}=Array(Int,0))
+function ncread{T<:Integer}(fil::AbstractString,vname::AbstractString;start::Array{T}=Array{Int}(0),count::Array{T}=Array{Int}(0))
   nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
   length(start)==0 && (start=defaultstart(nc[vname]))
   length(count)==0 && (count=defaultcount(nc[vname]))
@@ -722,7 +723,7 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict
         # Check if dimensions exist, if not, create
         # Remember if dimension was created
 
-        dcreate=Array(Bool,length(dim))
+        dcreate=falses(length(dim))
         for i=1:length(dim)
             if !haskey(nc.dim,dim[i].name)
                 create_dim(nc,dim[i])
