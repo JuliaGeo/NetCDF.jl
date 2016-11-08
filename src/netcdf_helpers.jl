@@ -371,7 +371,7 @@ function finalizedim(dimlen,dimvals,dimatts,name)
     dimvals=Array{Float64}(0)
   end
   if (dimatts==nothing)
-    dimatts=@Compat.AnyDict("missval"=>-9999)
+    dimatts=Dict("missval"=>-9999)
   end
   return(NcDim(name,dimlen,atts=dimatts,values=dimvals,unlimited=(dimlen==0 ? true : false)))
 end

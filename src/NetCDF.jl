@@ -1,6 +1,5 @@
 __precompile__()
 module NetCDF
-using Compat
 using Formatting
 using Base.Cartesian
 include("netcdf_c.jl")
@@ -12,7 +11,7 @@ export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,
 NC_VERBOSE=false
 #Some constants
 
-global const nctype2jltype=@Compat.Dict(
+global const nctype2jltype=Dict(
   NC_BYTE=>Int8,
   NC_UBYTE=>UInt8,
   NC_SHORT=>Int16,
@@ -23,7 +22,7 @@ global const nctype2jltype=@Compat.Dict(
   NC_CHAR=>UInt8,
   NC_STRING=>String)
 
-global const nctype2string=@Compat.Dict(
+global const nctype2string=Dict(
   NC_BYTE=>"BYTE",
   NC_UBYTE=>"UBYTE",
   NC_SHORT=>"SHORT",
