@@ -4,26 +4,26 @@ fn2=tempname2()
 fn3=tempname2()
 fn4=tempname2()
 
-nccreate(fn1,"v1","Dim1",[1,2],@Compat.AnyDict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,@Compat.AnyDict("max"=>10),
+nccreate(fn1,"v1","Dim1",[1,2],Dict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,Dict("max"=>10),
 mode=NC_NETCDF4)
 nccreate(fn1,"vstr","Dim2",collect(1:10),t=String)
 nccreate(fn1,"vchar","DimChar",20,"Dim2",t=NetCDF.NC_CHAR)
-nccreate(fn2,"v2","Dim1",[1,2,3],@Compat.AnyDict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,@Compat.AnyDict("max"=>10),
-atts=@Compat.AnyDict("a1"=>"varatts"),gatts=@Compat.AnyDict("Some global attributes"=>2010))
+nccreate(fn2,"v2","Dim1",[1,2,3],Dict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,Dict("max"=>10),
+atts=Dict("a1"=>"varatts"),gatts=Dict("Some global attributes"=>2010))
 nccreate(fn3,"v3","Dim1",3)
 tlist = [Float64, Float32, Int32, Int16, Int8]
 for i = 1:length(tlist)
 	nccreate(fn3,"vt$i","Dim2",collect(1:10),t=tlist[i])
 end
 
-ncputatt(fn1,"v1",@Compat.Dict("Additional String attribute"=>"att"))
-ncputatt(fn1,"global",@Compat.Dict("Additional global attribute"=>"gatt"))
-ncputatt(fn1,"global",@Compat.Dict("Additional Int8 attribute"=>Int8(20),
+ncputatt(fn1,"v1",Dict("Additional String attribute"=>"att"))
+ncputatt(fn1,"global",Dict("Additional global attribute"=>"gatt"))
+ncputatt(fn1,"global",Dict("Additional Int8 attribute"=>Int8(20),
 							"Additional Int16 attribute"=>Int16(20),
 							"Additional Int32 attribute"=>Int32(20),
 							"Additional Float32 attribute"=>Float32(20),
 							"Additional Float64 attribute"=>Float64(20)))
-ncputatt(fn1,"v1",    @Compat.Dict("Additional Int8 array attribute"=>Int8[i for i in 1:20],
+ncputatt(fn1,"v1",   Dict("Additional Int8 array attribute"=>Int8[i for i in 1:20],
 							"Additional Int16 array attribute"=>Int16[i for i in 1:20],
 							"Additional Int32 array attribute"=>Int32[i for i in 1:20],
 							"Additional Float32 array attribute"=>Float32[i for i in 1:20],
