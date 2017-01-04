@@ -100,23 +100,43 @@ type NcVar{T,N,M} <: AbstractArray{T,N}
   atts::Dict
   compress::Int32
   chunksize::NTuple{N,Int32}
+  offset::Nullable{T}
+  scale_factor::Nullable{T}
 end
 
-Base.convert{S,T,N,M}(::Type{NcVar{T,N,M}},v::NcVar{S,N,M})=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize)
-Base.convert{S,T,N,M}(::Type{NcVar{T}},v::NcVar{S,N,M})=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize)
+Base.convert{S,T,N,M}(::Type{NcVar{T,N,M}},v::NcVar{S,N,M})=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize,v.offset,v.scale_factor)
+Base.convert{S,T,N,M}(::Type{NcVar{T}},    v::NcVar{S,N,M})=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize,v.offset,v.scale_factor)
 """
     NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1)
 
-Here varname is the name of the variable, dimlist an array of type NcDim holding the dimensions associated to the variable, varattributes is a Dict
-holding pairs of attribute names and values. t is the data type that should be used for storing the variable. You can either specify a julia type
-(Int16, Int32, Float32, Float64) which will be translated to (NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE) or directly specify one of the latter list.
-You can also set the compression level of the variable by setting compress to a number in the range 1..9 This has only an effect in NetCDF4 files.
+Creates an empty NetCDF variable object, which can be passed to `NetCDF.create` later on. Here `name` is the name of the variable to be created and `dimin` is an `Array{NcDim}` containing
+the dimensions associated to the variable.
+
+### Keyword arguments
+
+* `atts` a Dictionary holding pairs of attribute names and values associated with the variable
+* `t` is the data type that should be used for storing the variable. One can either specify a julia type (Int16, Int32, Float32, Float64) which will be translated to (NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE) or directly specify one of the latter list.
+* `compress` sets the compression level of the variable in the range 1..9 This has only an effect in NetCDF4 files
+* `chunksize` is a tuple of `Int32`s and determines the variable chunk size
 """
-function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1,chunksize=ntuple(i->zero(Int32),isa(dimin,NcDim) ? 1 : length(dimin)))
+function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};
+               atts::Dict                 = Dict{Any,Any}(),
+               t::Union{DataType,Integer} = Float64,
+               jlt::DataType              = getJLType(t),
+               compress::Integer          = -1,
+               chunksize                  = ntuple(i->zero(Int32),isa(dimin,NcDim) ? 1 : length(dimin)))
+
   dim = isa(dimin,NcDim) ? NcDim[dimin] : dimin
-  return NcVar{getJLType(t),length(dim),getNCType(t)}(-1,-1,length(dim),length(atts), getNCType(t),name,Array(Int32,length(dim)),dim,atts,compress,chunksize)
+  nct = getNCType(t)
+
+  #determine if scale factor or offset were defined in attributes Dict
+  scale_factor = haskey(atts,"scale_factor") ? Nullable{jlt}(atts["scale_factor"]) : Nullable{jlt}()
+  offset       = haskey(atts,"add_offset")   ? Nullable{jlt}(atts["add_offset"])   : Nullable{jlt}()
+
+  return NcVar{jlt,length(dim),nct}(-1,-1,length(dim),length(atts), nct,name,Array(Int32,length(dim)),dim,atts,compress,chunksize,offset,scale_factor)
+
 end
-NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}},atts,t::Union{DataType,Integer}=Float64)=NcVar{getJLType(t),length(dimin),getNCType(t)}(-1,-1,length(dimin),length(atts), getNCType(t),name,Array(Int,length(dimin)),dimin,atts,-1,ntuple(i->zero(Int32),length(dimin)))
+NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}},atts,t::Union{DataType,Integer}=Float64)=NcVar(name,dimin,atts=atts,t=t)
 
 #Array methods
 @generated function Base.size{T,N}(a::NcVar{T,N})
@@ -169,7 +189,8 @@ readvar!(nc::NcFile, varname::AbstractString, retvalsa::AbstractArray;start::Vec
 
 
 """
-readvar!(v::NcVar, d::Array;start::Vector=ones(UInt,ndims(d)),count::Vector=size(d))
+    readvar!(v::NcVar, d::Array;start::Vector=ones(UInt,ndims(d)),count::Vector=size(d))
+
 is the mutating form of `readvar` which expects a pre-allocated array d, where the data are written to. It reads the values of the NcVar object `v`
 writing the values to the preallocated array `d`.
 If only parts of the variable are to be read, you can provide optionally `start` and `count`, which enable you to read blocks of data. `start` and `count` have the same
@@ -196,7 +217,8 @@ end
 readvar(nc::NcFile, varname::AbstractString;start::Vector=defaultstart(nc[varname]),count::Vector=defaultcount(nc[varname]))=readvar(nc[varname],start=start,count=count)
 
 """
-readvar{T,N}(v::NcVar{T,N};start::Vector=ones(Int,v.ndim),count::Vector=zeros(Int,v.ndim))
+    readvar{T,N}(v::NcVar{T,N};start::Vector=ones(Int,v.ndim),count::Vector=zeros(Int,v.ndim))
+
 `readvar` reads the values of the NcVar object `v` and returns them.
 If only parts of the variable are to be read, you can provide optionally `start` and `count`, which enable you to read blocks of data. `start` and `count` have the same
 length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension.
@@ -211,6 +233,7 @@ end
 
 """
     readvar{T,N}(v::NcVar{T,N},I::IndR...)
+
 Reading data from NetCDF file with array-style indexing. Integers and UnitRanges are valid indices for each dimension.
 """
 function readvar{T,N}(v::NcVar{T,N},I::IndR...)
@@ -239,9 +262,7 @@ counti(r::UnitRange,l::Integer)=length(r)
 firsti(r::Colon,l::Integer)=0
 counti(r::Colon,l::Integer)=Int(l)
 # For ranges
-@generated function readvar!{T,N}(v::NcVar{T,N}, retvalsa::AbstractArray,I::IndR...)
-
-  N==length(I) || error("Dimension mismatch")
+@generated function readvar!{T,N}(v::NcVar{T,N}, retvalsa::AbstractArray,I::Vararg{IndR,N})
 
   quote
     checkbounds(v,I...)
@@ -258,13 +279,37 @@ counti(r::Colon,l::Integer)=Int(l)
   end
 end
 
+function apply_scale_offset{V,T}(v::NcVar{V},retvalsa::AbstractArray{T},inverse::Bool)
+
+  _offset       = get(v.offset,zero(V))
+  _scale_factor = get(v.scale_factor,one(V))
+  offset       = convert(T,_offset)
+  scale_factor = convert(T,_scale_factor)
+  if inverse
+    scale_factor = 1/scale_factor
+    @inbounds for ii in eachindex(retvalsa)
+      retvalsa[ii] = (retvalsa[ii]-offset) * scale_factor
+    end
+  else
+    @inbounds for ii in eachindex(retvalsa)
+      retvalsa[ii] = retvalsa[ii] * scale_factor + offset
+    end
+  end
+end
 
 for (t,ending,arname) in funext
     fname = Symbol("nc_get_vara_$ending")
     fname1 = Symbol("nc_get_var1_$ending")
     arsym=Symbol(arname)
-    @eval nc_get_vara_x!(v::NcVar{$t},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{$t})=$fname(v.ncid,v.varid,start,count,retvalsa)
-    @eval nc_get_var1_x(v::NcVar{$t},start::Vector{UInt},::Type{$t})=begin $fname1(v.ncid,v.varid,start,$(arsym)); $(arsym)[1] end
+    @eval function nc_get_vara_x!(v::NcVar{$t},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{$t})
+      $fname(v.ncid,v.varid,start,count,retvalsa)
+      (!isnull(v.offset) || !isnull(v.scale_factor)) && apply_scale_offset(v,retvalsa,false)
+    end
+    @eval function nc_get_var1_x(v::NcVar{$t},start::Vector{UInt},::Type{$t})
+      $fname1(v.ncid,v.varid,start,$(arsym))
+      (!isnull(v.offset) || !isnull(v.scale_factor)) && apply_scale_offset(v,$(arsym),false)
+      $(arsym)[1]
+    end
 end
 
 nc_get_vara_x!{N}(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{UInt8})=nc_get_vara_text(v.ncid,v.varid,start,count,retvalsa)
@@ -311,6 +356,7 @@ end
 
 """
     ncputatt(nc::String,varname::String,atts::Dict)
+
 Writes name-value pairs of attributes given in `atts` to the file `nc`. If `varname` is a valid variable indentifier, the attribute(s) will be written to this variable.
 Otherwise, global attributes will be generated. This function automatically overwrites existing attributes.
 """
@@ -329,6 +375,7 @@ putvar(nc::NcFile,varname::AbstractString,vals::Array;start=ones(Int,length(size
 
 """
     putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
+
 This function writes the values from the array `vals` to a netcdf file. `v` is the NcVar handle of the respective variable and `vals` an array
 with the same dimension as the variable in the netcdf file. The optional parameter start gives the first index in each dimension along which the writing should
 begin. It is assumed that the input array vals has the same number of dimensions as the and writing happens along these dimensions. However, you can specify
@@ -371,8 +418,20 @@ for (t,ending,arname) in funext
     fname = Symbol("nc_put_vara_$ending")
     fname1= Symbol("nc_put_var1_$ending")
     arsym=Symbol(arname)
-    @eval nc_put_vara_x(v::NcVar,start::Vector{UInt}, count::Vector{UInt}, vals::Array{$t})=$fname(v.ncid,v.varid,start,count,vals)
-    @eval nc_put_var1_x(v::NcVar,start::Vector{UInt},val::$t)=begin $(arsym)[1]=val; $fname1(v.ncid,v.varid,start,$(arsym)) end
+    @eval function nc_put_vara_x(v::NcVar,start::Vector{UInt}, count::Vector{UInt}, vals::Array{$t})
+      if !isnull(v.offset) || !isnull(v.scale_factor)
+        _vals=copy(vals)
+        apply_scale_offset(v,_vals,true)
+        $fname(v.ncid,v.varid,start,count,_vals)
+      else
+        $fname(v.ncid,v.varid,start,count,vals)
+      end
+    end
+    @eval function nc_put_var1_x(v::NcVar,start::Vector{UInt},val::$t)
+      $(arsym)[1]=val
+      !isnull(v.offset) || !isnull(v.scale_factor) && apply_scale_offset(v,$(arsym),true)
+      $fname1(v.ncid,v.varid,start,$(arsym))
+    end
 end
 
 nc_put_vara_x{N}(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt}, count::Vector{UInt}, vals::Array{UInt8})=nc_put_vara_text(v.ncid,v.varid,start,count,vals)
@@ -451,6 +510,7 @@ function setcompression(v::NcVar,mode)
 end
 """
     NetCDF.create(name::String,varlist::Array{NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
+
 This creates a new NetCDF file. Here, `filename`
  is the name of the file to be created and `varlist` an array of `NcVar` holding the variables that should appear in the file. In the optional
 argument `gatts` you can specify a Dict containing global attributes and `mode` is the file type you want to create (NC_NETCDF4, NC_CLASSIC_MODEL or NC_64BIT_OFFSET).
@@ -478,7 +538,7 @@ function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict=Dict{Any,
 
     create_dim(nc,d)
     if (length(d.vals)>0) & (!haskey(nc.vars,d.name))
-      push!(varlist,NcVar{Float64,1,NC_DOUBLE}(id,varida[1],1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1,(zero(Int32),)))
+      push!(varlist,NcVar{Float64,1,NC_DOUBLE}(id,varida[1],1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1,(zero(Int32),),Nullable{Float64}(),Nullable{Float64}()))
     end
 
   end
@@ -500,7 +560,7 @@ function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict=Dict{Any,
 
   for d in nc.dim
     #Write dimension variable
-    if (length(d[2].vals)>0)
+    if !isempty(d[2].vals)
       putvar(nc,d[2].name,d[2].vals)
     end
   end
@@ -527,8 +587,8 @@ end
 
 opens a NetCDF variable `v` in the NetCDF file `fil` and returns an `NcVar` handle that implements the AbstractArray interface for reading and writing.
 """
-function open(fil::AbstractString,v::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
-    nc=open(fil,mode=mode,readdimvar=readdimvar)
+function open(fil::AbstractString,v::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false,applyscale::Bool=false)
+    nc=open(fil,mode=mode,readdimvar=readdimvar,applyscale=applyscale)
     nc.vars[v]
 end
 
@@ -538,7 +598,7 @@ end
 opens the NetCDF file `fil` and returns a `NcFile` handle. The optional argument mode determines the `mode` in which the files is opened (`NC_NOWRITE` or `NC_WRITE`).
 If you set `readdimvar=true`, then the dimension variables will be read when opening the file and added to the NcFIle object.
 """
-function open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
+function open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false, applyscale::Bool=false)
 
   if haskey(currentNcFiles,abspath(fil))
     if currentNcFiles[abspath(fil)].omode==mode
@@ -582,11 +642,26 @@ function open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=fa
       vdim[i]=ncf.dim[getdimnamebyid(ncf,did)]
       i=i+1
     end
-    ncf.vars[name]=NcVar{nctype2jltype[nctype],Int(vndim),Int(nctype)}(ncid,Int32(varid),vndim,natts,nctype,name,dimids[vndim:-1:1],vdim[vndim:-1:1],atts,0,chunksize)
+
+    jlt          = nctype2jltype[nctype]
+    jlt = promote_jlt(jlt,atts,applyscale)
+    scale_factor = (applyscale && haskey(atts,"scale_factor")) ? Nullable{jlt}(atts["scale_factor"]) : Nullable{jlt}()
+    offset       = (applyscale && haskey(atts,"add_offset"))   ? Nullable{jlt}(atts["add_offset"])   : Nullable{jlt}()
+
+    ncf.vars[name]=NcVar{jlt,Int(vndim),Int(nctype)}(ncid,Int32(varid),vndim,natts,nctype,name,dimids[vndim:-1:1],vdim[vndim:-1:1],atts,0,chunksize,offset,scale_factor)
   end
   readdimvar==true ? _readdimvars(ncf) : nothing
   currentNcFiles[abspath(ncf.name)]=ncf
   return ncf
+end
+
+function promote_jlt(jlt,atts,applyscale)
+  if applyscale && (haskey(atts,"scale_factor") || haskey(atts,"add_offset"))
+    #Determine new output data type
+    haskey(atts,"scale_factor") && (jlt=promote_type(jlt,typeof(atts["scale_factor"])))
+    haskey(atts,"add_offset")   && (jlt=promote_type(jlt,typeof(atts["add_offset"])))
+  end
+  jlt
 end
 
 # Define some high-level functions
@@ -598,14 +673,14 @@ If only parts of the variable are to be read, you can provide optionally `start`
 length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension.
 As a special case, setting a value in count to -1 will cause the function to read all values along this dimension.
 """
-function ncread{T<:Integer}(fil::AbstractString,vname::AbstractString;start::Array{T}=Array(Int,0),count::Array{T}=Array(Int,0))
-  nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
+function ncread{T<:Integer}(fil::AbstractString,vname::AbstractString;start::Array{T}=Array(Int,0),count::Array{T}=Array(Int,0),applyscale=false)
+  nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,applyscale=applyscale)
   length(start)==0 && (start=defaultstart(nc[vname]))
   length(count)==0 && (count=defaultcount(nc[vname]))
   x  = readvar(nc[vname],start=start,count=count)
   return x
 end
-ncread{T<:Integer}(fil::AbstractString,vname::AbstractString,start::Array{T,1},count::Array{T,1})=ncread(fil,vname,start=start,count=count)
+ncread{T<:Integer}(fil::AbstractString,vname::AbstractString,start::Array{T,1},count::Array{T,1};applyscale=false)=ncread(fil,vname,start=start,count=count,applyscale=applyscale)
 
 """
     ncread!( filename, varname, d, start=[1,1,...], count=[-1,-1,...] )
@@ -616,8 +691,8 @@ If only parts of the variable are to be read, you can provide optionally `start`
 length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension.
 As a special case, setting a value in count to -1 will cause the function to read all values along this dimension.
 """
-function ncread!(fil::AbstractString,vname::AbstractString,vals::AbstractArray;start::Vector{Int}=ones(Int,ndims(vals)),count::Vector{Int}=[size(vals,i) for i=1:ndims(vals)])
-  nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
+function ncread!(fil::AbstractString,vname::AbstractString,vals::AbstractArray;start::Vector{Int}=ones(Int,ndims(vals)),count::Vector{Int}=[size(vals,i) for i=1:ndims(vals)],applyscale=false)
+  nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,applyscale=applyscale)
   x  = readvar!(nc,vname,vals,start=start,count=count)
   return x
 end
@@ -625,7 +700,8 @@ end
 "prints information on the variables, dimension and attributes conatained in the file"
 function ncinfo(fil::AbstractString)
   nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
-  return(nc)
+  show(nc)
+  close(nc)
 end
 
 iswritable(nc::NcFile)=(nc.omode & NC_WRITE) != zero(UInt16)
@@ -639,16 +715,16 @@ You can supply the argument `start`, a vector that has the same number as the nu
 As default the number of values written along each dimension equals the dimension of the input array. However you can specify the along which dimension the data will be
 written by setting a `count` argument, an integer vector indicating the number of values written along each dimension.
 """
-function ncwrite{T<:Integer}(x::Array,fil::AbstractString,vname::AbstractString;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...])
-  nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,mode=NC_WRITE)
+function ncwrite{T<:Integer}(x::Array,fil::AbstractString,vname::AbstractString;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...],applyscale=false)
+  nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,mode=NC_WRITE,applyscale=applyscale)
   if (nc.omode==NC_NOWRITE)
     close(nc)
     println("reopening file in WRITE mode")
-    open(fil,mode=NC_WRITE)
+    open(fil,mode=NC_WRITE,applyscale=applyscale)
   end
   putvar(nc,vname,x,start=start,count=count)
 end
-ncwrite(x::Array,fil::AbstractString,vname::AbstractString,start::Array)=ncwrite(x,fil,vname,start=start)
+ncwrite(x::Array,fil::AbstractString,vname::AbstractString,start::Array;applyscale=false)=ncwrite(x,fil,vname,start=start,applyscale=applyscale)
 
 "This reads an attribute from the specified file and variable. To read global attributes, set varname to `Global`."
 function ncgetatt(fil::AbstractString,vname::AbstractString,att::AbstractString)
@@ -707,7 +783,9 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict
     # Check chunksize
     chunksize=chunksize[1]==0 ? ntuple(i->0,length(dim)) : chunksize
     # create the NcVar object
-    v=NcVar(varname,dim,atts=atts,compress=compress,t=t,chunksize=chunksize)
+    jlt = getJLType(t)
+    jlt = promote_jlt(jlt,atts,true)
+    v=NcVar(varname,dim,atts=atts,compress=compress,t=t,jlt=jlt,chunksize=chunksize)
     # Test if the file already exists
     if (isfile(fil))
         nc=haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,mode=NC_WRITE)
@@ -726,7 +804,7 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict
             if !haskey(nc.dim,dim[i].name)
                 create_dim(nc,dim[i])
                 v.dimids[i]=dim[i].dimid;
-                isempty(dim[i].vals) || create_var(nc,NcVar{Float64,1,NC_DOUBLE}(nc.ncid,0,1,length(dim[i].atts),NC_DOUBLE,dim[i].name,[dim[i].dimid],[dim[i]],dim[i].atts,-1,(0,)),mode)
+                isempty(dim[i].vals) || create_var(nc,NcVar{Float64,1,NC_DOUBLE}(nc.ncid,0,1,length(dim[i].atts),NC_DOUBLE,dim[i].name,[dim[i].dimid],[dim[i]],dim[i].atts,-1,(0,),Nullable{Float64}(),Nullable{Float64}()),mode)
                 dcreate[i] = true
             else
                 v.dimids[i]=nc.dim[dim[i].name].dimid;
@@ -752,7 +830,13 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict
     return v
 end
 
-#show{T<:Any,N}(io::IO,a::NcVar{T,N})=println(io,a.name)
+function show(io::IO,a::NcVar)
+  print(io, "NetCDF variable with dimensions: ")
+  for d in a.dim
+    print(io,length(d),"(",d.name,") x ")
+  end
+end
+
 #showcompact{T<:Any,N}(io::IO,a::NcVar{T,N})=println(io,a.name)
 function show(io::IO,nc::NcFile)
     nrow,ncol=Base.displaysize(io)
