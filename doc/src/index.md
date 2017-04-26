@@ -1,4 +1,4 @@
-# CABLAB.jl
+# NetCDF.jl
 
 *Reading and writing NetCDF files in Julia*
 
@@ -14,7 +14,7 @@ Pages = [
     "intro.md",
     "highlevel.md",
     "intermediate.md",
-    "array-like.md"
+    "strings.md"
 ]
 Depth = 1
 ```

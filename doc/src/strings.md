@@ -1,4 +1,4 @@
-# Reading and writing NC_CHAR and NC_STRING variables
+# Short note on reading and writing NC_CHAR and NC_STRING variables
 
 There are two common types for storing String data in NetCDF variables. The first is `NC_CHAR`,
 where a 1D array of strings is stored in a 2D `char**` array. Here the user must define the maximum
@@ -10,11 +10,15 @@ string length and add a respective NetCDF dimension. Since NetCDF4 there is the 
 
 In this package, the Julia type `String` maps to the `NC_STRING` datatype, which means that creating a variable with any of
 
-    nccreate(filename, varname, dims..., t=String)
+```
+nccreate(filename, varname, dims..., t=String)
+```
 
 or
 
-    NcVar(varname,dims,t=String)
+```
+NcVar(varname,dims,t=String)
+```
 
 will result in a NetCDF variable of type `NC_STRING`. You can directly write an `Array{String}` of matching shape to these
 variables. Similarly, calling `ncread` or `NetCDF.readvar` on any of these variables will return an `Array{String}`
@@ -38,9 +42,11 @@ which will return a string vector of length 20.
 
 An example for creating `NC_CHAR` and writing variables would be the following:
 
-    nccreate(filename,varname,"str_len",20,"DimValues",5,t=NC_CHAR)
-    xs = ["a","bb","ccc","dddd","eeeee"]
-    ncwrite(filename,varname,nc_string2char(xs))
+```
+nccreate(filename,varname,"str_len",20,"DimValues",5,t=NC_CHAR)
+xs = ["a","bb","ccc","dddd","eeeee"]
+ncwrite(filename,varname,nc_string2char(xs))
+```
 
 The call of `string2char` will convert the `Vector{String}` to a `Matrix{UInt8}`. which
 can be written to the NetCDF file.
