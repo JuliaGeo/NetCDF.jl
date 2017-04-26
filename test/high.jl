@@ -32,21 +32,8 @@ ncputatt(fn1,"v1",   Dict("Additional Int8 array attribute"=>Int8[i for i in 1:2
 #First generate the data
 x1 = rand(2,10,20)
 x2 = rand(2,10,20)
-xt=Array(Any,length(tlist))
-for i=1:length(tlist)
-    xt[i]=rand(tlist[i],10)
-end
-xs=Array(String,10)
-xs[1]="a"
-xs[2]="bb"
-xs[3]="ccc"
-xs[4]="dddd"
-xs[5]="eeeee"
-xs[6]="ffffff"
-xs[7]="ggggggg"
-xs[8]="hhhhhhhh"
-xs[9]="iiiiiiiii"
-xs[10]="jjjjjjjjjj"
+xt = [rand(tl,10) for tl in tlist]
+xs=["a","bb","ccc","dddd","eeeee","ffffff","ggggggg","hhhhhhhh","iiiiiiiii","jjjjjjjjjj"]
 #
 # And write it
 #
