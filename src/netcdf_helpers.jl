@@ -197,7 +197,6 @@ function nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Ar
     for i = 1:length(valsa)
         valsa[i] = unsafe_string(valsa_c[i])
     end
-    nc_free_string(length(valsa_c),valsa_c)
     valsa
 end
 

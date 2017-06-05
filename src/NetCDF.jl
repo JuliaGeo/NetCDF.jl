@@ -289,7 +289,6 @@ function nc_get_vara_x!{N}(v::NcVar{String,N,NC_STRING},start::Vector{UInt},coun
     for i=1:length(retvalsa)
         retvalsa[i]=unsafe_string(retvalsa_c[i])
     end
-    nc_free_string(length(retvalsa_c),retvalsa_c)
     retvalsa
 end
 
@@ -297,7 +296,6 @@ function nc_get_var1_x{N}(v::NcVar{String,N,NC_STRING},start::Vector{UInt},::Str
     retvalsa_c=Array{Ptr{UInt8}}(1)
     nc_get_var1_string(v.ncid,v.varid,start,retvalsa_c)
     retval=string(retvalsa_c[1])
-    nc_free_string(1,retvalsa_c)
     retval
 end
 

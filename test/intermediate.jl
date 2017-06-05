@@ -88,7 +88,7 @@ nc3 = NetCDF.open(fn3,mode=NC_NOWRITE);
 @test x2 == NetCDF.readvar(nc2,"v2")
 @test x4 == NetCDF.readvar(nc2,"v3")
 
-@test all(xs .== NetCDF.nc_char2string(NetCDF.readvar(nc1,"vchar")))
+@test xs == NetCDF.nc_char2string(NetCDF.readvar(nc1,"vchar"))
 
 #Test -1 reading full dimension
 NetCDF.readvar(nc1,"v1",start=[1,1,1],count=[-1,-1,-1])
