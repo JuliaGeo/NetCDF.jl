@@ -23,13 +23,14 @@ function check(code::Cint)
     end
 end
 
-const funext = [  (Float64, "double","float64a"),
-            (Float32, "float","float32a"),
-            (Int32  , "int","int32a"),
-            (UInt8  , "uchar","uint8a"),
-            (Int8   , "schar","int8a"),
-            (Int16  , "short","int16a"),
-            (Int64  , "longlong","int64a")]
+const funext = [
+    (Float64, "double", "float64a"),
+    (Float32, "float", "float32a"),
+    (Int32,   "int", "int32a"),
+    (UInt8,   "uchar", "uint8a"),
+    (Int8,    "schar", "int8a"),
+    (Int16,   "short", "int16a"),
+    (Int64,   "longlong", "int64a")]
 
 const ida          = zeros(Int32,1)
 const namea        = zeros(UInt8,NC_MAX_NAME+1)
@@ -61,9 +62,9 @@ end
 Convert a `UInt8` array read from a NetCDF variable of type `NC_CHAR` to a Julia array of Strings
 """
 function nc_char2string(x::Array{UInt8})
-  y=copy(x)
-  y[end,:]=0
-  squeeze(mapslices(i->unsafe_string(pointer(i)),y,1),1)
+    y = copy(x)
+    y[end,:] = 0
+    squeeze(mapslices(i -> unsafe_string(pointer(i)), y, 1), 1)
 end
 
 """
@@ -73,14 +74,14 @@ Convert a Julia `String` array to an `Array{UInt8}` so that it can be written to
 NetCDF variable of type `NC_CHAR`.
 """
 function nc_string2char(s::Array{String})
-  maxlen=maximum(length(i) for i in s)
-  c = zeros(UInt8,maxlen+1,size(s)...)
-  offs=1
-  for i=1:length(s)
-    copy!(c,offs,s[i],1)
-    offs+=maxlen+1
-  end
-  c
+    maxlen=maximum(length(i) for i in s)
+    c = zeros(UInt8,maxlen+1,size(s)...)
+    offs=1
+    for i=1:length(s)
+        copy!(c,offs,s[i],1)
+        offs+=maxlen+1
+    end
+    c
 end
 
 function nc_open(fname::AbstractString,omode::UInt16)
@@ -124,26 +125,26 @@ end
 
 
 function nc_inq(id::Integer)
-  # Inquire NetCDF file, return number of dims, number of variables, number of global attributes and number of unlimited dimensions
-  nc_inq(id,ndima,nvara,ngatta,nunlimdimida)
-  return (ndima[1],nvara[1],ngatta[1],nunlimdimida[1])
+    # Inquire NetCDF file, return number of dims, number of variables, number of global attributes and number of unlimited dimensions
+    nc_inq(id,ndima,nvara,ngatta,nunlimdimida)
+    return (ndima[1],nvara[1],ngatta[1],nunlimdimida[1])
 end
 
 
-function nc_inq_attname(ncid::Integer,varid::Integer,attnum::Integer)
-  # Get attribute name from attribute number
-  nc_inq_attname(ncid,varid,attnum,namea)
-  namea[end]=0
-  name=unsafe_string(pointer(namea))
-  return name
+function nc_inq_attname(ncid::Integer, varid::Integer, attnum::Integer)
+    # Get attribute name from attribute number
+    nc_inq_attname(ncid,varid,attnum,namea)
+    namea[end] = 0
+    name = unsafe_string(pointer(namea))
+    return name
 end
 
-function nc_get_att(ncid::Integer,varid::Integer,attnum::Integer)
+function nc_get_att(ncid::Integer, varid::Integer, attnum::Integer)
     #Reads attribute name, type and number of values
-    name=nc_inq_attname(ncid,varid,attnum)
+    name = nc_inq_attname(ncid,varid,attnum)
     nc_inq_att(ncid,varid,name,typea,nvals)
-    text=nc_get_att(ncid,varid,string(name),typea[1],nvals[1])
-    return (name,text)
+    text = nc_get_att(ncid,varid,string(name),typea[1],nvals[1])
+    return name, text
 end
 
 #Define methods for writing attributes
@@ -171,14 +172,14 @@ function nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Abstr
 end
 
 function nc_get_att(ncid::Integer,varid::Integer,name::AbstractString,attype::Integer,attlen::Integer)
-    if attype==NC_CHAR
-      valsa=zeros(UInt8,attlen+1)
-      nc_get_att_text(ncid,varid,name,valsa)
-      valsa[end]=0
-      return unsafe_string(pointer(valsa))
+    if attype == NC_CHAR
+        valsa = zeros(UInt8,attlen+1)
+        nc_get_att_text(ncid,varid,name,valsa)
+        valsa[end] = 0
+        return unsafe_string(pointer(valsa))
     else
-      valsa=Array{nctype2jltype[attype]}(attlen)
-      return nc_get_att!(ncid,varid,name,valsa)
+        valsa = Array{nctype2jltype[attype]}(attlen)
+        return nc_get_att!(ncid,varid,name,valsa)
     end
 end
 
@@ -191,33 +192,33 @@ nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float64})  = begin nc_get_att_double(ncid,varid,name,valsa); valsa end
 
 function nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{AbstractString})
-  valsa_c=Array{Ptr{UInt8}}(length(valsa))
-  nc_get_att_string(ncid,varid,name,valsa_c)
-  for i=1:length(valsa)
-    valsa[i]=unsafe_string(valsa_c[i])
-  end
-  nc_free_string(length(valsa_c),valsa_c)
-  valsa
+    valsa_c = Array{Ptr{UInt8}}(length(valsa))
+    nc_get_att_string(ncid,varid,name,valsa_c)
+    for i = 1:length(valsa)
+        valsa[i] = unsafe_string(valsa_c[i])
+    end
+    nc_free_string(length(valsa_c),valsa_c)
+    valsa
 end
 
 function nc_inq_var(nc::NcFile,varid::Integer)
-  # Inquire variables in the file
-  nc_inq_var(nc.ncid,varid,namea,typea,ndima,dimida,natta)
-  dimids=ndima[1]>0 ? dimida[1:ndima[1]] : Int32[]
-  namea[end]=0
-  name=unsafe_string(pointer(namea))
-  #Find out chunks
-  nc_inq_var_chunking(nc.ncid,varid,storagep,chunk_sizea)
-  chunksize=storagep[1]==NC_CONTIGUOUS ? ntuple(i->0,ndima[1]) : ntuple(i->chunk_sizea[i],ndima[1])
-  return (name,typea[1],dimids,natta[1],ndima[1],isdimvar(nc,name),chunksize)
+    # Inquire variables in the file
+    nc_inq_var(nc.ncid,varid,namea,typea,ndima,dimida,natta)
+    dimids = ndima[1] > 0 ? dimida[1:ndima[1]] : Int32[]
+    namea[end] = 0
+    name = unsafe_string(pointer(namea))
+    #Find out chunks
+    nc_inq_var_chunking(nc.ncid,varid,storagep,chunk_sizea)
+    chunksize=storagep[1] == NC_CONTIGUOUS ? ntuple(i->0,ndima[1]) : ntuple(i->chunk_sizea[i],ndima[1])
+    return name, typea[1], dimids, natta[1], ndima[1], isdimvar(nc,name), chunksize
 end
 
 #Test if a variable name is also a dimension name
-isdimvar(v::NcVar) = v.name==v.dim[1].name ? true : false
+isdimvar(v::NcVar) = v.name == v.dim[1].name ? true : false
 
 function isdimvar(nc::NcFile,name::AbstractString)
     for n in nc.dim
-        if (n[2].name==name)
+        if n[2].name==name
             return true
         end
     end
@@ -226,67 +227,67 @@ end
 
 
 function getdimnamebyid(nc::NcFile,dimid::Integer)
-    da=""
+    da = ""
     for d in nc.dim
-        da = d[2].dimid==dimid ? d[2].name : da
+        da = d[2].dimid == dimid ? d[2].name : da
     end
     return da
 end
 
 
-function getatts_all(ncid::Integer,varid::Integer,natts::Integer)
-  atts=Dict{Any,Any}()
-  for attnum=0:natts-1
-    attname,attval=nc_get_att(ncid,varid,attnum)
-    if ((length(attval)==1) & !(typeof(attval)<:AbstractString))
-      attval=attval[1]
+function getatts_all(ncid::Integer, varid::Integer, natts::Integer)
+    atts = Dict{Any,Any}()
+    for attnum = 0:natts-1
+        attname, attval = nc_get_att(ncid, varid, attnum)
+        if ((length(attval)==1) && !(typeof(attval)<:AbstractString))
+            attval = attval[1]
+        end
+        atts[attname] = attval
     end
-    atts[attname]=attval
-  end
-  NC_VERBOSE ? println(atts) : nothing
-  return atts
+    NC_VERBOSE && println(atts)
+    return atts
 end
 
 function readdimvars(nc::NcFile)
     for v in nc.vars
         if isdimvar(v[2])
-            v[2].dim[1].vals=readvar(nc,v[1])
-            d[2].atts=v[2].atts
+            v[2].dim[1].vals = readvar(nc,v[1])
+            d[2].atts = v[2].atts
         end
     end
 end
 
 function checkboundsNC(v)
-  nd=ndims(v)
-  for i=1:nd
-    ci             = nd+1-i
-    gstart[ci] < 0 && error("Start index must not be smaller than 1")
-    if gstart[ci] + gcount[ci] > v.dim[i].dimlen
-      if v.dim[i].unlim
-        #Reset length of unlimited dimension
-        v.dim[i].dimlen=gstart[ci] + gcount[ci]
-      else
-        error("Start + Count exceeds dimension length in dimension $(v.dim[i].name)")
-      end
+    nd = ndims(v)
+    for i = 1:nd
+        ci = nd + 1 - i
+        gstart[ci] < 0 && error("Start index must not be smaller than 1")
+        if gstart[ci] + gcount[ci] > v.dim[i].dimlen
+            if v.dim[i].unlim
+                #Reset length of unlimited dimension
+                v.dim[i].dimlen=gstart[ci] + gcount[ci]
+            else
+                error("Start + Count exceeds dimension length in dimension $(v.dim[i].name)")
+            end
+        end
+        nothing
     end
-    nothing
-  end
 end
 
-function preparestartcount(start,count,v::NcVar)
+function preparestartcount(start, count, v::NcVar)
 
     length(start) == v.ndim || error("Length of start ($(length(start))) must equal the number of variable dimensions ($(v.ndim))")
     length(count) == v.ndim || error("Length of start ($(length(count))) must equal the number of variable dimensions ($(v.ndim))")
 
-    p  = one(eltype(gcount))
+    p = one(eltype(gcount))
     nd = length(start)
 
     for i=1:nd
-        ci             = nd+1-i
+        ci = nd + 1 - i
         gstart[ci] = start[i] - 1
         gcount[ci] = count[i] < 0 ? v.dim[i].dimlen - gstart[ci] : count[i]
 
-        p=p*gcount[ci]
+        p *= gcount[ci]
     end
 
     checkboundsNC(v)
@@ -295,83 +296,84 @@ function preparestartcount(start,count,v::NcVar)
 end
 
 function _readdimvars(nc::NcFile)
-  for d in nc.dim
-    for v in nc.vars
-      if (d[2].name==v[2].name)
-        NC_VERBOSE ?println(d[2].name," ",v[2].name) : nothing
-        d[2].vals=readvar(nc,v[2].name)
-        d[2].atts=v[2].atts
-      end
+    for d in nc.dim
+        for v in nc.vars
+            if d[2].name == v[2].name
+                NC_VERBOSE && println(d[2].name," ",v[2].name)
+                d[2].vals = readvar(nc,v[2].name)
+                d[2].atts = v[2].atts
+            end
+        end
     end
-  end
 end
 
-ischunked(v::NcVar)=v.chunksize[1]>0
+ischunked(v::NcVar) = v.chunksize[1] > 0
 
-defaultstart(v::NcVar)=ones(Int,v.ndim)
-defaultcount(v::NcVar)=Int[i for i in size(v)]
+defaultstart(v::NcVar) = ones(Int, v.ndim)
+defaultcount(v::NcVar) = Int[i for i in size(v)]
 
 
 function parsedimargs(dim)
-  idim=0
-  dimlen=nothing
-  dimvals=nothing
-  dimatts=nothing
-  name=nothing
-  d=NcDim[]
-  for a in dim
-    NC_VERBOSE ? println(a,idim) : nothing
-    if isa(a,AbstractString)
-      #Assume a name is given
-      #first create an NcDim object from the last dim
-      if (name!=nothing)
-        push!(d,finalizedim(dimlen,dimvals,dimatts,name))
-        idim=idim+1
-        dimlen=nothing
-        dimvals=nothing
-        dimatts=nothing
-        name=nothing
-      end
-      name=a
-    elseif isa(a,Integer)
-      #Assume a dimension length is given
-      if a>0
-        dimlen=a
-      else
-        #Assume unlimited dimension
-        dimlen=0
-      end
-    elseif isa(a,AbstractFloat) && isinf(a)
-      #Generate unlimited dimension
-      dimlen=0
-    elseif isa(a,AbstractArray)
-      #Assume dimension values are given
-      if dimvals==nothing
-        dimvals=a
-        dimlen=length(dimvals)
-      else
-        error("Dimension values of $name defined more than once")
-      end
-    elseif isa(a,Dict)
-      #Assume attributes are given
-      dimatts= dimatts==nothing ? a : error("Dimension attributes of $name defined more than once")
-    else
-      error("Could not parse argument $a in nccreate")
+    idim = 0
+    dimlen = nothing
+    dimvals = nothing
+    dimatts = nothing
+    name = nothing
+    d = NcDim[]
+    for a in dim
+        NC_VERBOSE && println(a,idim)
+        if isa(a, AbstractString)
+            #Assume a name is given
+            #first create an NcDim object from the last dim
+            if (name != nothing)
+                push!(d, finalizedim(dimlen,dimvals,dimatts,name))
+                idim = idim+1
+                dimlen = nothing
+                dimvals = nothing
+                dimatts = nothing
+                name = nothing
+            end
+            name = a
+        elseif isa(a, Integer)
+            #Assume a dimension length is given
+            if a > 0
+                dimlen = a
+            else
+                #Assume unlimited dimension
+                dimlen = 0
+            end
+        elseif isa(a, AbstractFloat) && isinf(a)
+            #Generate unlimited dimension
+            dimlen = 0
+        elseif isa(a, AbstractArray)
+            #Assume dimension values are given
+            if dimvals == nothing
+                dimvals = a
+                dimlen = length(dimvals)
+            else
+                error("Dimension values of $name defined more than once")
+            end
+        elseif isa(a, Dict)
+            #Assume attributes are given
+            dimatts = dimatts == nothing ? a : error("Dimension attributes of $name defined more than once")
+        else
+            error("Could not parse argument $a in nccreate")
+        end
     end
-  end
-  push!(d,finalizedim(dimlen,dimvals,dimatts,name))
-  return(d)
+    push!(d, finalizedim(dimlen,dimvals,dimatts,name))
+    return d
 end
 
-function finalizedim(dimlen,dimvals,dimatts,name)
-  if ((dimlen==nothing) & (dimvals==nothing))
-    dimlen=1
-  end
-  if ((dimlen!=nothing) & (dimvals==nothing))
-    dimvals=Array{Float64}(0)
-  end
-  if (dimatts==nothing)
-    dimatts=Dict("missval"=>-9999)
-  end
-  return(NcDim(name,dimlen,atts=dimatts,values=dimvals,unlimited=(dimlen==0 ? true : false)))
+function finalizedim(dimlen, dimvals, dimatts, name)
+    if (dimlen == nothing) && (dimvals == nothing)
+        dimlen = 1
+    end
+    if (dimlen != nothing) && (dimvals == nothing)
+        dimvals = Array{Float64}(0)
+    end
+    if dimatts == nothing
+        dimatts = Dict("missval"=>-9999)
+    end
+    isunlimited = dimlen == 0 ? true : false
+    return NcDim(name, dimlen, atts=dimatts, values=dimvals, unlimited=isunlimited)
 end
