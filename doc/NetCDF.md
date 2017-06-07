@@ -60,11 +60,11 @@ Possible optional arguments are:
 
 ## Miscellaneous
 
-    ncsync([ filename ])
+    ncsync([filename])
 
 Synchronizes the changes made to the file and writes changes to the disk. If the argument is omitted, all open files are synchronized.
 
-    ncclose([ filename ])
+    ncclose([filename])
 
 Closes the file and writes changes to the disk. If argument is omitted, all open files are closed.   
 
@@ -76,9 +76,9 @@ Closes the file and writes changes to the disk. If argument is omitted, all open
 
 this function returns an object of type NcVar, which contains all file metainformation and attributes. You can browse it, just type
 
-    names(nc)
+    fieldnames(nc)
 
-to find out the fields of the type NcVar. Most of the other functions of the medium-level interface will use the NcFile object as their first argument. The optional argument mode determines the mode in which the files is opened(NC_NOWRITE or NC_WRITE). If you set readdimvar=true, then the dimension variables will be read when opening the file and added to the NcFIle object.
+to find out the fields of the type NcVar. Most of the other functions of the medium-level interface will use the NcFile object as their first argument. The optional argument mode determines the mode in which the files is opened(NC_NOWRITE or NC_WRITE). If you set readdimvar=true, then the dimension variables will be read when opening the file and added to the NcFile object.
 
 ## Reading data
 
@@ -169,9 +169,9 @@ which will return a string vector of length 20.
 
 An example for creating `NC_CHAR` and writing variables would be the following:
 
-    nccreate(filename,varname,"str_len",20,"DimValues",5,t=NC_CHAR)
+    nccreate(filename, varname, "str_len", 20, "DimValues", 5, t=NC_CHAR)
     xs = ["a","bb","ccc","dddd","eeeee"]
-    ncwrite(filename,varname,nc_string2char(xs))
+    ncwrite(filename, varname, nc_string2char(xs))
 
 The call of `string2char` will convert the `Vector{String}` to a `Matrix{UInt8}`. which
 can be written to the NetCDF file.
