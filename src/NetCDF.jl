@@ -893,7 +893,7 @@ function show(io::IO,nc::NcFile)
     println(io,"##### Dimensions #####")
     println(io,"")
     println(io,tolen("Name",l2),tolen("Length",l1))
-    println(hline)
+    println(io,hline)
   for d in nc.dim
     println(io,tolen(d[2].name,l2),tolen(d[2].unlim ? string("UNLIMITED (" ,d[2].dimlen," currently)") : d[2].dimlen,l1))
   end
@@ -903,7 +903,7 @@ function show(io::IO,nc::NcFile)
   println(io,"##### Variables #####")
   println(io,"")
   println(io,tolen("Name",l2),tolen("Type",l1),tolen("Dimensions",l2))
-  println(hline)
+  println(io,hline)
   for v in nc.vars
     s1=string(tolen(v[2].name,l2))
     s2=string(tolen(nctype2string[Int(v[2].nctype)],l1))
@@ -911,7 +911,7 @@ function show(io::IO,nc::NcFile)
     for d in v[2].dim
       s3=string(s3,d.name," ")
     end
-    println(s1,s2,tolen(s3,l2))
+    println(io,s1,s2,tolen(s3,l2))
   end
   l1=div(ncol,4)
   l2=2*l1
@@ -919,7 +919,7 @@ function show(io::IO,nc::NcFile)
   println(io,"##### Attributes #####")
   println(io,"")
   println(io,tolen("Variable",l1),tolen("Name",l1),tolen("Value",l2))
-  println(hline)
+  println(io,hline)
   for a in nc.gatts
     println(io,tolen("global",l1),tolen(a[1],l1),tolen(a[2],l2))
   end

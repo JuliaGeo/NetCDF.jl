@@ -26,7 +26,7 @@ day=1
 tim=collect(0:23)
 
 # Create radiation array
-rad = [g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim]
+rad = [g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim];
 
 ```
 
@@ -43,7 +43,7 @@ lonatts = Dict("longname" => "Longitude",
 latatts = Dict("longname" => "Latitude",
           "units"    => "degrees north")
 timatts = Dict("longname" => "Time",
-          "units"    => "hours since 01-01-2000 00:00:00")
+          "units"    => "hours since 01-01-2000 00:00:00");
 ```
 
 Now we have all the meta-information ready to create the actual file:
@@ -52,6 +52,7 @@ Now we have all the meta-information ready to create the actual file:
 fn = joinpath(tempdir(),"radiation.nc")
 isfile(fn) && rm(fn)
 nccreate(fn,"rad","lon",lon,lonatts,"lat",lat,latatts,"time",tim,timatts,atts=varatts);
+nothing # hide
 ```
 
 Once the file is created we can write the actual data to it:
@@ -65,6 +66,7 @@ by the NetCDF library. In order to write and close the file we run `ncclose`
 
 ```@example 1
 ncclose(fn)
+nothing # hide
 ```
 
 Now we assume we just retrieved this radiation NetCDF file and want to get some information about it.
@@ -100,15 +102,15 @@ Now we can generate the plot.
 
 ```@example 1
 using PlotlyJS
-plot(x=tvec,y=collect(ts))
+plot(scatter(x=tvec,y=collect(ts)))
 ```
 
 Another example would be to generate a heatmap plot of the solar radiation
 at 12am UTC:
 
 ```@example 1
-lons = ncread(fn,"longitude")
-lats = ncread(fn,"latitude")
-m    = ncread(fn,"rad",start=[1,1,12],time=[-1,-1,1])
+lons = ncread(fn,"lon")
+lats = ncread(fn,"lat")
+m    = ncread(fn,"rad",start=[1,1,12],count=[-1,-1,1])
 plot(heatmap(x=lons,y=lats,z=m))
 ```

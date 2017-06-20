@@ -190,7 +190,7 @@ nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int64
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float32})  = begin nc_get_att_float(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float64})  = begin nc_get_att_double(ncid,varid,name,valsa); valsa end
 
-function nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{AbstractString})
+function nc_get_att!{T<:AbstractString}(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{T})
   valsa_c=Array{Ptr{UInt8}}(length(valsa))
   nc_get_att_string(ncid,varid,name,valsa_c)
   for i=1:length(valsa)

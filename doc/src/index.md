@@ -12,6 +12,7 @@ High-level (MATLAB-like), low-level (C-like) and array-based access to NetCDF fi
 ```@contents
 Pages = [
     "intro.md",
+    "quickstart.md",
     "highlevel.md",
     "intermediate.md",
     "strings.md"
