@@ -101,8 +101,7 @@ tvec = Base.Dates.DateTime(2001,1,1)+Base.Dates.Hour.(ncread(fn,"time"))
 Now we can generate the plot.
 
 ```@example 1
-using PlotlyJS
-plot(scatter(x=tvec,y=collect(ts)))
+plot(tvec,ts)
 ```
 
 Another example would be to generate a heatmap plot of the solar radiation
