@@ -284,7 +284,8 @@ nc_get_var1_x!{N}(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},retvalsa::Abstra
     nc_get_var1_text(v.ncid,v.varid,start,retvalsa)
 
 function nc_get_vara_x!{N}(v::NcVar{String,N,NC_STRING},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{String})
-    retvalsa_c=Array{Ptr{UInt8}}(length(retvalsa))
+    @assert length(retvalsa)==prod(view(count,1:N))
+    retvalsa_c=fill(Ptr{UInt8}(0),length(retvalsa))
     nc_get_vara_string(v.ncid,v.varid,start,count,retvalsa_c)
     for i=1:length(retvalsa)
         retvalsa[i]=unsafe_string(retvalsa_c[i])
@@ -294,7 +295,7 @@ function nc_get_vara_x!{N}(v::NcVar{String,N,NC_STRING},start::Vector{UInt},coun
 end
 
 function nc_get_var1_x{N}(v::NcVar{String,N,NC_STRING},start::Vector{UInt},::String)
-    retvalsa_c=Array{Ptr{UInt8}}(1)
+    retvalsa_c=fill(Ptr{UInt8}(0),1)
     nc_get_var1_string(v.ncid,v.varid,start,retvalsa_c)
     retval=string(retvalsa_c[1])
     nc_free_string(1,retvalsa_c)
