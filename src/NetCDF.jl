@@ -52,7 +52,10 @@ getJLType(t::Int) = nctype2jltype[t]
 getNCType(t::DataType) = jl2nc(t)
 getNCType(t::Int) = Int(t)
 
-"""The type `NcDim` Represents an NcDim object representing a NetCDF dimension of name `name` with dimension values.
+"""
+    NcDim
+
+Represents a NetCDF dimension of name `name` optionally holding the dimension values.
 """
 type NcDim
   ncid::Int32
@@ -67,9 +70,15 @@ end
 
 
 """
+    NcDim(name::String,dimlength::Integer)
 
-    NcDim(name::String,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts=Dict{Any,Any}(),unlimited=false)`
-This constructor creates an NcDim object with the name `name` and length `dimlength`.
+Creates a NetCDF dimension object named `name` with length `dimlength` in memory.
+
+### Keyword arguments
+
+* `values=[]` optional for adding dimension values which can be written to a dimension variable
+* `atts` a Dict of attributes associated to the dimension variable
+* `unlimited` is this the record dimension, defaults to `false`
 """
 function NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict=Dict{Any,Any}(),unlimited=false)
     length(values) > 0 && length(values) != dimlength && error("Dimension value vector must have the same length as dimlength!")
@@ -78,21 +87,27 @@ end
 
 
 """
-    NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts=Dict{Any,Any}();unlimited=false)
-This constructor creates an NcDim object with the name `name` and and associated values `values`. Upon creation of the NetCDF file a
-dimension variable will be generated and the values be written to this variable. Optionally a Dict of attributes can be supplied.
+NcDim(name::String,values::AbstractVector)
+
+Creates a NetCDF dimension object named `name` and associated `values` in memory.
+
+### Keyword arguments
+
+* `atts` a Dict of attributes associated to the dimension variable
+* `unlimited` is this the record dimension, defaults to `false`
 """
 NcDim(name::AbstractString,values::AbstractArray;atts::Dict=Dict{Any,Any}(),unlimited=false) =
     NcDim(name,length(values),values=values,atts=atts,unlimited=unlimited)
 NcDim(name::AbstractString,values::AbstractArray,atts::Dict;unlimited=false) =
     NcDim(name,length(values),values=values,atts=atts,unlimited=unlimited)
 
+
 """
     NcVar
 
-The type `NcVar{T,N,M}` represents a NetCDF variable. It is a subtype of AbstractArray{T,N}, so normal indexing using `[]`
-will work for reading and writing data to and from a NetCDF file. `NcVar` objects can be returned by the `open` function , by
-indexing an `NcFIle` object (e.g. `myfile["temperature"]`) or, when creating a new file, constructing it directly. The type parameter `M`
+`NcVar{T,N,M}` represents a NetCDF variable. It is a subtype of AbstractArray{T,N}, so normal indexing using `[]`
+will work for reading and writing data to and from a NetCDF file. `NcVar` objects are returned by `NetCDF.open`, by
+indexing an `NcFile` object (e.g. `myfile["temperature"]`) or, when creating a new file, by its constructor. The type parameter `M`
 denotes the NetCDF data type of the variable, which may or may not correspond to the Julia Data Type.
 """
 type NcVar{T,N,M} <: AbstractArray{T,N}
@@ -111,13 +126,18 @@ end
 
 Base.convert{S,T,N,M}(::Type{NcVar{T,N,M}},v::NcVar{S,N,M})=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize)
 Base.convert{S,T,N,M}(::Type{NcVar{T}},v::NcVar{S,N,M})=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize)
-"""
-    NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1)
 
-Here varname is the name of the variable, dimlist an array of type NcDim holding the dimensions associated to the variable, varattributes is a Dict
-holding pairs of attribute names and values. t is the data type that should be used for storing the variable. You can either specify a julia type
-(Int16, Int32, Float32, Float64) which will be translated to (NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE) or directly specify one of the latter list.
-You can also set the compression level of the variable by setting compress to a number in the range 1..9 This has only an effect in NetCDF4 files.
+"""
+    NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}}
+
+Creates a new NetCDF variable `name` in memory. The variable is associated to a
+list of NetCDF dimensions specified by `dimin`.
+
+### Keyword arguments
+
+* `atts` Dictionary representing the variables attributes
+* `t` either a Julia type, (one of `Int16, Int32, Float32, Float64, String`) or a NetCDF data type (`NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE, NC_CHAR, NC_STRING`) determines the data type of the variable. Defaults to -1
+* `compress` Integer which sets the compression level of the variable for NetCDF4 files. Defaults to -1 (no compression). Compression levels of 1..9 are valid
 """
 function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1,chunksize=ntuple(i->zero(Int32),isa(dimin,NcDim) ? 1 : length(dimin)))
     dim = isa(dimin,NcDim) ? NcDim[dimin] : dimin
@@ -150,7 +170,9 @@ Base.setindex!{T}(v::NcVar{T,6},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5:
 
 
 """
-The type `NcFile` represents a link to a NetCDF file. I can be retrieved by `NetCDF.open` or by `NetCDF.create`.
+    NcFile
+
+Represents a link to a NetCDF file. Is returned by `NetCDF.open` or by `NetCDF.create`.
 """
 type NcFile
     ncid::Int32
@@ -178,12 +200,23 @@ readvar!(nc::NcFile, varname::AbstractString, retvalsa::AbstractArray;start::Vec
 
 
 """
-readvar!(v::NcVar, d::Array;start::Vector=ones(UInt,ndims(d)),count::Vector=size(d))
-is the mutating form of `readvar` which expects a pre-allocated array d, where the data are written to. It reads the values of the NcVar object `v`
-writing the values to the preallocated array `d`.
-If only parts of the variable are to be read, you can provide optionally `start` and `count`, which enable you to read blocks of data. `start` and `count` have the same
-length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension.
-As a special case, setting a value in count to -1 will cause the function to read all values along this dimension.
+    NetCDF.readvar!(v::NcVar, d::Array;start::Vector=ones(UInt,ndims(d)),count::Vector=size(d))
+
+Reads the values from the file associated to the `NcVar` object `v` into the array `d`. By default th whole variable is read
+
+### Keyword arguments
+
+* `start` Vector of length `ndim(v)` setting the starting index for each dimension
+* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. Th value -1 is treated as a special case to read all values from this dimension
+
+### Example
+
+Assume `v` is a NetCDF variable with dimensions (3,3,10).
+
+    x = zeros(3,1,10)
+    NetCDF.readvar(v, x, start=[1,2,1], count=[3,1,-1])
+
+This reads all values from the first and last dimension and only the second value from the second dimension.
 """
 function readvar!(v::NcVar, retvalsa::AbstractArray;start::Vector=defaultstart(v),count::Vector=defaultcount(v))
 
@@ -206,11 +239,22 @@ readvar(nc::NcFile, varname::AbstractString;start::Vector=defaultstart(nc[varnam
     readvar(nc[varname],start=start,count=count)
 
 """
-readvar{T,N}(v::NcVar{T,N};start::Vector=ones(Int,v.ndim),count::Vector=zeros(Int,v.ndim))
-`readvar` reads the values of the NcVar object `v` and returns them.
-If only parts of the variable are to be read, you can provide optionally `start` and `count`, which enable you to read blocks of data. `start` and `count` have the same
-length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension.
-As a special case, setting a value in count to -1 will cause the function to read all values along this dimension.
+    NetCDF.readvar(v::NcVar;start::Vector=ones(UInt,ndims(d)),count::Vector=size(d))
+
+Reads the values from the file associated to the `NcVar` object `v` and returns them. By default th whole variable is read
+
+### Keyword arguments
+
+* `start` Vector of length `ndim(v)` setting the starting index for each dimension
+* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. Th value -1 is treated as a special case to read all values from this dimension
+
+### Example
+
+Assume `v` is a NetCDF variable with dimensions (3,3,10).
+
+    x = NetCDF.readvar(v, start=[1,2,1], count=[3,1,-1])
+
+This reads all values from the first and last dimension and only the second value from the second dimension.
 """
 function readvar{T,N}(v::NcVar{T,N};start::Vector=defaultstart(v),count::Vector=defaultcount(v))
     s = [count[i]==-1 ? size(v,i)-start[i]+1 : count[i] for i=1:length(count)]
@@ -220,8 +264,9 @@ function readvar{T,N}(v::NcVar{T,N};start::Vector=defaultstart(v),count::Vector=
 end
 
 """
-    readvar{T,N}(v::NcVar{T,N},I::IndR...)
-Reading data from NetCDF file with array-style indexing. Integers and UnitRanges are valid indices for each dimension.
+    NetCDF.readvar{T,N}(v::NcVar{T,N},I::Union{Integer, UnitRange, Colon}...)
+
+Reads data from a NetCDF file with array-style indexing. `Integer`s and `UnitRange`s and `Colon`s are valid indices for each dimension.
 """
 function readvar{T,N}(v::NcVar{T,N},I::IndR...)
     count=ntuple(i->counti(I[i],v.dim[i].dimlen),length(I))
@@ -250,6 +295,11 @@ firsti(r::Colon,l::Integer) = 0
 counti(r::Colon,l::Integer) = Int(l)
 
 # For ranges
+"""
+    NetCDF.readvar!{T,N}(v::NcVar{T,N},d::AbstractArray, I::Union{Integer, UnitRange, Colon}...)
+
+Reads data from a NetCDF file with array-style indexing and writes them to d. `Integer`s and `UnitRange`s and `Colon`s are valid indices for each dimension.
+"""
 @generated function readvar!{T,N}(v::NcVar{T,N}, retvalsa::AbstractArray,I::IndR...)
 
     N == length(I) || error("Dimension mismatch")
@@ -311,7 +361,13 @@ function putatt(ncid::Integer,varid::Integer,atts::Dict)
     end
 end
 
+"""
+    NetCDF.putatt(nc::NcFile, varname::String, atts::Dict)
 
+Writes the attributes defined in `atts` to the variable `varname` in the NetCDF file
+`nc`. Existing attributes are overwritten. If varname is not a valid variable name,
+a global attribute will be written.
+"""
 function putatt(nc::NcFile,varname::AbstractString,atts::Dict)
     varid = haskey(nc.vars,varname) ? nc.vars[varname].varid : NC_GLOBAL
     chdef = false
@@ -325,8 +381,10 @@ end
 
 """
     ncputatt(nc::String,varname::String,atts::Dict)
-Writes name-value pairs of attributes given in `atts` to the file `nc`. If `varname` is a valid variable indentifier, the attribute(s) will be written to this variable.
-Otherwise, global attributes will be generated. This function automatically overwrites existing attributes.
+
+Writes the attributes defined in `atts` to the variable `varname` for the given NetCDF file name
+`nc`. Existing attributes are overwritten. If varname is not a valid variable name,
+a global attribute will be written.
 """
 function ncputatt(nc::AbstractString,varname::AbstractString,atts::Dict)
     nc = haskey(currentNcFiles,abspath(nc)) ? currentNcFiles[abspath(nc)] : open(nc,mode=NC_WRITE)
@@ -343,18 +401,27 @@ putvar(nc::NcFile,varname::AbstractString,vals::Array;start=ones(Int,length(size
     putvar(nc[varname], vals, start=start, count=count)
 
 """
-    putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
-This function writes the values from the array `vals` to a netcdf file. `v` is the NcVar handle of the respective variable and `vals` an array
-with the same dimension as the variable in the netcdf file. The optional parameter start gives the first index in each dimension along which the writing should
-begin. It is assumed that the input array vals has the same number of dimensions as the and writing happens along these dimensions. However, you can specify
-the number of values to be written along each dimension by adding an optional count argument, which is a vector whose length equals the number of variable dimensions.
+    NetCDF.putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
+
+Writes the values from the array `vals` to a netcdf file. `v` is the NcVar handle of the respective variable and `vals` an array
+with the same dimension as the variable in the netcdf file.
+
+### Keyword arguments
+
+* `start` Vector of length `ndim(v)` setting the starting index for each dimension
+* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. Th value -1 is treated as a special case to read all values from this dimension
+
 """
 function putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
     p=preparestartcount(start, count, v)
     nc_put_vara_x(v, gstart, gcount, vals)
 end
 
+"""
+    NetCDF.putvar(v::NcVar, val, i...)
 
+Writes the value(s) `val` to the variable `v` while the indices are given in in an array-style indexing manner.
+"""
 @generated function putvar{T,N}(v::NcVar{T,N},val::Any,I::IndR...)
 
     N==length(I) || error("Dimension mismatch")
@@ -403,6 +470,7 @@ function nc_put_var1_x{N}(v::NcVar{String,N,NC_STRING},start::Vector{UInt},val::
   nc_put_var1_string(v.ncid,v.varid,start,val_p)
 end
 
+
 function Base.push!(v::NcVar,a::AbstractArray)
     sold = size(v)
     N = ndims(v)
@@ -426,19 +494,32 @@ function Base.push!{T}(v::NcVar{T,1}, a::Number)
 end
 
 
-"Synchronizes the changes made to the file and writes changes to the disk. If the argument is omitted, all open files are synchronized. "
+"""
+    ncsync()
+
+Synchronizes the changes made all open NetCDF files and writes changes to the disk.
+"""
 function ncsync()
     for ncf in currentNcFiles
         nc_sync(ncf[2].ncid)
     end
 end
 
+"""
+    NetCDF.sync(nc::NcFile)
+
+Synchronizes the changes made to the file and writes changes to the disk.
+"""
 function sync(nc::NcFile)
     nc_sync(nc.ncid)
 end
 
 #Function to close netcdf files
-"Closes the file and writes changes to the disk. If argument is omitted, all open files are closed.   "
+"""
+    ncclose(filename::String)
+
+Closes the file and writes changes to the disk. If argument is omitted, all open files are closed.
+"""
 function ncclose(fil::AbstractString)
     if (haskey(currentNcFiles,abspath(fil)))
         close(currentNcFiles[abspath(fil)])
@@ -468,9 +549,14 @@ end
 
 """
     NetCDF.create(name::String,varlist::Array{NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
-This creates a new NetCDF file. Here, `filename`
- is the name of the file to be created and `varlist` an array of `NcVar` holding the variables that should appear in the file. In the optional
-argument `gatts` you can specify a Dict containing global attributes and `mode` is the file type you want to create (NC_NETCDF4, NC_CLASSIC_MODEL or NC_64BIT_OFFSET).
+
+Creates a new NetCDF file. Here, `name`
+ is the name of the file to be created and `varlist` an array of `NcVar` holding the variables that should appear in the file.
+
+### Keyword arguments
+
+* `gatts` a Dict containing global attributes of the NetCDF file
+* `mode` NetCDF file type (NC_NETCDF4, NC_CLASSIC_MODEL or NC_64BIT_OFFSET), defaults to NC_NETCDF4
 """
 function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
 
@@ -539,9 +625,14 @@ function close(nco::NcFile)
 end
 
 """
-    NetCDF.open(fil::AbstractString,v::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
+    NetCDF.open(fil::AbstractString,v::AbstractString; , )
 
 opens a NetCDF variable `v` in the NetCDF file `fil` and returns an `NcVar` handle that implements the AbstractArray interface for reading and writing.
+
+### Keyword arguments
+
+* `mode` mode in which the file is opened, defaults to `NC_NOWRITE`, choose `NC_WRITE` for write access
+* `readdimvar` determines if dimension variables will be read into the file structure, default is `false`
 """
 function open(fil::AbstractString,v::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
     nc=open(fil,mode=mode,readdimvar=readdimvar)
@@ -549,10 +640,14 @@ function open(fil::AbstractString,v::AbstractString; mode::Integer=NC_NOWRITE, r
 end
 
 """
-    open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
+    NetCDF.open(fil::AbstractString)
 
-opens the NetCDF file `fil` and returns a `NcFile` handle. The optional argument mode determines the `mode` in which the files is opened (`NC_NOWRITE` or `NC_WRITE`).
-If you set `readdimvar=true`, then the dimension variables will be read when opening the file and added to the NcFIle object.
+opens the NetCDF file `fil` and returns a `NcFile` handle.
+
+### Keyword arguments
+
+* `mode` mode in which the file is opened, defaults to `NC_NOWRITE`, choose `NC_WRITE` for write access
+* `readdimvar` determines if dimension variables will be read into the file structure, default is `false`
 """
 function open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
 
@@ -605,12 +700,21 @@ end
 
 # Define some high-level functions
 """
-    ncread(filename, varname, start=[1,1,...], count=[-1,-1,...] )
+    ncread(filename, varname)
 
 reads the values of the variable varname from file filename and returns the values in an array.
-If only parts of the variable are to be read, you can provide optionally `start` and `count`, which enable you to read blocks of data. `start` and `count` have the same
-length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension.
-As a special case, setting a value in count to -1 will cause the function to read all values along this dimension.
+
+### Keyword arguments
+
+* `start` Vector of length `ndim(v)` setting the starting index for each dimension
+* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. Th value -1 is treated as a special case to read all values from this dimension
+
+### Example
+
+To read the second slice of a 3D NetCDF variable one can write:
+
+    ncread("filename","varname", start=[1,1,2], count = [-1,-1,1])
+
 """
 function ncread{T<:Integer}(fil::AbstractString,vname::AbstractString;start::Array{T}=Array{Int}(0),count::Array{T}=Array{Int}(0))
     nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
@@ -622,13 +726,22 @@ end
 ncread{T<:Integer}(fil::AbstractString,vname::AbstractString,start::Array{T,1},count::Array{T,1})=ncread(fil,vname,start=start,count=count)
 
 """
-    ncread!( filename, varname, d, start=[1,1,...], count=[-1,-1,...] )
+ncread!(filename, varname, d)
 
-is the mutating form of `ncread` which expects a pre-allocated array d, where the data are written to. It reads the values of the variable varname from file filename
-writing the values to the preallocated array `d`.
-If only parts of the variable are to be read, you can provide optionally `start` and `count`, which enable you to read blocks of data. `start` and `count` have the same
-length as the number of variable dimensions. start gives the initial index for each dimension, while count gives the number of indices to be read along each dimension.
-As a special case, setting a value in count to -1 will cause the function to read all values along this dimension.
+reads the values of the variable varname from file filename and writes the results to the pre-allocated array `d`
+
+### Keyword arguments
+
+* `start` Vector of length `ndim(v)` setting the starting index for each dimension
+* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. Th value -1 is treated as a special case to read all values from this dimension
+
+### Example
+
+To read the second slice of a 3D NetCDF variable one can write:
+
+d = zeros(10,10,1)
+ncread!("filename","varname", d, start=[1,1,2], count = [-1,-1,1])
+
 """
 function ncread!(fil::AbstractString,vname::AbstractString,vals::AbstractArray;start::Vector{Int}=ones(Int,ndims(vals)),count::Vector{Int}=[size(vals,i) for i=1:ndims(vals)])
     nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
@@ -636,7 +749,11 @@ function ncread!(fil::AbstractString,vname::AbstractString,vals::AbstractArray;s
     return x
 end
 
-"prints information on the variables, dimension and attributes conatained in the file"
+"""
+    ncinfo()
+
+prints information on the variables, dimension and attributes conatained in the file
+"""
 function ncinfo(fil::AbstractString)
     nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
     return(nc)
@@ -646,12 +763,14 @@ iswritable(nc::NcFile) = (nc.omode & NC_WRITE) != zero(UInt16)
 
 #High-level functions for writing data to a file
 """
-    ncwrite{T<:Integer}(x::Array,fil::AbstractString,vname::AbstractString;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...])
+    ncwrite(x::Array,fil::AbstractString,vname::AbstractString)
 
-Writes the array `x` to the file `fil` and variable `vname`. If no `start` argument is supplied, writing starts at index 1 in each dimension.
-You can supply the argument `start`, a vector that has the same number as the number of variable dimensions, that provides the indices where to start writing the data.
-As default the number of values written along each dimension equals the dimension of the input array. However you can specify the along which dimension the data will be
-written by setting a `count` argument, an integer vector indicating the number of values written along each dimension.
+Writes the array `x` to the file `fil` and variable `vname`.
+
+### Keyword arguments
+
+* `start` Vector of length `ndim(v)` setting the starting index for writing for each dimension
+* `count` Vector of length `ndim(v)` setting the count of values to be written along each dimension. Th value -1 is treated as a special case to write all values from this dimension. This is usually inferred by the given array size.
 """
 function ncwrite{T<:Integer}(x::Array,fil::AbstractString,vname::AbstractString;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...])
     nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,mode=NC_WRITE)
@@ -664,7 +783,11 @@ function ncwrite{T<:Integer}(x::Array,fil::AbstractString,vname::AbstractString;
 end
 ncwrite(x::Array,fil::AbstractString,vname::AbstractString,start::Array)=ncwrite(x,fil,vname,start=start)
 
-"This reads an attribute from the specified file and variable. To read global attributes, set varname to `Global`."
+"""
+    ncgetatt(filename, varname, attname)
+
+This reads a NetCDF attribute `attname` from the specified file and variable. To read global attributes, set varname to `Global`.
+"""
 function ncgetatt(fil::AbstractString,vname::AbstractString,att::AbstractString)
     nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,NC_WRITE)
     return ( haskey(nc.vars,vname) ? get(nc.vars[vname].atts,att,nothing) : get(nc.gatts,att,nothing) )
@@ -704,14 +827,14 @@ function create_var(nc,v,mode)
 end
 
 """
-    nccreate (filename, varname, dimensions ..., atts=atts,gatts=gatts,compress=compress,t=t,mode=mode)
+    nccreate (filename, varname, dimensions ...)
 
-This creates a variable in an existing netcdf file or creates a new file. `filename` and `varname` are strings.
+Create a variable in an existing netcdf file or generates a new file. `filename` and `varname` are strings.
 After that follows a list of dimensions. Each dimension entry starts with a dimension name (a String), and
 may be followed by a dimension length, an array with dimension values or a Dict containing dimension attributes.
 Then the next dimension is entered and so on. Have a look at examples/high.jl for an example use.
 
-Possible optional arguments are:
+###Keyword arguments
 
 - **atts** Dict of attribute names and values to be assigned to the variable created
 - **gatts** Dict of attribute names and values to be written as global attributes
@@ -785,7 +908,7 @@ function show(io::IO,nc::NcFile)
     println(io,"##### Dimensions #####")
     println(io,"")
     println(io,tolen("Name",l2),tolen("Length",l1))
-    println(hline)
+    println(io,hline)
     for d in nc.dim
         println(io,tolen(d[2].name,l2),tolen(d[2].unlim ? string("UNLIMITED (" ,d[2].dimlen," currently)") : d[2].dimlen,l1))
     end
@@ -811,7 +934,7 @@ function show(io::IO,nc::NcFile)
     println(io,"##### Attributes #####")
     println(io,"")
     println(io,tolen("Variable",l1),tolen("Name",l1),tolen("Value",l2))
-    println(hline)
+    println(io,hline)
     for a in nc.gatts
         println(io,tolen("global",l1),tolen(a[1],l1),tolen(a[2],l2))
     end

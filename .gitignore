@@ -1,4 +1,5 @@
-/deps/deps.jl 
+/deps/deps.jl
+docs/build
 *.jl.cov
 *.jl.*.cov
 *.jl.mem
