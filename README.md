@@ -56,7 +56,7 @@ Max-Planck-Institute for Biogeochemistry
 Jena, Germany
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
-[docs-latest-url]: https://JulilaGeo.github.io/NetCDF.jl/latest
+[docs-latest-url]: https://JuliaGeo.github.io/NetCDF.jl/latest
 
 [travis-img]: https://travis-ci.org/JuliaGeo/NetCDF.jl.svg?branch=master
 [travis-url]: https://travis-ci.org/JuliaGeo/NetCDF.jl
