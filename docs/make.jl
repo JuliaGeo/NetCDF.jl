@@ -1,4 +1,4 @@
-using Documenter, NetCDF, Plots, PlotlyJS
+using Documenter, NetCDF
 
 makedocs(
     modules = [NetCDF],

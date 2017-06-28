@@ -1,7 +1,10 @@
 NetCDF.jl
 ============
 
-[![Build Status](https://travis-ci.org/JuliaGeo/NetCDF.jl.png)](https://travis-ci.org/JuliaGeo/NetCDF.jl)
+| **Documentation**                                                               | **PackageEvaluator**                                                                            | **Build Status**                                                                                |
+|:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
+| [![][docs-latest-img]][docs-latest-url] | [![][pkg-0.5-img]][pkg-0.5-url] [![][pkg-0.6-img]][pkg-0.6-url]  | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] |
+
 
 NetCDF support for the julia programming language, there is a high-level and a medium-level interface for writing and reading netcdf files.
 
@@ -45,9 +48,24 @@ Now we can write data to the file:
     d = rand(10, 20)
     ncwrite(d, filename, varname)
 
-To learn more, have a look at https://github.com/JuliaGeo/NetCDF.jl/blob/master/doc/NetCDF.md.
+The full documentation can be found [here][docs-latest-url]
 
 Contact info:
 Fabian Gans (fgans@bgc-jena.mpg.de)
 Max-Planck-Institute for Biogeochemistry
 Jena, Germany
+
+[docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
+[docs-latest-url]: https://JulilaGeo.github.io/NetCDF.jl/latest
+
+[travis-img]: https://travis-ci.org/JuliaGeo/NetCDF.jl.svg?branch=master
+[travis-url]: https://travis-ci.org/JuliaGeo/NetCDF.jl
+
+[appveyor-img]: https://ci.appveyor.com/api/projects/status/m9okydt7700kgavi?svg=true
+[appveyor-url]: https://ci.appveyor.com/project/JuliaGeo/netcdf-jl/build/1.0.42
+
+
+[pkg-0.5-img]: http://pkg.julialang.org/badges/NetCDF_0.5.svg
+[pkg-0.5-url]: http://pkg.julialang.org/?pkg=NetCDFD&ver=0.5
+[pkg-0.6-img]: http://pkg.julialang.org/badges/NetCDF_0.6.svg
+[pkg-0.6-url]: http://pkg.julialang.org/?pkg=NetCDF&ver=0.6

@@ -100,16 +100,13 @@ tvec = Base.Dates.DateTime(2001,1,1)+Base.Dates.Hour.(ncread(fn,"time"))
 
 Now we can generate the plot.
 
-```@example 1
-plot(tvec,ts)
-```
+    plot(tvec,ts)
+
 
 Another example would be to generate a heatmap plot of the solar radiation
 at 12am UTC:
 
-```@example 1
-lons = ncread(fn,"lon")
-lats = ncread(fn,"lat")
-m    = ncread(fn,"rad",start=[1,1,12],count=[-1,-1,1])
-plot(heatmap(x=lons,y=lats,z=m))
-```
+    lons = ncread(fn,"lon")
+    lats = ncread(fn,"lat")
+    m    = ncread(fn,"rad",start=[1,1,12],count=[-1,-1,1])
+    plot(heatmap(x=lons,y=lats,z=m))
