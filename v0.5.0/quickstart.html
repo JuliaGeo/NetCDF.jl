@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Quickstart · NetCDF.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link href="assets/highlightjs/default.css" rel="stylesheet" type="text/css"/><link href="assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>NetCDF.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" action="search.html"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="index.html">Home</a></li><li><span class="toctext">Manual</span><ul><li class="current"><a class="toctext" href="quickstart.html">Quickstart</a><ul class="internal"><li><a class="toctext" href="#Reading-a-file-1">Reading a file</a></li><li><a class="toctext" href="#A-more-advanced-example-1">A more advanced example</a></li></ul></li><li><a class="toctext" href="highlevel.html">High-level interface</a></li><li><a class="toctext" href="intermediate.html">Medium-level interface</a></li><li><a class="toctext" href="strings.html">Short note on reading and writing NC_CHAR and NC_STRING variables</a></li></ul></li></ul></nav><article id="docs"><header><nav><ul><li>Manual</li><li><a href="quickstart.html">Quickstart</a></li></ul><a class="edit-page" href="https://github.com/JuliaGeo/NetCDF.jl/tree/62db8552b6ed3d39edbef79c15839c50d44a18d0/docs/src/quickstart.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Quickstart</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Quickstart-1" href="#Quickstart-1">Quickstart</a></h1><h2><a class="nav-anchor" id="Reading-a-file-1" href="#Reading-a-file-1">Reading a file</a></h2><p>The most common task is probably to just read a NetCDF file into memory. This is done with</p><pre><code class="language-none">ncread(filename, varname)</code></pre><p>This reads the whole variable into memory and returns it as a Julia array. To read only a slice of a NetCDF file, there are optional <code>start</code> and <code>count</code> keyword arguments, where on can specify the starting index and count along each dimension.</p><h2><a class="nav-anchor" id="A-more-advanced-example-1" href="#A-more-advanced-example-1">A more advanced example</a></h2><p>In this example we show how to create a NetCDF file from scratch, write some data to it and read it back in afterwards. First of all we create an array with top-of the atmosphere radiation data</p><div><pre><code class="language-julia">using NetCDF
+include(joinpath(Pkg.dir(&quot;NetCDF&quot;),&quot;examples&quot;,&quot;toa.jl&quot;))
+
+# Define longitudes and latitudes, day and timesteps
+lat=collect(-89.5:89.5)
+lon=collect(-179.5:179.5)
+day=1
+tim=collect(0:23)
+
+# Create radiation array
+rad = [g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim];</code></pre><pre><code class="language-none">360×180×24 Array{Float64,3}:
+[:, :, 1] =
+ 569.246  591.944  614.461  636.791  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.245  591.941  614.456  636.784     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.241  591.927  614.434  636.753     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.233  591.904  614.394  636.698     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.221  591.87   614.337  636.618     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.206  591.825  614.263  636.514  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.188  591.77   614.171  636.386     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.166  591.704  614.062  636.233     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.141  591.629  613.936  636.056     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.112  591.542  613.792  635.856     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+   ⋮                                 ⋱            ⋮
+ 569.098  591.5    613.722  635.757     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.128  591.591  613.873  635.969     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.155  591.671  614.007  636.156     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.179  591.742  614.124  636.32      0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.199  591.801  614.224  636.459  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.215  591.851  614.306  636.574     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.228  591.89   614.371  636.665     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.237  591.918  614.418  636.731     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.243  591.936  614.448  636.773     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+
+[:, :, 2] =
+ 568.868  590.81   612.572  634.147  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.815  590.652  612.309  633.779     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.76   590.484  612.029  633.388     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.7    590.307  611.733  632.973     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.638  590.119  611.42   632.535     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.572  589.921  611.091  632.074  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.503  589.714  610.745  631.591     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.43   589.497  610.383  631.084     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.355  589.27   610.005  630.555     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.276  589.033  609.611  630.003     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+   ⋮                                 ⋱            ⋮
+ 569.188  591.77   614.171  636.386     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.166  591.704  614.062  636.233     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.141  591.629  613.936  636.056     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.112  591.542  613.792  635.856     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.08   591.446  613.632  635.631  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.045  591.339  613.454  635.381     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.006  591.222  613.259  635.109     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.963  591.095  613.047  634.812     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.917  590.957  612.818  634.491     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+
+[:, :, 3] =
+ 567.737  587.416  606.916  626.231  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.636  587.114  606.413  625.527     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.532  586.803  605.895  624.802     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.426  586.483  605.362  624.057     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.316  586.155  604.815  623.291     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.204  585.818  604.253  622.504  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.089  585.472  603.677  621.698     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 566.97   585.118  603.087  620.872     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 566.85   584.755  602.482  620.026     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 566.726  584.384  601.864  619.161     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+   ⋮                                 ⋱            ⋮
+ 568.503  589.714  610.745  631.591     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.43   589.497  610.383  631.084     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.355  589.27   610.005  630.555     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.276  589.033  609.611  630.003     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.194  588.787  609.201  629.429  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.108  588.531  608.775  628.833     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.02   588.266  608.333  628.215     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.929  587.992  607.876  627.575     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.834  587.708  607.404  626.914     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+
+...
+
+[:, :, 22] =
+ 565.865  581.801  597.56   613.137  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 566.005  582.222  598.262  614.119     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 566.143  582.636  598.951  615.084     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 566.279  583.042  599.628  616.032     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 566.411  583.441  600.292  616.961     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 566.542  583.831  600.943  617.872  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 566.669  584.214  601.581  618.764     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 566.794  584.588  602.205  619.638     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 566.916  584.955  602.815  620.492     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.036  585.313  603.412  621.327     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+   ⋮                                 ⋱            ⋮
+ 564.496  577.694  590.716  603.559     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 564.657  578.177  591.521  604.684     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 564.815  578.653  592.314  605.795     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 564.972  579.123  593.098  606.892     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 565.127  579.586  593.87   607.972  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 565.279  580.043  594.631  609.038     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 565.429  580.493  595.381  610.087     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 565.577  580.936  596.119  611.12      0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 565.722  581.372  596.845  612.137     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+
+[:, :, 23] =
+ 567.691  587.28   606.69   625.915  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.79   587.577  607.185  626.608     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.886  587.865  607.664  627.279     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.979  588.143  608.128  627.928     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.069  588.413  608.577  628.556     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.156  588.673  609.01   629.162  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.239  588.923  609.427  629.746     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.319  589.164  609.829  630.308     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.396  589.395  610.214  630.848     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.47   589.617  610.584  631.364     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+   ⋮                                 ⋱            ⋮
+ 566.669  584.214  601.581  618.764     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 566.794  584.588  602.205  619.638     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 566.916  584.955  602.815  620.492     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.036  585.313  603.412  621.327     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.152  585.662  603.994  622.142  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.266  586.003  604.563  622.938     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.377  586.336  605.117  623.713     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.484  586.66   605.656  624.468     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 567.589  586.974  606.18   625.202     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+
+[:, :, 24] =
+ 568.845  590.74   612.455  633.983  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.895  590.892  612.708  634.338     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.943  591.034  612.945  634.67      0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.987  591.166  613.165  634.977     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.027  591.288  613.368  635.261     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.064  591.399  613.553  635.521  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.098  591.5    613.722  635.757     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.128  591.591  613.873  635.969     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.155  591.671  614.007  636.156     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 569.179  591.742  614.124  636.32      0.0  0.0  0.0  0.0  0.0  0.0  0.0
+   ⋮                                 ⋱            ⋮
+ 568.239  588.923  609.427  629.746     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.319  589.164  609.829  630.308     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.396  589.395  610.214  630.848     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.47   589.617  610.584  631.364     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.541  589.829  610.937  631.859  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.608  590.031  611.273  632.33      0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.672  590.223  611.594  632.778     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.733  590.405  611.897  633.203     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 568.791  590.577  612.184  633.605     0.0  0.0  0.0  0.0  0.0  0.0  0.0</code></pre></div><p>The resulting array is a 3-dimensional array with dimensions lon-lat-time, resembling approximately the hourly top of atmosphere radiation on January 1st. For documentation purposes we want to add atributes to the variable as well as the dimensions. Throughout this package, attributes are represented <code>Dict{String}</code>s</p><div><pre><code class="language-julia">varatts = Dict(&quot;longname&quot; =&gt; &quot;Radiation at the top of the atmosphere&quot;,
+          &quot;units&quot;    =&gt; &quot;W/m^2&quot;)
+lonatts = Dict(&quot;longname&quot; =&gt; &quot;Longitude&quot;,
+          &quot;units&quot;    =&gt; &quot;degrees east&quot;)
+latatts = Dict(&quot;longname&quot; =&gt; &quot;Latitude&quot;,
+          &quot;units&quot;    =&gt; &quot;degrees north&quot;)
+timatts = Dict(&quot;longname&quot; =&gt; &quot;Time&quot;,
+          &quot;units&quot;    =&gt; &quot;hours since 01-01-2000 00:00:00&quot;);</code></pre><pre><code class="language-none">Dict{String,String} with 2 entries:
+  &quot;units&quot;    =&gt; &quot;hours since 01-01-2000 00:00:00&quot;
+  &quot;longname&quot; =&gt; &quot;Time&quot;</code></pre></div><p>Now we have all the meta-information ready to create the actual file:</p><div><pre><code class="language-julia">fn = joinpath(tempdir(),&quot;radiation.nc&quot;)
+isfile(fn) &amp;&amp; rm(fn)
+nccreate(fn,&quot;rad&quot;,&quot;lon&quot;,lon,lonatts,&quot;lat&quot;,lat,latatts,&quot;time&quot;,tim,timatts,atts=varatts);</code></pre></div><p>Once the file is created we can write the actual data to it:</p><div><pre><code class="language-julia">ncwrite(rad,fn,&quot;rad&quot;);</code></pre></div><p>This does not yet ensure that the data is actually written to the file, it might still be cached by the NetCDF library. In order to write and close the file we run <code>ncclose</code></p><div><pre><code class="language-julia">ncclose(fn)</code></pre></div><p>Now we assume we just retrieved this radiation NetCDF file and want to get some information about it. This is done using <code>ncinfo</code></p><div><pre><code class="language-julia">ncinfo(fn)</code></pre><pre><code class="language-none">
+##### NetCDF File #####
+
+/tmp/radiation.nc
+
+##### Dimensions #####
+
+Name                                                Length
+--------------------------------------------------------------------------------
+lat                                                 180
+time                                                24
+lon                                                 360
+
+##### Variables #####
+
+Name                            Type            Dimensions
+
+##### Attributes #####
+
+Variable            Name                Value
+--------------------------------------------------------------------------------
+lat                 units               degrees north
+lat                 longname            Latitude
+time                units               hours since 01-01-2000 00:00:00
+time                longname            Time
+lon                 units               degrees east
+lon                 longname            Longitude
+rad                 units               W/m^2
+rad                 longname            Radiation at the top of the atmosphere</code></pre></div><p>Here we learn the most important information about the file, which variables it contains, the variable dimensions and their attributes. We decide to read the radiation variable:</p><div><pre><code class="language-julia">x=ncread(fn,&quot;rad&quot;)
+size(x)</code></pre><pre><code class="language-none">(360,180,24)</code></pre></div><p>This reads the whole array at once. If we only want to read a certain part of the variable, for example if we only want to plot the time series at a certain location, we can use the <code>start</code> and <code>count</code> keywords:</p><div><pre><code class="language-julia">ts = ncread(fn,&quot;rad&quot;,start=[180,45,1], count=[1,1,-1])</code></pre><pre><code class="language-none">1×1×24 Array{Float64,3}:
+[:, :, 1] =
+ 0.0
+
+[:, :, 2] =
+ 0.0
+
+[:, :, 3] =
+ 0.0
+
+...
+
+[:, :, 22] =
+ 0.0
+
+[:, :, 23] =
+ 0.0
+
+[:, :, 24] =
+ 0.0</code></pre></div><p>In order to correctly label the time steps we retrieve the time information from the file</p><div><pre><code class="language-julia">tvec = Base.Dates.DateTime(2001,1,1)+Base.Dates.Hour.(ncread(fn,&quot;time&quot;))</code></pre><pre><code class="language-none">24-element Array{DateTime,1}:
+ 2001-01-01T00:00:00
+ 2001-01-01T01:00:00
+ 2001-01-01T02:00:00
+ 2001-01-01T03:00:00
+ 2001-01-01T04:00:00
+ 2001-01-01T05:00:00
+ 2001-01-01T06:00:00
+ 2001-01-01T07:00:00
+ 2001-01-01T08:00:00
+ 2001-01-01T09:00:00
+ ⋮
+ 2001-01-01T15:00:00
+ 2001-01-01T16:00:00
+ 2001-01-01T17:00:00
+ 2001-01-01T18:00:00
+ 2001-01-01T19:00:00
+ 2001-01-01T20:00:00
+ 2001-01-01T21:00:00
+ 2001-01-01T22:00:00
+ 2001-01-01T23:00:00</code></pre></div><p>Now we can generate the plot.</p><pre><code class="language-none">plot(tvec,ts)</code></pre><p>Another example would be to generate a heatmap plot of the solar radiation at 12am UTC:</p><pre><code class="language-none">lons = ncread(fn,&quot;lon&quot;)
+lats = ncread(fn,&quot;lat&quot;)
+m    = ncread(fn,&quot;rad&quot;,start=[1,1,12],count=[-1,-1,1])
+plot(heatmap(x=lons,y=lats,z=m))</code></pre><footer><hr/><a class="previous" href="index.html"><span class="direction">Previous</span><span class="title">Home</span></a><a class="next" href="highlevel.html"><span class="direction">Next</span><span class="title">High-level interface</span></a></footer></article></body></html>
