@@ -2,7 +2,7 @@
 
 ## Reading a file
 
-The most common task is probably to just read a NetCDF file into memory. This is done with
+The most common task is probably to just read a NetCDF file into memory. This is done with:
 
     ncread(filename, varname)
 
@@ -13,7 +13,7 @@ on can specify the starting index and count along each dimension.
 ## A more advanced example
 
 In this example we show how to create a NetCDF file from scratch, write some data to it and read it back in afterwards.
-First of all we create an array with top-of the atmosphere radiation data
+First of all we create an array with top-of the atmosphere radiation data:
 
 ```@example 1
 using NetCDF
@@ -33,7 +33,7 @@ rad = [g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim];
 The resulting array is a 3-dimensional array with dimensions lon-lat-time, resembling
 approximately the hourly top of atmosphere radiation on January 1st. For documentation
 purposes we want to add atributes to the variable as well as the dimensions. Throughout
-this package, attributes are represented `Dict{String}`s
+this package, attributes are represented `Dict{String}`s:
 
 ```@example 1
 varatts = Dict("longname" => "Radiation at the top of the atmosphere",
@@ -62,7 +62,7 @@ ncwrite(rad,fn,"rad");
 ```
 
 This does not yet ensure that the data is actually written to the file, it might still be cached
-by the NetCDF library. In order to write and close the file we run `ncclose`
+by the NetCDF library. In order to write and close the file we run `ncclose`:
 
 ```@example 1
 ncclose(fn)
@@ -70,7 +70,7 @@ nothing # hide
 ```
 
 Now we assume we just retrieved this radiation NetCDF file and want to get some information about it.
-This is done using `ncinfo`
+This is done using `ncinfo`:
 
 ```@example 1
 ncinfo(fn)
@@ -92,13 +92,13 @@ keywords:
 ts = ncread(fn,"rad",start=[180,45,1], count=[1,1,-1])
 ```
 
-In order to correctly label the time steps we retrieve the time information from the file
+In order to correctly label the time steps we retrieve the time information from the file:
 
 ```@example 1
 tvec = Base.Dates.DateTime(2001,1,1)+Base.Dates.Hour.(ncread(fn,"time"))
 ```
 
-Now we can generate the plot.
+Now we can generate the plot:
 
     plot(tvec,ts)
 
