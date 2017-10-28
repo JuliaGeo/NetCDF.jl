@@ -202,12 +202,12 @@ readvar!(nc::NcFile, varname::AbstractString, retvalsa::AbstractArray;start::Vec
 """
     NetCDF.readvar!(v::NcVar, d::Array;start::Vector=ones(UInt,ndims(d)),count::Vector=size(d))
 
-Reads the values from the file associated to the `NcVar` object `v` into the array `d`. By default th whole variable is read
+Reads the values from the file associated to the `NcVar` object `v` into the array `d`. By default the whole variable is read
 
 ### Keyword arguments
 
 * `start` Vector of length `ndim(v)` setting the starting index for each dimension
-* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. Th value -1 is treated as a special case to read all values from this dimension
+* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. The value -1 is treated as a special case to read all values from this dimension
 
 ### Example
 
@@ -241,12 +241,12 @@ readvar(nc::NcFile, varname::AbstractString;start::Vector=defaultstart(nc[varnam
 """
     NetCDF.readvar(v::NcVar;start::Vector=ones(UInt,ndims(d)),count::Vector=size(d))
 
-Reads the values from the file associated to the `NcVar` object `v` and returns them. By default th whole variable is read
+Reads the values from the file associated to the `NcVar` object `v` and returns them. By default the whole variable is read
 
 ### Keyword arguments
 
 * `start` Vector of length `ndim(v)` setting the starting index for each dimension
-* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. Th value -1 is treated as a special case to read all values from this dimension
+* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. The value -1 is treated as a special case to read all values from this dimension
 
 ### Example
 
@@ -409,7 +409,7 @@ with the same dimension as the variable in the netcdf file.
 ### Keyword arguments
 
 * `start` Vector of length `ndim(v)` setting the starting index for each dimension
-* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. Th value -1 is treated as a special case to read all values from this dimension
+* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. The value -1 is treated as a special case to read all values from this dimension
 
 """
 function putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
@@ -625,7 +625,7 @@ function close(nco::NcFile)
 end
 
 """
-    NetCDF.open(fil::AbstractString,v::AbstractString; , )
+    NetCDF.open(fil::AbstractString,v::AbstractString)
 
 opens a NetCDF variable `v` in the NetCDF file `fil` and returns an `NcVar` handle that implements the AbstractArray interface for reading and writing.
 
@@ -707,7 +707,7 @@ reads the values of the variable varname from file filename and returns the valu
 ### Keyword arguments
 
 * `start` Vector of length `ndim(v)` setting the starting index for each dimension
-* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. Th value -1 is treated as a special case to read all values from this dimension
+* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. The value -1 is treated as a special case to read all values from this dimension
 
 ### Example
 
@@ -733,7 +733,7 @@ reads the values of the variable varname from file filename and writes the resul
 ### Keyword arguments
 
 * `start` Vector of length `ndim(v)` setting the starting index for each dimension
-* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. Th value -1 is treated as a special case to read all values from this dimension
+* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. The value -1 is treated as a special case to read all values from this dimension
 
 ### Example
 
@@ -770,7 +770,7 @@ Writes the array `x` to the file `fil` and variable `vname`.
 ### Keyword arguments
 
 * `start` Vector of length `ndim(v)` setting the starting index for writing for each dimension
-* `count` Vector of length `ndim(v)` setting the count of values to be written along each dimension. Th value -1 is treated as a special case to write all values from this dimension. This is usually inferred by the given array size.
+* `count` Vector of length `ndim(v)` setting the count of values to be written along each dimension. The value -1 is treated as a special case to write all values from this dimension. This is usually inferred by the given array size.
 """
 function ncwrite{T<:Integer}(x::Array,fil::AbstractString,vname::AbstractString;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...])
     nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,mode=NC_WRITE)

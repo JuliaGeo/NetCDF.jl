@@ -9,7 +9,7 @@ NetCDF.open
 ## Getting information
 
 The `NetCDF.open` function returns an object of type `NcFile` which contains meta-Information about the file and associated variables. You can index
-the NcFile object `nc[varname]` to retrieve and NcVar object and retrieve information about it. You can run `names(nc)` to get a list of available variables.
+the NcFile object `nc[varname]` to retrieve an NcVar object and retrieve information about it. You can run `names(nc)` to get a list of available variables.
 
 Most of the following functions of the medium-level interface will use either an `NcFile` or an `NcVar` object as their first argument.
 
