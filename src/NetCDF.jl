@@ -559,6 +559,22 @@ Creates a new NetCDF file. Here, `name`
 * `mode` NetCDF file type (NC_NETCDF4, NC_CLASSIC_MODEL or NC_64BIT_OFFSET), defaults to NC_NETCDF4
 """
 function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
+    if !isfile(name)
+        create_new(name,varlist,gatts=gatts,mode=mode)
+    else
+        for v in varlist
+            dspec = Any[]
+            for d in v.dim
+                push!(dspec,d.name)
+                push!(dspec,d.vals)
+                push!(dspec,d.atts)
+            end
+            nccreate(name,v.name,dspec...;atts=v.atts,compress=v.compress,t=Int64(v.nctype),mode=mode,chunksize=v.chunksize)
+        end
+    end
+end
+
+function create_new(name::AbstractString,varlist::Array{NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
 
     #Create the file
     id = nc_create(name,mode)
