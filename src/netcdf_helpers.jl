@@ -1,6 +1,6 @@
 
 "Exception type for error thrown by the NetCDF library"
-type NetCDFError <: Exception
+mutable struct NetCDFError <: Exception
     code::Cint
     msg::String
 end
@@ -191,7 +191,7 @@ nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int64
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float32})  = begin nc_get_att_float(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float64})  = begin nc_get_att_double(ncid,varid,name,valsa); valsa end
 
-function nc_get_att!{T<:AbstractString,N}(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{T,N})
+function nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{T,N}) where {T<:AbstractString,N}
   #Assert that length of the attribute matches length of output
   nc_inq_attlen(ncid, varid, name, lengtha)
   @assert lengtha[1]==length(valsa)

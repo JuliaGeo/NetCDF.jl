@@ -57,7 +57,7 @@ getNCType(t::Int) = Int(t)
 
 Represents a NetCDF dimension of name `name` optionally holding the dimension values.
 """
-type NcDim
+mutable struct NcDim
   ncid::Int32
   dimid::Int32
   varid::Int32
@@ -110,7 +110,7 @@ will work for reading and writing data to and from a NetCDF file. `NcVar` object
 indexing an `NcFile` object (e.g. `myfile["temperature"]`) or, when creating a new file, by its constructor. The type parameter `M`
 denotes the NetCDF data type of the variable, which may or may not correspond to the Julia Data Type.
 """
-type NcVar{T,N,M} <: AbstractArray{T,N}
+mutable struct NcVar{T,N,M} <: AbstractArray{T,N}
     ncid::Int32
     varid::Int32
     ndim::Int32
@@ -124,8 +124,8 @@ type NcVar{T,N,M} <: AbstractArray{T,N}
     chunksize::NTuple{N,Int32}
 end
 
-Base.convert{S,T,N,M}(::Type{NcVar{T,N,M}},v::NcVar{S,N,M})=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize)
-Base.convert{S,T,N,M}(::Type{NcVar{T}},v::NcVar{S,N,M})=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize)
+Base.convert(::Type{NcVar{T,N,M}},v::NcVar{S,N,M}) where {S,T,N,M}=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize)
+Base.convert(::Type{NcVar{T}},v::NcVar{S,N,M}) where {S,T,N,M}=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize)
 
 """
     NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}}
@@ -147,26 +147,26 @@ NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}},atts,t::Union{Data
     NcVar{getJLType(t),length(dimin),getNCType(t)}(-1,-1,length(dimin),length(atts), getNCType(t),name,Array{Int}(length(dimin)),dimin,atts,-1,ntuple(i->zero(Int32),length(dimin)))
 
 #Array methods
-@generated function Base.size{T,N}(a::NcVar{T,N})
+@generated function Base.size(a::NcVar{T,N}) where {T,N}
     :(@ntuple($N,i->Int(a.dim[i].dimlen)))
 end
 const IndR  = Union{Integer,UnitRange,Colon}
 const ArNum = Union{AbstractArray,Number}
 
 IndexStyle(::NcVar) = IndexCartesian()
-Base.getindex{T}(v::NcVar{T,1},i1::IndR) = readvar(v,i1)
-Base.getindex{T}(v::NcVar{T,2},i1::IndR,i2::IndR) = readvar(v,i1,i2)
-Base.getindex{T}(v::NcVar{T,3},i1::IndR,i2::IndR,i3::IndR) = readvar(v,i1,i2,i3)
-Base.getindex{T}(v::NcVar{T,4},i1::IndR,i2::IndR,i3::IndR,i4::IndR) = readvar(v,i1,i2,i3,i4)
-Base.getindex{T}(v::NcVar{T,5},i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR) = readvar(v,i1,i2,i3,i4,i5)
-Base.getindex{T}(v::NcVar{T,6},i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR,i6::IndR) = readvar(v,i1,i2,i3,i4,i5,i6)
+Base.getindex(v::NcVar{T,1},i1::IndR) where {T} = readvar(v,i1)
+Base.getindex(v::NcVar{T,2},i1::IndR,i2::IndR) where {T} = readvar(v,i1,i2)
+Base.getindex(v::NcVar{T,3},i1::IndR,i2::IndR,i3::IndR) where {T} = readvar(v,i1,i2,i3)
+Base.getindex(v::NcVar{T,4},i1::IndR,i2::IndR,i3::IndR,i4::IndR) where {T} = readvar(v,i1,i2,i3,i4)
+Base.getindex(v::NcVar{T,5},i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR) where {T} = readvar(v,i1,i2,i3,i4,i5)
+Base.getindex(v::NcVar{T,6},i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR,i6::IndR) where {T} = readvar(v,i1,i2,i3,i4,i5,i6)
 
-Base.setindex!{T}(v::NcVar{T,1},x::ArNum,i1::IndR) = putvar(v,x,i1)
-Base.setindex!{T}(v::NcVar{T,2},x::ArNum,i1::IndR,i2::IndR) = putvar(v,x,i1,i2)
-Base.setindex!{T}(v::NcVar{T,3},x::ArNum,i1::IndR,i2::IndR,i3::IndR) = putvar(v,x,i1,i2,i3)
-Base.setindex!{T}(v::NcVar{T,4},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR) = putvar(v,x,i1,i2,i3,i4)
-Base.setindex!{T}(v::NcVar{T,5},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR) = putvar(v,x,i1,i2,i3,i4,i5)
-Base.setindex!{T}(v::NcVar{T,6},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR,i6::IndR) = putvar(v,x,i1,i2,i3,i4,i5,i6)
+Base.setindex!(v::NcVar{T,1},x::ArNum,i1::IndR) where {T} = putvar(v,x,i1)
+Base.setindex!(v::NcVar{T,2},x::ArNum,i1::IndR,i2::IndR) where {T} = putvar(v,x,i1,i2)
+Base.setindex!(v::NcVar{T,3},x::ArNum,i1::IndR,i2::IndR,i3::IndR) where {T} = putvar(v,x,i1,i2,i3)
+Base.setindex!(v::NcVar{T,4},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR) where {T} = putvar(v,x,i1,i2,i3,i4)
+Base.setindex!(v::NcVar{T,5},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR) where {T} = putvar(v,x,i1,i2,i3,i4,i5)
+Base.setindex!(v::NcVar{T,6},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR,i6::IndR) where {T} = putvar(v,x,i1,i2,i3,i4,i5,i6)
 
 
 """
@@ -174,7 +174,7 @@ Base.setindex!{T}(v::NcVar{T,6},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5:
 
 Represents a link to a NetCDF file. Is returned by `NetCDF.open` or by `NetCDF.create`.
 """
-type NcFile
+mutable struct NcFile
     ncid::Int32
     nvar::Int32
     ndim::Int32
@@ -256,7 +256,7 @@ Assume `v` is a NetCDF variable with dimensions (3,3,10).
 
 This reads all values from the first and last dimension and only the second value from the second dimension.
 """
-function readvar{T,N}(v::NcVar{T,N};start::Vector=defaultstart(v),count::Vector=defaultcount(v))
+function readvar(v::NcVar{T,N};start::Vector=defaultstart(v),count::Vector=defaultcount(v)) where {T,N}
     s = [count[i]==-1 ? size(v,i)-start[i]+1 : count[i] for i=1:length(count)]
     retvalsa = Array{T}(s...)
     readvar!(v, retvalsa, start=start, count=count)
@@ -268,7 +268,7 @@ end
 
 Reads data from a NetCDF file with array-style indexing. `Integer`s and `UnitRange`s and `Colon`s are valid indices for each dimension.
 """
-function readvar{T,N}(v::NcVar{T,N},I::IndR...)
+function readvar(v::NcVar{T,N},I::IndR...) where {T,N}
     count=ntuple(i->counti(I[i],v.dim[i].dimlen),length(I))
     retvalsa = Array{T}(count...)
     readvar!(v, retvalsa, I...)
@@ -278,7 +278,7 @@ end
 
 # Here are some functions for array-style indexing readvar
 #For single indices
-@generated function readvar{T,N}(v::NcVar{T,N},I::Integer...)
+@generated function readvar(v::NcVar{T,N},I::Integer...) where {T,N}
     N==length(I) || error("Dimension mismatch")
     quote
         checkbounds(v,I...)
@@ -300,7 +300,7 @@ counti(r::Colon,l::Integer) = Int(l)
 
 Reads data from a NetCDF file with array-style indexing and writes them to d. `Integer`s and `UnitRange`s and `Colon`s are valid indices for each dimension.
 """
-@generated function readvar!{T,N}(v::NcVar{T,N}, retvalsa::AbstractArray,I::IndR...)
+@generated function readvar!(v::NcVar{T,N}, retvalsa::AbstractArray,I::IndR...) where {T,N}
 
     N == length(I) || error("Dimension mismatch")
 
@@ -328,12 +328,12 @@ for (t,ending,arname) in funext
     @eval nc_get_var1_x(v::NcVar{$t},start::Vector{UInt},::Type{$t})=begin $fname1(v.ncid,v.varid,start,$(arsym)); $(arsym)[1] end
 end
 
-nc_get_vara_x!{N}(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{UInt8}) =
+nc_get_vara_x!(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{UInt8}) where {N} =
     nc_get_vara_text(v.ncid,v.varid,start,count,retvalsa)
-nc_get_var1_x!{N}(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},retvalsa::AbstractArray{UInt8}) =
+nc_get_var1_x!(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},retvalsa::AbstractArray{UInt8}) where {N} =
     nc_get_var1_text(v.ncid,v.varid,start,retvalsa)
 
-function nc_get_vara_x!{N}(v::NcVar{String,N,NC_STRING},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{String})
+function nc_get_vara_x!(v::NcVar{String,N,NC_STRING},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{String}) where N
     @assert length(retvalsa)==prod(view(count,1:N))
     retvalsa_c=fill(Ptr{UInt8}(0),length(retvalsa))
     nc_get_vara_string(v.ncid,v.varid,start,count,retvalsa_c)
@@ -344,7 +344,7 @@ function nc_get_vara_x!{N}(v::NcVar{String,N,NC_STRING},start::Vector{UInt},coun
     retvalsa
 end
 
-function nc_get_var1_x{N}(v::NcVar{String,N,NC_STRING},start::Vector{UInt},::String)
+function nc_get_var1_x(v::NcVar{String,N,NC_STRING},start::Vector{UInt},::String) where N
     retvalsa_c=fill(Ptr{UInt8}(0),1)
     nc_get_var1_string(v.ncid,v.varid,start,retvalsa_c)
     retval=string(retvalsa_c[1])
@@ -422,7 +422,7 @@ end
 
 Writes the value(s) `val` to the variable `v` while the indices are given in in an array-style indexing manner.
 """
-@generated function putvar{T,N}(v::NcVar{T,N},val::Any,I::IndR...)
+@generated function putvar(v::NcVar{T,N},val::Any,I::IndR...) where {T,N}
 
     N==length(I) || error("Dimension mismatch")
 
@@ -438,7 +438,7 @@ Writes the value(s) `val` to the variable `v` while the indices are given in in 
     end
 end
 
-@generated function putvar{T,N}(v::NcVar{T,N}, val::Any, I::Integer...)
+@generated function putvar(v::NcVar{T,N}, val::Any, I::Integer...) where {T,N}
 
     N == length(I) || error("Dimension mismatch")
     quote
@@ -457,15 +457,15 @@ for (t, ending, arname) in funext
     @eval nc_put_var1_x(v::NcVar,start::Vector{UInt},val::$t)=begin $(arsym)[1]=val; $fname1(v.ncid,v.varid,start,$(arsym)) end
 end
 
-nc_put_vara_x{N}(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt}, count::Vector{UInt}, vals::Array{UInt8})=nc_put_vara_text(v.ncid,v.varid,start,count,vals)
-nc_put_var1_x{N}(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},val::UInt8)=begin vals=UInt8[val]; nc_put_var1_text(v.ncid,v.varid,start,count,vals) end
+nc_put_vara_x(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt}, count::Vector{UInt}, vals::Array{UInt8}) where {N}=nc_put_vara_text(v.ncid,v.varid,start,count,vals)
+nc_put_var1_x(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},val::UInt8) where {N}=begin vals=UInt8[val]; nc_put_var1_text(v.ncid,v.varid,start,count,vals) end
 
-function nc_put_vara_x{N}(v::NcVar{String,N,NC_STRING}, start, count,vals::Array{String})
+function nc_put_vara_x(v::NcVar{String,N,NC_STRING}, start, count,vals::Array{String}) where N
     vals_p = map(x->pointer(x),vals)
     nc_put_vara_string(v.ncid,v.varid,start,count,vals_p)
 end
 
-function nc_put_var1_x{N}(v::NcVar{String,N,NC_STRING},start::Vector{UInt},val::String)
+function nc_put_var1_x(v::NcVar{String,N,NC_STRING},start::Vector{UInt},val::String) where N
   val_p = [pointer(val)]
   nc_put_var1_string(v.ncid,v.varid,start,val_p)
 end
@@ -489,7 +489,7 @@ function Base.push!(v::NcVar,a::AbstractArray)
     NetCDF.putvar(v, a, start=st, count=co)
 end
 
-function Base.push!{T}(v::NcVar{T,1}, a::Number)
+function Base.push!(v::NcVar{T,1}, a::Number) where T
     push!(v, collect(a))
 end
 
@@ -716,14 +716,14 @@ To read the second slice of a 3D NetCDF variable one can write:
     ncread("filename","varname", start=[1,1,2], count = [-1,-1,1])
 
 """
-function ncread{T<:Integer}(fil::AbstractString,vname::AbstractString;start::Array{T}=Array{Int}(0),count::Array{T}=Array{Int}(0))
+function ncread(fil::AbstractString,vname::AbstractString;start::Array{T}=Array{Int}(0),count::Array{T}=Array{Int}(0)) where T<:Integer
     nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
     length(start)==0 && (start=defaultstart(nc[vname]))
     length(count)==0 && (count=defaultcount(nc[vname]))
     x  = readvar(nc[vname],start=start,count=count)
     return x
 end
-ncread{T<:Integer}(fil::AbstractString,vname::AbstractString,start::Array{T,1},count::Array{T,1})=ncread(fil,vname,start=start,count=count)
+ncread(fil::AbstractString,vname::AbstractString,start::Array{T,1},count::Array{T,1}) where {T<:Integer}=ncread(fil,vname,start=start,count=count)
 
 """
 ncread!(filename, varname, d)
@@ -772,7 +772,7 @@ Writes the array `x` to the file `fil` and variable `vname`.
 * `start` Vector of length `ndim(v)` setting the starting index for writing for each dimension
 * `count` Vector of length `ndim(v)` setting the count of values to be written along each dimension. The value -1 is treated as a special case to write all values from this dimension. This is usually inferred by the given array size.
 """
-function ncwrite{T<:Integer}(x::Array,fil::AbstractString,vname::AbstractString;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...])
+function ncwrite(x::Array,fil::AbstractString,vname::AbstractString;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...]) where T<:Integer
     nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,mode=NC_WRITE)
     if (nc.omode==NC_NOWRITE)
         close(nc)
