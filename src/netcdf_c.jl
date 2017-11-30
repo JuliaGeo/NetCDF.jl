@@ -185,7 +185,7 @@ const NC_FATAL = 1
 
 const nc_type=Cint
 
-type nc_vlen_t
+mutable struct nc_vlen_t
     len::Integer
     p::Ptr{Void}
 end
