@@ -789,7 +789,7 @@ ncwrite(x::Array,fil::AbstractString,vname::AbstractString,start::Array)=ncwrite
 This reads a NetCDF attribute `attname` from the specified file and variable. To read global attributes, set varname to `Global`.
 """
 function ncgetatt(fil::AbstractString,vname::AbstractString,att::AbstractString)
-    nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,NC_WRITE)
+    nc= haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
     return ( haskey(nc.vars,vname) ? get(nc.vars[vname].atts,att,nothing) : get(nc.gatts,att,nothing) )
 end
 
