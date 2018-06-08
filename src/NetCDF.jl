@@ -8,7 +8,6 @@ using Base.Cartesian
 include("netcdf_c.jl")
 
 import Base.show
-import Compat: IndexStyle, IndexCartesian
 
 export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,
     NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE,NC_STRING,ncgetatt,NC_NOWRITE,NC_WRITE,NC_CHAR,
@@ -42,7 +41,7 @@ global const nctype2string = Dict(
 
 
 function jl2nc(t::DataType)
-    shift!(collect(keys(nctype2jltype))[find(e->(t <: e), collect(values(nctype2jltype)))])
+    popfirst!(collect(keys(nctype2jltype))[findall(e->(t <: e), collect(values(nctype2jltype)))])
 end
 jl2nc(t::Type{UInt8}) = NC_UBYTE
 
@@ -128,7 +127,7 @@ Base.convert(::Type{NcVar{T,N,M}},v::NcVar{S,N,M}) where {S,T,N,M}=NcVar{T,N,M}(
 Base.convert(::Type{NcVar{T}},v::NcVar{S,N,M}) where {S,T,N,M}=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize)
 
 """
-    NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}}
+    NcVar(name::AbstractString,dimin::Union{NcDim,Array{<:NcDim,1}}
 
 Creates a new NetCDF variable `name` in memory. The variable is associated to a
 list of NetCDF dimensions specified by `dimin`.
@@ -139,12 +138,12 @@ list of NetCDF dimensions specified by `dimin`.
 * `t` either a Julia type, (one of `Int16, Int32, Float32, Float64, String`) or a NetCDF data type (`NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE, NC_CHAR, NC_STRING`) determines the data type of the variable. Defaults to -1
 * `compress` Integer which sets the compression level of the variable for NetCDF4 files. Defaults to -1 (no compression). Compression levels of 1..9 are valid
 """
-function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1,chunksize=ntuple(i->zero(Int32),isa(dimin,NcDim) ? 1 : length(dimin)))
+function NcVar(name::AbstractString,dimin::Union{NcDim,Array{<:NcDim,1}};atts::Dict=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1,chunksize=ntuple(i->zero(Int32),isa(dimin,NcDim) ? 1 : length(dimin)))
     dim = isa(dimin,NcDim) ? NcDim[dimin] : dimin
-    return NcVar{getJLType(t),length(dim),getNCType(t)}(-1,-1,length(dim),length(atts), getNCType(t),name,Array{Int32}(length(dim)),dim,atts,compress,chunksize)
+    return NcVar{getJLType(t),length(dim),getNCType(t)}(-1,-1,length(dim),length(atts), getNCType(t),name,zeros(Int32,length(dim)),dim,atts,compress,chunksize)
 end
-NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}},atts,t::Union{DataType,Integer}=Float64) =
-    NcVar{getJLType(t),length(dimin),getNCType(t)}(-1,-1,length(dimin),length(atts), getNCType(t),name,Array{Int}(length(dimin)),dimin,atts,-1,ntuple(i->zero(Int32),length(dimin)))
+NcVar(name::AbstractString,dimin::Union{NcDim,Array{<:NcDim,1}},atts,t::Union{DataType,Integer}=Float64) =
+    NcVar{getJLType(t),length(dimin),getNCType(t)}(-1,-1,length(dimin),length(atts), getNCType(t),name,zeros(Int,length(dimin)),dimin,atts,-1,ntuple(i->zero(Int32),length(dimin)))
 
 #Array methods
 @generated function Base.size(a::NcVar{T,N}) where {T,N}
@@ -258,7 +257,7 @@ This reads all values from the first and last dimension and only the second valu
 """
 function readvar(v::NcVar{T,N};start::Vector=defaultstart(v),count::Vector=defaultcount(v)) where {T,N}
     s = [count[i]==-1 ? size(v,i)-start[i]+1 : count[i] for i=1:length(count)]
-    retvalsa = Array{T}(s...)
+    retvalsa = Array{T}(undef,s...)
     readvar!(v, retvalsa, start=start, count=count)
     return retvalsa
 end
@@ -270,7 +269,7 @@ Reads data from a NetCDF file with array-style indexing. `Integer`s and `UnitRan
 """
 function readvar(v::NcVar{T,N},I::IndR...) where {T,N}
     count=ntuple(i->counti(I[i],v.dim[i].dimlen),length(I))
-    retvalsa = Array{T}(count...)
+    retvalsa = Array{T}(undef,count...)
     readvar!(v, retvalsa, I...)
     return retvalsa
 end
@@ -548,7 +547,7 @@ function setcompression(v::NcVar,mode)
 end
 
 """
-    NetCDF.create(name::String,varlist::Array{NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
+    NetCDF.create(name::String,varlist::Array{<:NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
 
 Creates a new NetCDF file. Here, `name`
  is the name of the file to be created and `varlist` an array of `NcVar` holding the variables that should appear in the file.
@@ -558,7 +557,7 @@ Creates a new NetCDF file. Here, `name`
 * `gatts` a Dict containing global attributes of the NetCDF file
 * `mode` NetCDF file type (NC_NETCDF4, NC_CLASSIC_MODEL or NC_64BIT_OFFSET), defaults to NC_NETCDF4
 """
-function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
+function create(name::AbstractString,varlist::Array{<:NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
 
     #Create the file
     id = nc_create(name,mode)
@@ -687,10 +686,7 @@ function open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=fa
             ncf.dim[name].varid=varid
         end
         atts = getatts_all(ncid,varid,natts)
-        vdim = Array{NcDim}(length(dimids))
-        for (i, did) in enumerate(dimids)
-            vdim[i] = ncf.dim[getdimnamebyid(ncf,did)]
-        end
+        vdim = NcDim[ncf.dim[getdimnamebyid(ncf,did)] for did in dimids]
         ncf.vars[name]=NcVar{nctype2jltype[nctype],Int(vndim),Int(nctype)}(ncid,Int32(varid),vndim,natts,nctype,name,dimids[vndim:-1:1],vdim[vndim:-1:1],atts,0,chunksize)
     end
     readdimvar == true && _readdimvars(ncf)
@@ -716,7 +712,7 @@ To read the second slice of a 3D NetCDF variable one can write:
     ncread("filename","varname", start=[1,1,2], count = [-1,-1,1])
 
 """
-function ncread(fil::AbstractString,vname::AbstractString;start::Array{T}=Array{Int}(0),count::Array{T}=Array{Int}(0)) where T<:Integer
+function ncread(fil::AbstractString,vname::AbstractString;start::Array{T}=Int[],count::Array{T}=Int[]) where T<:Integer
     nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil)
     length(start)==0 && (start=defaultstart(nc[vname]))
     length(count)==0 && (count=defaultcount(nc[vname]))

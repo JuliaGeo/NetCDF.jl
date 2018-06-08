@@ -63,8 +63,8 @@ Convert a `UInt8` array read from a NetCDF variable of type `NC_CHAR` to a Julia
 """
 function nc_char2string(x::Array{UInt8})
     y = copy(x)
-    y[end,:] = 0
-    squeeze(mapslices(i -> unsafe_string(pointer(i)), y, 1), 1)
+    y[end,:] .= 0
+    squeeze(mapslices(i -> unsafe_string(pointer(i)), y, 1), dims=1)
 end
 
 """
@@ -78,7 +78,7 @@ function nc_string2char(s::Array{String})
     c = zeros(UInt8,maxlen+1,size(s)...)
     offs=1
     for i=1:length(s)
-        copy!(c,offs,s[i],1)
+        copyto!(c,offs,s[i],1)
         offs+=maxlen+1
     end
     c
@@ -178,7 +178,7 @@ function nc_get_att(ncid::Integer,varid::Integer,name::AbstractString,attype::In
         valsa[end] = 0
         return unsafe_string(pointer(valsa))
     else
-        valsa = Array{nctype2jltype[attype]}(attlen)
+        valsa = Array{nctype2jltype[attype]}(undef,attlen)
         return nc_get_att!(ncid,varid,name,valsa)
     end
 end
@@ -195,7 +195,7 @@ function nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Ar
   #Assert that length of the attribute matches length of output
   nc_inq_attlen(ncid, varid, name, lengtha)
   @assert lengtha[1]==length(valsa)
-  valsa_c = Array{Ptr{UInt8}}(length(valsa))
+  valsa_c = Array{Ptr{UInt8}}(undef,length(valsa))
   nc_get_att_string(ncid,varid,name,valsa_c)
   for i = 1:length(valsa)
     valsa[i] = unsafe_string(valsa_c[i])
@@ -372,7 +372,7 @@ function finalizedim(dimlen, dimvals, dimatts, name)
         dimlen = 1
     end
     if (dimlen != nothing) && (dimvals == nothing)
-        dimvals = Array{Float64}(0)
+        dimvals = Float64[]
     end
     if dimatts == nothing
         dimatts = Dict("missval"=>-9999)

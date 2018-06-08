@@ -20,10 +20,7 @@ vs = NcVar("vstr",d2,t=String)
 vc = NcVar("vchar",[d5,d2],t=NetCDF.NC_CHAR)
 
 tlist = [Float64, Float32, Int32, Int16, Int8]
-vt = Array{NcVar}(length(tlist))
-for i= 1:length(tlist)
-      vt[i]=NcVar("vt$i",d2,t = tlist[i])
-end
+vt = [NcVar("vt$i",d2,t = tlist[i]) for i=1:length(tlist)]
 vunlim = NcVar("vunlim",d4,t=Float64)
 
 # Creating Files
