@@ -66,6 +66,6 @@ myvar2 = ones(5,10,20)
 myvar2[1,:,:] .= 0.0
 @test ncread(fn4, "myvar2") == myvar2
 @test nc_char2string(ncread(fn1, "vchar")) == xs
-@test_throws NetCDF.NetCDFError ncread("nonexistant file", "a var")
+@test_throws NetCDF.NetCDFException ncread("nonexistant file", "a var")
 
 ncclose()

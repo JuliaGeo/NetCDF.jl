@@ -3,6 +3,7 @@ __precompile__()
 module NetCDF
 
 using Formatting
+import StaticArrays: SVector, MVector, @SVector
 using Base.Cartesian
 
 include("netcdf_c.jl")
@@ -14,7 +15,6 @@ export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,
     NC_CLOBBER,NC_NOCLOBBER,NC_CLASSIC_MODEL,NC_64BIT_OFFSET,NC_NETCDF4,NC_UNLIMITED,
     nc_char2string, nc_string2char
 
-NC_VERBOSE = false
 #Some constants
 
 global const nctype2jltype = Dict(
@@ -224,9 +224,9 @@ function readvar!(v::NcVar, retvalsa::AbstractArray;start::Vector=defaultstart(v
     length(start) == v.ndim || error("Length of start ($(length(start))) must equal the number of variable dimensions ($(v.ndim))")
     length(count) == v.ndim || error("Length of start ($(length(count))) must equal the number of variable dimensions ($(v.ndim))")
 
-    p = preparestartcount(start, count, v)
+    gstart,gcount = preparestartcount(start, count, v)
 
-    length(retvalsa) != p && error("Size of output array ($(length(retvalsa))) does not equal number of elements to be read ($p)!")
+    length(retvalsa) != prod(gcount) && error("Size of output array ($(length(retvalsa))) does not equal number of elements to be read ($p)!")
 
     nc_get_vara_x!(v, gstart, gcount, retvalsa)
 
@@ -277,12 +277,13 @@ end
 
 # Here are some functions for array-style indexing readvar
 #For single indices
-@generated function readvar(v::NcVar{T,N},I::Integer...) where {T,N}
+@generated function readvar(v::NcVar{T,N},I::Integer...)::T where {T,N}
     N==length(I) || error("Dimension mismatch")
+    gstartex = Expr(:vect,[:(Csize_t(I[$(N-i)]-1)) for i=0:(N-1)]...)
     quote
         checkbounds(v,I...)
-        @nexprs $N i->gstart[v.ndim+1-i]=I[i]-1
-        nc_get_var1_x(v,gstart,T)::T
+        gstart = @SVector $gstartex
+        nc_get_var1_x(v,gstart,T)
     end
 end
 
@@ -302,16 +303,16 @@ Reads data from a NetCDF file with array-style indexing and writes them to d. `I
 @generated function readvar!(v::NcVar{T,N}, retvalsa::AbstractArray,I::IndR...) where {T,N}
 
     N == length(I) || error("Dimension mismatch")
-
+    gstartex = Expr(:vect,[:(Csize_t(firsti(I[$(N-i)],v.dim[$(N-i)].dimlen))) for i=0:(N-1)]...)
+    gcountex = Expr(:vect,[:(Csize_t(counti(I[$(N-i)],v.dim[$(N-i)].dimlen))) for i=0:(N-1)]...)
     quote
         checkbounds(v, I...)
 
         isa(retvalsa, Array) || Base.iscontiguous(retvalsa) || error("Can only read into contiguous pieces of memory")
 
-        @nexprs $N i->gstart[v.ndim+1-i]=firsti(I[i],v.dim[i].dimlen)
-        @nexprs $N i->gcount[v.ndim+1-i]=counti(I[i],v.dim[i].dimlen)
-        p=1
-        @nexprs $N i->p=p*gcount[v.ndim+1-i]
+        gstart = @SVector $gstartex
+        gcount = @SVector $gcountex
+        p = prod(gcount)
         length(retvalsa) != p && error(string("Size of output array ($(length(retvalsa))) does not equal number of elements to be read (",p,")!"))
         nc_get_vara_x!(v,gstart,gcount,retvalsa)
         retvalsa
@@ -323,16 +324,16 @@ for (t,ending,arname) in funext
     fname = Symbol("nc_get_vara_$ending")
     fname1 = Symbol("nc_get_var1_$ending")
     arsym = Symbol(arname)
-    @eval nc_get_vara_x!(v::NcVar{$t},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{$t})=$fname(v.ncid,v.varid,start,count,retvalsa)
-    @eval nc_get_var1_x(v::NcVar{$t},start::Vector{UInt},::Type{$t})=begin $fname1(v.ncid,v.varid,start,$(arsym)); $(arsym)[1] end
+    @eval nc_get_vara_x!(v::NcVar{$t},start::AbstractVector{UInt},count::AbstractVector{UInt},retvalsa::AbstractArray{$t})=$fname(v.ncid,v.varid,start,count,retvalsa)
+    @eval nc_get_var1_x(v::NcVar{$t},start::AbstractVector{UInt},::Type{$t})=begin a = MVector{1,$t}(); $fname1(v.ncid,v.varid,start,a); a[1] end
 end
 
-nc_get_vara_x!(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{UInt8}) where {N} =
+nc_get_vara_x!(v::NcVar{UInt8,N,NC_CHAR},start::AbstractVector{UInt},count::AbstractVector{UInt},retvalsa::AbstractArray{UInt8}) where {N} =
     nc_get_vara_text(v.ncid,v.varid,start,count,retvalsa)
-nc_get_var1_x!(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},retvalsa::AbstractArray{UInt8}) where {N} =
+nc_get_var1_x!(v::NcVar{UInt8,N,NC_CHAR},start::AbstractVector{UInt},retvalsa::AbstractArray{UInt8}) where {N} =
     nc_get_var1_text(v.ncid,v.varid,start,retvalsa)
 
-function nc_get_vara_x!(v::NcVar{String,N,NC_STRING},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{String}) where N
+function nc_get_vara_x!(v::NcVar{String,N,NC_STRING},start::AbstractVector{UInt},count::AbstractVector{UInt},retvalsa::AbstractArray{String}) where N
     @assert length(retvalsa)==prod(view(count,1:N))
     retvalsa_c=fill(Ptr{UInt8}(0),length(retvalsa))
     nc_get_vara_string(v.ncid,v.varid,start,count,retvalsa_c)
@@ -412,7 +413,7 @@ with the same dimension as the variable in the netcdf file.
 
 """
 function putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
-    p=preparestartcount(start, count, v)
+    gstart, gcount = preparestartcount(start, count, v)
     nc_put_vara_x(v, gstart, gcount, vals)
 end
 
@@ -424,40 +425,41 @@ Writes the value(s) `val` to the variable `v` while the indices are given in in 
 @generated function putvar(v::NcVar{T,N},val::Any,I::IndR...) where {T,N}
 
     N==length(I) || error("Dimension mismatch")
-
+    gstartex = Expr(:vect,[:(Csize_t(firsti(I[$(N-i)],v.dim[$(N-i)].dimlen))) for i=0:(N-1)]...)
+    gcountex = Expr(:vect,[:(Csize_t(counti(I[$(N-i)],v.dim[$(N-i)].dimlen))) for i=0:(N-1)]...)
     quote
 
-        @nexprs $N i->gstart[v.ndim+1-i]=firsti(I[i],v.dim[i].dimlen)
-        @nexprs $N i->gcount[v.ndim+1-i]=counti(I[i],v.dim[i].dimlen)
-        checkboundsNC(v)
-        p=1
-        @nexprs $N i->p=p*gcount[v.ndim+1-i]
-        length(val) != p && error(string("Size of output array ($(length(retvalsa))) does not equal number of elements to be read (",p,")!"))
-        nc_put_vara_x(v,gstart,gcount,val)
+      gstart = @SVector $gstartex
+      gcount = @SVector $gcountex
+      checkboundsNC(v,gstart,gcount)
+      p=prod(gcount)
+      length(val) != p && error(string("Size of output array ($(length(retvalsa))) does not equal number of elements to be read (",p,")!"))
+      nc_put_vara_x(v,gstart,gcount,val)
     end
 end
 
 @generated function putvar(v::NcVar{T,N}, val::Any, I::Integer...) where {T,N}
 
     N == length(I) || error("Dimension mismatch")
+    gstartex = Expr(:vect,[:(Csize_t(firsti(I[$(N-i)],v.dim[$(N-i)].dimlen))) for i=0:(N-1)]...)
     quote
-        @nexprs $N i->gstart[v.ndim+1-i]=I[i]-1
-        @nall($N,d->((I[d]<=v.dim[d].dimlen && I[d]>0) || v.dim[d].unlim)) || throw(BoundsError(v,I))
-        nc_put_var1_x(v.ncid,v.varid,gstart,val)
+      gstart = $gstartex
+      @nall($N,d->((I[d]<=v.dim[d].dimlen && I[d]>0) || v.dim[d].unlim)) || throw(BoundsError(v,I))
+      nc_put_var1_x(v.ncid,v.varid,gstart,val)
     end
 
 end
-
+import StaticArrays: SArray
 for (t, ending, arname) in funext
     fname = Symbol("nc_put_vara_$ending")
     fname1 = Symbol("nc_put_var1_$ending")
     arsym = Symbol(arname)
-    @eval nc_put_vara_x(v::NcVar,start::Vector{UInt}, count::Vector{UInt}, vals::Array{$t})=$fname(v.ncid,v.varid,start,count,vals)
-    @eval nc_put_var1_x(v::NcVar,start::Vector{UInt},val::$t)=begin $(arsym)[1]=val; $fname1(v.ncid,v.varid,start,$(arsym)) end
+    @eval nc_put_vara_x(v::NcVar,start::SArray, count::SArray, vals::Array{$t}) where {N}=$fname(v.ncid,v.varid,start,count,vals)
+    @eval nc_put_var1_x(v::NcVar,start::SArray,val::$t) where {N}=begin $(arsym)[1]=val; $fname1(v.ncid,v.varid,start,$(arsym)) end
 end
 
-nc_put_vara_x(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt}, count::Vector{UInt}, vals::Array{UInt8}) where {N}=nc_put_vara_text(v.ncid,v.varid,start,count,vals)
-nc_put_var1_x(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},val::UInt8) where {N}=begin vals=UInt8[val]; nc_put_var1_text(v.ncid,v.varid,start,count,vals) end
+nc_put_vara_x(v::NcVar{UInt8,N,NC_CHAR},start::SArray, count::SArray, vals::Array{UInt8}) where {N}=nc_put_vara_text(v.ncid,v.varid,start,count,vals)
+nc_put_var1_x(v::NcVar{UInt8,N,NC_CHAR},start::SArray,val::UInt8) where {N}=begin vals=UInt8[val]; nc_put_var1_text(v.ncid,v.varid,start,count,vals) end
 
 function nc_put_vara_x(v::NcVar{String,N,NC_STRING}, start, count,vals::Array{String}) where N
     vals_p = map(x->pointer(x),vals)
@@ -579,7 +581,7 @@ function create(name::AbstractString,varlist::Array{<:NcVar};gatts::Dict=Dict{An
     for d in dims
         create_dim(nc, d)
         if (length(d.vals)>0) & (!haskey(nc.vars,d.name))
-            push!(varlist,NcVar{Float64,1,NC_DOUBLE}(id,varida[1],1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1,(zero(Int32),)))
+            push!(varlist,NcVar{Float64,1,NC_DOUBLE}(id,0,1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1,(zero(Int32),)))
         end
     end
 
@@ -796,30 +798,28 @@ end
 
 function create_dim(nc,dim)
     nc_redef(nc)
+    dima = MVector{1,Cint}()
     nc_def_dim(nc.ncid,dim.name,dim.dimlen,dima);
     dim.dimid=dima[1];
     nc.dim[dim.name]=dim;
 end
 
 
-function create_var(nc,v,mode)
-    nc_redef(nc)
+function create_var(nc,v::NcVar{T,N},mode) where {T,N}
+  nc_redef(nc)
 
-    v.dimids=Int32[v.dim[i].dimid for i=1:length(v.dim)]
-    for i=1:v.ndim
-        dumids[i] = v.dimids[v.ndim+1-i]
-    end
-    nc_def_var(nc.ncid,v.name,v.nctype,v.ndim,dumids,vara)
-    v.varid=vara[1];
-    if v.chunksize[1]>0
-        for i=1:v.ndim
-            chunk_sizea[i] = v.chunksize[i]
-        end
-        nc_def_var_chunking(nc.ncid, v.varid, NC_CHUNKED, chunk_sizea)
-    end
-    nc.vars[v.name] = v
-    putatt(nc.ncid,v.varid,v.atts)
-    setcompression(v,mode)
+  v.dimids = Int32[v.dim[i].dimid for i=1:length(v.dim)]
+  dumids   = SVector{N,Cint}(reverse(v.dimids))
+  vara     = MVector{1,Cint}()
+  nc_def_var(nc.ncid,v.name,v.nctype,v.ndim,dumids,vara)
+  v.varid=vara[1];
+  if v.chunksize[1]>0
+    chunk_sizea = SVector{N,Csize_t}(v.chunksize)
+    nc_def_var_chunking(nc.ncid, v.varid, NC_CHUNKED, chunk_sizea)
+  end
+  nc.vars[v.name] = v
+  putatt(nc.ncid,v.varid,v.atts)
+  setcompression(v,mode)
 end
 
 """
