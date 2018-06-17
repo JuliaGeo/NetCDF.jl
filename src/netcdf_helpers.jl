@@ -115,26 +115,12 @@ function nc_inq_dimid(id::Integer,name::AbstractString)
     return dimida[1]
 end
 
-function nc_redef(nc::NcFile)
-    if (!nc.in_def_mode)
-        nc_redef(nc.ncid)
-        nc.in_def_mode=true
-    end
-end
-
-function nc_enddef(nc::NcFile)
-    if nc.in_def_mode
-        nc_enddef(nc.ncid)
-        nc.in_def_mode=false
-    end
-end
-
-
 function nc_inq(id::Integer)
   # Inquire NetCDF file, return number of dims, number of variables, number of global attributes and number of unlimited dimensions
   ndima,nvara,ngatta,nunlimdimida = MVector{1,Cint}(),MVector{1,Cint}(),MVector{1,Cint}(),MVector{1,Cint}()
   nc_inq(id,ndima,nvara,ngatta,nunlimdimida)
-  return (ndima[1],nvara[1],ngatta[1],nunlimdimida[1])
+  unlimdims = allunlimdims(id)
+  return (ndima[1],nvara[1],ngatta[1],unlimdims)
 end
 
 
@@ -220,7 +206,7 @@ function nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Ar
   valsa
 end
 
-function nc_inq_var(nc::NcFile,varid::Integer)
+function nc_inq_var(nc,varid::Integer)
     # Inquire variables in the file
     namea = MVector{NC_MAX_NAME+1,UInt8}()
     typea = MVector{1,Cint}()
@@ -236,30 +222,8 @@ function nc_inq_var(nc::NcFile,varid::Integer)
     chunk_sizea = MVector{NC_MAX_VAR_DIMS,Csize_t}()
     nc_inq_var_chunking(nc.ncid,varid,storagep,chunk_sizea)
     chunksize=storagep[1] == NC_CONTIGUOUS ? ntuple(i->0,ndima[1]) : ntuple(i->chunk_sizea[i],ndima[1])
-    return name, typea[1], dimids, natta[1], ndima[1], isdimvar(nc,name), chunksize
+    return name, typea[1], dimids, natta[1], ndima[1], name in keys(nc.dim), chunksize
 end
-
-#Test if a variable name is also a dimension name
-isdimvar(v::NcVar) = v.name == v.dim[1].name ? true : false
-
-function isdimvar(nc::NcFile,name::AbstractString)
-    for n in nc.dim
-        if n[2].name==name
-            return true
-        end
-    end
-    return false
-end
-
-
-function getdimnamebyid(nc::NcFile,dimid::Integer)
-    da = ""
-    for d in nc.dim
-        da = d[2].dimid == dimid ? d[2].name : da
-    end
-    return da
-end
-
 
 function getatts_all(ncid::Integer, varid::Integer, natts::Integer)
     atts = Dict{Any,Any}()
@@ -273,64 +237,21 @@ function getatts_all(ncid::Integer, varid::Integer, natts::Integer)
     return atts
 end
 
-function readdimvars(nc::NcFile)
-    for v in nc.vars
-        if isdimvar(v[2])
-            v[2].dim[1].vals = readvar(nc,v[1])
-            d[2].atts = v[2].atts
-        end
+function allunlimdims(ncid)
+  nunlimdims = MVector{1,Cint}()
+  nc_inq_unlimdims(ncid,nunlimdims,C_NULL)
+  unlimdims = zeros(Cint,nunlimdims[1])
+  nc_inq_unlimdims(ncid,C_NULL,unlimdims)
+  unlimdims
+end
+
+function putatt(ncid::Integer,varid::Integer,atts::Dict)
+    for a in atts
+        name=a[1]
+        val=a[2]
+        nc_put_att(ncid,varid,name,val)
     end
 end
-
-function checkboundsNC(v::NcVar{T,N},gstart,gcount) where {T,N}
-    nd = N
-    for i = 1:nd
-        ci = nd + 1 - i
-        gstart[ci] < 0 && error("Start index must not be smaller than 1")
-        if gstart[ci] + gcount[ci] > v.dim[i].dimlen
-            if v.dim[i].unlim
-                #Reset length of unlimited dimension
-                v.dim[i].dimlen=gstart[ci] + gcount[ci]
-            else
-                error("Start + Count exceeds dimension length in dimension $(v.dim[i].name)")
-            end
-        end
-        nothing
-    end
-end
-
-@generated function preparestartcount(start, count, v::NcVar{T,N}) where {T,N}
-
-  gstartex = Expr(:vect,[:(Csize_t(start[$(N-i)]-1)) for i=0:(N-1)]...)
-  gcountex = Expr(:vect,[:(Csize_t(count[$(N-i)] < 0 ? v.dim[$(N-i)].dimlen - gstart[$(i+1)] : count[$(N-i)])) for i=0:(N-1)]...)
-  quote
-    length(start) == v.ndim || error("Length of start ($(length(start))) must equal the number of variable dimensions ($(v.ndim))")
-    length(count) == v.ndim || error("Length of start ($(length(count))) must equal the number of variable dimensions ($(v.ndim))")
-
-    gstart = @SVector $gstartex
-    gcount = @SVector $gcountex
-
-    checkboundsNC(v,gstart,gcount)
-
-    return gstart,gcount
-  end
-end
-
-function _readdimvars(nc::NcFile)
-    for d in nc.dim
-        for v in nc.vars
-            if d[2].name == v[2].name
-                d[2].vals = readvar(nc,v[2].name)
-                d[2].atts = v[2].atts
-            end
-        end
-    end
-end
-
-ischunked(v::NcVar) = v.chunksize[1] > 0
-
-defaultstart(v::NcVar) = ones(Int, v.ndim)
-defaultcount(v::NcVar) = Int[i for i in size(v)]
 
 
 function parsedimargs(dim)

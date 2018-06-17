@@ -61,14 +61,6 @@ Once the file is created we can write the actual data to it:
 ncwrite(rad,fn,"rad");
 ```
 
-This does not yet ensure that the data is actually written to the file, it might still be cached
-by the NetCDF library. In order to write and close the file we run `ncclose`:
-
-```@example 1
-ncclose(fn)
-nothing # hide
-```
-
 Now we assume we just retrieved this radiation NetCDF file and want to get some information about it.
 This is done using `ncinfo`:
 

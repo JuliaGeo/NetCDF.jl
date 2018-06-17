@@ -1,4 +1,3 @@
-ncclose()
 import Random: bitrand
 v1 = NetCDF.open(fn1, "v1", mode=NC_WRITE)
 @test isa(v1, NetCDF.NcVar{Float64, 3, 6})
