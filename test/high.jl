@@ -69,3 +69,9 @@ myvar2[1,:,:] = 0.0
 @test_throws NetCDF.NetCDFError ncread("nonexistant file", "a var")
 
 ncclose()
+
+# Open file by reading and create new variable
+ncread(fn4, "myvar2")
+nccreate(fn4, "myvar3", "time", Inf)
+
+ncclose()

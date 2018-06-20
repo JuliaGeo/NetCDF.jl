@@ -853,7 +853,7 @@ function nccreate(fil::AbstractString, varname::AbstractString, dims...;atts::Di
         if nc.omode == NC_NOWRITE
             close(nc)
             println("reopening file in WRITE mode")
-            open(fil, NC_WRITE)
+            open(fil, mode=NC_WRITE)
         end
         v.ncid = nc.ncid
         haskey(nc.vars, varname) && error("Variable $varname already exists in file $fil")
