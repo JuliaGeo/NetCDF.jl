@@ -18,10 +18,10 @@ srcdir = joinpath(workdir, "../src")
 headerpath = ["/home/martijn/src/netcdf-4.4.1/include/netcdf.h"]
 includedirs = ["/home/martijn/src/netcdf-4.4.1/include"]
 
-context=wrap_c.init(headers=headerpath,
+context = wrap_c.init(headers=headerpath,
                     output_dir=workdir,
                     common_file="common.jl",
                     clang_includes=includedirs,
-                    header_library=x->"libnetcdf")
+                    header_library=x -> "libnetcdf")
 
 run(context)

@@ -50,10 +50,11 @@ Now we can write data to the file:
 
 The full documentation can be found [here][docs-latest-url]
 
-Contact info:
-Fabian Gans (fgans@bgc-jena.mpg.de)
-Max-Planck-Institute for Biogeochemistry
-Jena, Germany
+An alternative interface for reading NetCDF files can be found here: https://github.com/Alexander-Barth/NCDatasets.jl
+
+## Credits
+
+This package was originally started and is mostly maintained by Fabian Gans (fgans@bgc-jena.mpg.de). The automatic C wrapper generator was contributed by Martijn Visser (https://github.com/visr). Many thanks to several people who contributed bug fixes and enhancements. 
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
 [docs-latest-url]: https://JuliaGeo.github.io/NetCDF.jl/latest

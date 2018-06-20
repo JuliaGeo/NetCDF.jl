@@ -13,7 +13,7 @@ day = 1
 tim = collect(0:23)
 
 # Create radiation array
-rad = Float64[g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim]
+rad = Float64[g_pot(x2, x1, day, x3) for x1 = lon, x2 = lat, x3 = tim]
 
 # Define some attributes of the variable (optionlal)
 varatts = Dict("longname" => "Radiation at the top of the atmosphere",
