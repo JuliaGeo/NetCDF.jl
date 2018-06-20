@@ -18,6 +18,7 @@ v2 = NcVar("v2",[d1,d2,d3],atts=Dict("a1"=>"varatts"))  # with given attributes
 v3 = NcVar("v3",d1)
 vs = NcVar("vstr",d2,t=String)
 vc = NcVar("vchar",[d5,d2],t=NetCDF.NC_CHAR)
+vscal = NcVar("vscal",NcDim[])
 
 tlist = [Float64, Float32, Int32, Int16, Int8]
 vt = Array{NcVar}(length(tlist))
@@ -28,7 +29,7 @@ vunlim = NcVar("vunlim",d4,t=Float64)
 
 # Creating Files
 nc1 = NetCDF.create(fn1,[v1,vs,vc],mode=NC_NETCDF4);
-nc2 = NetCDF.create(fn2,NcVar[v2,v3],gatts=Dict("Some global attributes"=>2010));
+nc2 = NetCDF.create(fn2,NcVar[v2,v3,vscal],gatts=Dict("Some global attributes"=>2010));
 nc3 = NetCDF.create(fn3,vt);
 ncunlim = NetCDF.create(fn4,vunlim)
 
@@ -54,6 +55,7 @@ x1 = rand(2,10,20)
 x2 = rand(2,10,20)
 xt = [rand(tl,10) for tl in tlist]
 xs = ["a","bb","ccc","dddd","eeeee","ffffff","ggggggg","hhhhhhhh","iiiiiiiii","jjjjjjjjjj"]
+xscal = Array{Float64,0}();xscal[1]=2.5
 #
 # And write it
 #
@@ -67,6 +69,8 @@ end
 #Test automatic type conversion
 x4 = [1,2]
 NetCDF.putvar(nc2,"v3",x4)
+
+NetCDF.putvar(nc2,"vscal",xscal)
 
 for i=1:length(tlist)
   NetCDF.putvar(nc3,"vt$i",xt[i])
@@ -87,8 +91,10 @@ nc3 = NetCDF.open(fn3,mode=NC_NOWRITE);
 @test xs == NetCDF.readvar(nc1,"vstr")
 @test x2 == NetCDF.readvar(nc2,"v2")
 @test x4 == NetCDF.readvar(nc2,"v3")
+@test xscal == NetCDF.readvar(nc2,"vscal")
 
 @test xs == NetCDF.nc_char2string(NetCDF.readvar(nc1,"vchar"))
+
 
 #Test -1 reading full dimension
 NetCDF.readvar(nc1,"v1",start=[1,1,1],count=[-1,-1,-1])

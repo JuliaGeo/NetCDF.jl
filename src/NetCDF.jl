@@ -154,6 +154,7 @@ const IndR  = Union{Integer,UnitRange,Colon}
 const ArNum = Union{AbstractArray,Number}
 
 IndexStyle(::NcVar) = IndexCartesian()
+Base.getindex(v::NcVar{T,0}) where {T} = readvar(v)
 Base.getindex(v::NcVar{T,1},i1::IndR) where {T} = readvar(v,i1)
 Base.getindex(v::NcVar{T,2},i1::IndR,i2::IndR) where {T} = readvar(v,i1,i2)
 Base.getindex(v::NcVar{T,3},i1::IndR,i2::IndR,i3::IndR) where {T} = readvar(v,i1,i2,i3)
@@ -161,6 +162,7 @@ Base.getindex(v::NcVar{T,4},i1::IndR,i2::IndR,i3::IndR,i4::IndR) where {T} = rea
 Base.getindex(v::NcVar{T,5},i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR) where {T} = readvar(v,i1,i2,i3,i4,i5)
 Base.getindex(v::NcVar{T,6},i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR,i6::IndR) where {T} = readvar(v,i1,i2,i3,i4,i5,i6)
 
+Base.setindex!(v::NcVar{T,0},x::ArNum) where {T} = putvar(v,x)
 Base.setindex!(v::NcVar{T,1},x::ArNum,i1::IndR) where {T} = putvar(v,x,i1)
 Base.setindex!(v::NcVar{T,2},x::ArNum,i1::IndR,i2::IndR) where {T} = putvar(v,x,i1,i2)
 Base.setindex!(v::NcVar{T,3},x::ArNum,i1::IndR,i2::IndR,i3::IndR) where {T} = putvar(v,x,i1,i2,i3)
@@ -280,10 +282,16 @@ end
 #For single indices
 @generated function readvar(v::NcVar{T,N},I::Integer...) where {T,N}
     N==length(I) || error("Dimension mismatch")
-    quote
+    if N==0
+      checkbounds(v,I...)
+      gstart[1]=0
+      nc_get_var1_x(v,gstart,T)::T
+    else
+      quote
         checkbounds(v,I...)
         @nexprs $N i->gstart[v.ndim+1-i]=I[i]-1
         nc_get_var1_x(v,gstart,T)::T
+      end
     end
 end
 
@@ -425,7 +433,6 @@ Writes the value(s) `val` to the variable `v` while the indices are given in in 
 @generated function putvar(v::NcVar{T,N},val::Any,I::IndR...) where {T,N}
 
     N==length(I) || error("Dimension mismatch")
-
     quote
 
         @nexprs $N i->gstart[v.ndim+1-i]=firsti(I[i],v.dim[i].dimlen)
@@ -441,10 +448,17 @@ end
 @generated function putvar(v::NcVar{T,N}, val::Any, I::Integer...) where {T,N}
 
     N == length(I) || error("Dimension mismatch")
-    quote
+    if N==0
+      quote
+        gstart[1]=0
+        nc_put_var1_x(v,gstart,val[1])
+      end
+    else
+      quote
         @nexprs $N i->gstart[v.ndim+1-i]=I[i]-1
         @nall($N,d->((I[d]<=v.dim[d].dimlen && I[d]>0) || v.dim[d].unlim)) || throw(BoundsError(v,I))
-        nc_put_var1_x(v.ncid,v.varid,gstart,val)
+        nc_put_var1_x(v,gstart,val[1])
+      end
     end
 
 end
@@ -772,7 +786,7 @@ Writes the array `x` to the file `fil` and variable `vname`.
 * `start` Vector of length `ndim(v)` setting the starting index for writing for each dimension
 * `count` Vector of length `ndim(v)` setting the count of values to be written along each dimension. The value -1 is treated as a special case to write all values from this dimension. This is usually inferred by the given array size.
 """
-function ncwrite(x::Array,fil::AbstractString,vname::AbstractString;start::Array{T,1}=ones(Int,length(size(x))),count::Array{T,1}=[size(x)...]) where T<:Integer
+function ncwrite(x::Array,fil::AbstractString,vname::AbstractString;start=ones(Int,length(size(x))),count=[size(x)...])
     nc = haskey(currentNcFiles,abspath(fil)) ? currentNcFiles[abspath(fil)] : open(fil,mode=NC_WRITE)
     if (nc.omode==NC_NOWRITE)
         close(nc)
@@ -815,7 +829,7 @@ function create_var(nc,v,mode)
     end
     nc_def_var(nc.ncid,v.name,v.nctype,v.ndim,dumids,vara)
     v.varid=vara[1];
-    if v.chunksize[1]>0
+    if any(i->i>0,v.chunksize)
         for i=1:v.ndim
             chunk_sizea[i] = v.chunksize[i]
         end
@@ -855,7 +869,7 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict
         if nc.omode==NC_NOWRITE
             close(nc)
             println("reopening file in WRITE mode")
-            open(fil,NC_WRITE)
+            open(fil,mode=NC_WRITE)
         end
         v.ncid = nc.ncid
         haskey(nc.vars,varname) && error("Variable $varname already exists in file $fil")
