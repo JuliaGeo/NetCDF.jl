@@ -3,6 +3,7 @@ fn1 = tempname2()
 fn2 = tempname2()
 fn3 = tempname2()
 fn4 = tempname2()
+fn5 = tempname2()
 
 # Test Medium level Interface
 # Test Dimension Creation
@@ -98,3 +99,17 @@ nc3 = NetCDF.open(fn3,mode=NC_NOWRITE);
 
 #Test -1 reading full dimension
 NetCDF.readvar(nc1,"v1",start=[1,1,1],count=[-1,-1,-1])
+
+#Test dimension variables type
+dim1 = NcDim("dim1", 4, atts=Dict("units" => "m"), values=collect(Int32,1:4))
+x5_1 = NcVar("x5_1", [dim1], atts=Dict("units" => "m"), t=Int32)
+
+dim2 = NcDim("dim2", 4, atts=Dict("units" => "m"), values=collect(Float32, 1:4))
+x5_2 = NcVar("x5_2", [dim2], atts=Dict("units" => "m"), t=Int32)
+
+nc5 = NetCDF.create(fn5, Array{NcVar, 1}([x5_1, x5_2]))
+NetCDF.close(nc5)
+
+nc5 = NetCDF.open(fn5)
+@test typeof(NetCDF.readvar(nc5, "dim1")) == Array{Int32, 1}
+@test typeof(NetCDF.readvar(nc5, "dim2")) == Array{Float32, 1}

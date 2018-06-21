@@ -594,7 +594,8 @@ function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict=Dict{Any,
     for d in dims
         create_dim(nc, d)
         if (length(d.vals)>0) & (!haskey(nc.vars,d.name))
-            push!(varlist,NcVar{Float64,1,NC_DOUBLE}(id,varida[1],1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1,(zero(Int32),)))
+            elt = eltype(d.vals)
+            push!(varlist,NcVar{elt,1,jl2nc(elt)}(id,varida[1],1,length(d.atts),jl2nc(elt),d.name,[d.dimid],[d],d.atts,-1,(zero(Int32),)))
         end
     end
 
@@ -881,7 +882,10 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict
             if !haskey(nc.dim,dim[i].name)
                 create_dim(nc,dim[i])
                 v.dimids[i] = dim[i].dimid
-                isempty(dim[i].vals) || create_var(nc,NcVar{Float64,1,NC_DOUBLE}(nc.ncid,0,1,length(dim[i].atts),NC_DOUBLE,dim[i].name,[dim[i].dimid],[dim[i]],dim[i].atts,-1,(0,)),mode)
+                if length(dim[i].vals)>0
+                    elt = eltype(dim[i].vals)
+                    create_var(nc,NcVar{elt,1,jl2nc(elt)}(nc.ncid,0,1,length(dim[i].atts),jl2nc(elt),dim[i].name,[dim[i].dimid],[dim[i]],dim[i].atts,-1,(0,)),mode)
+                end
                 dcreate[i] = true
             else
                 v.dimids[i] = nc.dim[dim[i].name].dimid

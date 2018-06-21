@@ -3,6 +3,7 @@ fn1 = tempname2()
 fn2 = tempname2()
 fn3 = tempname2()
 fn4 = tempname2()
+fn5 = tempname2()
 
 nccreate(fn1,"v1","Dim1",[1,2],Dict("units"=>"deg C"),"Dim2",collect(1:10),"Dim3",20,Dict("max"=>10),
     mode=NC_NETCDF4)
@@ -73,6 +74,12 @@ nccreate(fn4,"scalar")
 a = Array{Float64,0}();a[1]=10.0
 ncwrite(a,fn4,"scalar")
 @test ncread(fn4,"scalar")[1] == a[1]
+
+# Test dimension variable type
+nccreate(fn5, "x5_1", "dim1", collect(Int32, 1:4), Dict("units"=>"m"))
+nccreate(fn5, "x5_2", "dim2", collect(Float32, 1:4), Dict("units"=>"m"))
+@test typeof(ncread(fn5, "dim1")) == Array{Int32, 1}
+@test typeof(ncread(fn5, "dim2")) == Array{Float32, 1}
 ncclose()
 
 # Open file by reading and create new variable
