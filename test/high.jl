@@ -74,3 +74,9 @@ a = Array{Float64,0}();a[1]=10.0
 ncwrite(a,fn4,"scalar")
 @test ncread(fn4,"scalar")[1] == a[1]
 ncclose()
+
+# Open file by reading and create new variable
+ncread(fn4, "myvar2")
+nccreate(fn4, "myvar3", "time", Inf)
+
+ncclose()
