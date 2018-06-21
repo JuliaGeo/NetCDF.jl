@@ -317,6 +317,7 @@ defaultcount(v::NcVar) = Int[i for i in size(v)]
 
 
 function parsedimargs(dim)
+  isempty(dim) && return NcDim[]
     idim = 0
     dimlen = nothing
     dimvals = nothing
