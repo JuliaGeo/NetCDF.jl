@@ -317,7 +317,3 @@ function finalizedim(dimlen, dimvals, dimatts, name)
     isunlimited = dimlen == 0 ? true : false
     return NcDim(name, dimlen, atts=dimatts, values=dimvals, unlimited=isunlimited)
 end
-
-struct NetCDFException <: Exception
-  code::Int
-end

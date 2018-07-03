@@ -65,7 +65,7 @@ function create(name::AbstractString,varlist::Array{<:NcVar};gatts::Dict=Dict{An
     for d in dims
         create_dim(nc, d)
         if (length(d.vals)>0) & (!haskey(nc.vars,d.name))
-            push!(varlist,NcVar{Float64,1,NC_DOUBLE}(id,0,1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1,(zero(Int32),)))
+            push!(varlist,NcVar{Float64,1,NC_DOUBLE}(id,0,1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1,(zero(Int32),),NC_FILL_DOUBLE,NC_FILL_DOUBLE))
         end
     end
 
@@ -130,8 +130,8 @@ opens a NetCDF variable `v` in the NetCDF file `fil` and returns an `NcVar` hand
 * `mode` mode in which the file is opened, defaults to `NC_NOWRITE`, choose `NC_WRITE` for write access
 * `readdimvar` determines if dimension variables will be read into the file structure, default is `false`
 """
-function open(fil::AbstractString,v::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
-  nc=open(fil,mode=mode,readdimvar=readdimvar)
+function open(fil::AbstractString,v::AbstractString; kwargs...)
+  nc=open(fil;kwargs...)
   nc.vars[v]
 end
 
@@ -145,7 +145,8 @@ opens the NetCDF file `fil` and returns a `NcFile` handle.
 * `mode` mode in which the file is opened, defaults to `NC_NOWRITE`, choose `NC_WRITE` for write access
 * `readdimvar` determines if dimension variables will be read into the file structure, default is `false`
 """
-function open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=false)
+function open(fil::AbstractString;
+  mode::Integer=NC_NOWRITE, readdimvar::Bool=false, replace_missing=false)
 
   # Open netcdf file
   ncid = nc_open(fil,mode)
@@ -172,8 +173,11 @@ function open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=fa
       ncf.dim[name].varid=varid
     end
     atts = getatts_all(ncid,varid,natts)
+    TV = replace_missing ? getJLType(nctype,Missing) : getJLType(nctype,Nothing)
+    missval = get(atts,"missing_value",getfill(TV))
+    fillval = get(atts,"_FillValue",getfill(TV))
     vdim = NcDim[ncf.dim[findfirst(i->i.dimid==did,ncf.dim)] for did in dimids]
-    ncf.vars[name]=NcVar{nctype2jltype[nctype],Int(vndim),Int(nctype)}(ncid,Int32(varid),vndim,natts,nctype,name,dimids[vndim:-1:1],vdim[vndim:-1:1],atts,0,chunksize)
+    ncf.vars[name]=NcVar{TV,Int(vndim),Int(nctype)}(ncid,Int32(varid),vndim,natts,nctype,name,dimids[vndim:-1:1],vdim[vndim:-1:1],atts,0,chunksize,missval,fillval)
   end
   readdimvar == true && _readdimvars(ncf)
   return ncf

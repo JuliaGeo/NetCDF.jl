@@ -4,15 +4,6 @@ if isfile(depfile)
 else
     error("libnetcdf not properly installed. Please run Pkg.build(\"NetCDF\")")
 end
-macro checked_call(ex)
-  body = ex.args[2]
-  ex.args[2] = quote
-    ret = $(body)
-    ret == NC_NOERR || throw(NetCDFException(ret))
-    nothing
-  end
-  ex
-end
 const err=-1
 const nc_type=Cint
 # Automatically generated using Clang.jl wrap_c, version 0.0.0
@@ -309,1318 +300,1318 @@ function nc_inq_libvers()
     ccall((:nc_inq_libvers, libnetcdf), Ptr{UInt8}, ())
 end
 
-@checked_call function nc_strerror(ncerr::Integer)
+function nc_strerror(ncerr::Integer)
     ccall((:nc_strerror, libnetcdf), Ptr{UInt8}, (Cint,), ncerr)
 end
 
-@checked_call function nc__create(path, cmode::Integer, initialsz::Integer, chunksizehintp, ncidp)
-    ccall((:nc__create, libnetcdf), Cint, (Ptr{UInt8}, Cint, Csize_t, Ptr{Csize_t}, Ptr{Cint}), path, cmode, initialsz, chunksizehintp, ncidp)
+function nc__create(path, cmode::Integer, initialsz::Integer, chunksizehintp, ncidp)
+  check(ccall((:nc__create, libnetcdf), Cint, (Ptr{UInt8}, Cint, Csize_t, Ptr{Csize_t}, Ptr{Cint}), path, cmode, initialsz, chunksizehintp, ncidp))
 end
 
-@checked_call function nc_create(path, cmode::Integer, ncidp)
-    ccall((:nc_create, libnetcdf), Cint, (Ptr{UInt8}, Cint, Ptr{Cint}), path, cmode, ncidp)
+function nc_create(path, cmode::Integer, ncidp)
+  check(ccall((:nc_create, libnetcdf), Cint, (Ptr{UInt8}, Cint, Ptr{Cint}), path, cmode, ncidp))
 end
 
-@checked_call function nc__open(path, mode::Integer, chunksizehintp, ncidp)
-    ccall((:nc__open, libnetcdf), Cint, (Ptr{UInt8}, Cint, Ptr{Csize_t}, Ptr{Cint}), path, mode, chunksizehintp, ncidp)
+function nc__open(path, mode::Integer, chunksizehintp, ncidp)
+  check(ccall((:nc__open, libnetcdf), Cint, (Ptr{UInt8}, Cint, Ptr{Csize_t}, Ptr{Cint}), path, mode, chunksizehintp, ncidp))
 end
 
-@checked_call function nc_open(path, mode::Integer, ncidp)
-    ccall((:nc_open, libnetcdf), Cint, (Ptr{UInt8}, Cint, Ptr{Cint}), path, mode, ncidp)
+function nc_open(path, mode::Integer, ncidp)
+  check(ccall((:nc_open, libnetcdf), Cint, (Ptr{UInt8}, Cint, Ptr{Cint}), path, mode, ncidp))
 end
 
-@checked_call function nc_inq_path(ncid::Integer, pathlen, path)
-    ccall((:nc_inq_path, libnetcdf), Cint, (Cint, Ptr{Csize_t}, Ptr{UInt8}), ncid, pathlen, path)
+function nc_inq_path(ncid::Integer, pathlen, path)
+  check(ccall((:nc_inq_path, libnetcdf), Cint, (Cint, Ptr{Csize_t}, Ptr{UInt8}), ncid, pathlen, path))
 end
 
-@checked_call function nc_inq_ncid(ncid::Integer, name, grp_ncid)
-    ccall((:nc_inq_ncid, libnetcdf), Cint, (Cint, Ptr{UInt8}, Ptr{Cint}), ncid, name, grp_ncid)
+function nc_inq_ncid(ncid::Integer, name, grp_ncid)
+  check(ccall((:nc_inq_ncid, libnetcdf), Cint, (Cint, Ptr{UInt8}, Ptr{Cint}), ncid, name, grp_ncid))
 end
 
-@checked_call function nc_inq_grps(ncid::Integer, numgrps, ncids)
-    ccall((:nc_inq_grps, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}), ncid, numgrps, ncids)
+function nc_inq_grps(ncid::Integer, numgrps, ncids)
+  check(ccall((:nc_inq_grps, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}), ncid, numgrps, ncids))
 end
 
-@checked_call function nc_inq_grpname(ncid::Integer, name)
-    ccall((:nc_inq_grpname, libnetcdf), Cint, (Cint, Ptr{UInt8}), ncid, name)
+function nc_inq_grpname(ncid::Integer, name)
+  check(ccall((:nc_inq_grpname, libnetcdf), Cint, (Cint, Ptr{UInt8}), ncid, name))
 end
 
-@checked_call function nc_inq_grpname_full(ncid::Integer, lenp, full_name)
-    ccall((:nc_inq_grpname_full, libnetcdf), Cint, (Cint, Ptr{Csize_t}, Ptr{UInt8}), ncid, lenp, full_name)
+function nc_inq_grpname_full(ncid::Integer, lenp, full_name)
+  check(ccall((:nc_inq_grpname_full, libnetcdf), Cint, (Cint, Ptr{Csize_t}, Ptr{UInt8}), ncid, lenp, full_name))
 end
 
-@checked_call function nc_inq_grpname_len(ncid::Integer, lenp)
-    ccall((:nc_inq_grpname_len, libnetcdf), Cint, (Cint, Ptr{Csize_t}), ncid, lenp)
+function nc_inq_grpname_len(ncid::Integer, lenp)
+  check(ccall((:nc_inq_grpname_len, libnetcdf), Cint, (Cint, Ptr{Csize_t}), ncid, lenp))
 end
 
-@checked_call function nc_inq_grp_parent(ncid::Integer, parent_ncid)
-    ccall((:nc_inq_grp_parent, libnetcdf), Cint, (Cint, Ptr{Cint}), ncid, parent_ncid)
+function nc_inq_grp_parent(ncid::Integer, parent_ncid)
+  check(ccall((:nc_inq_grp_parent, libnetcdf), Cint, (Cint, Ptr{Cint}), ncid, parent_ncid))
 end
 
-@checked_call function nc_inq_grp_ncid(ncid::Integer, grp_name, grp_ncid)
-    ccall((:nc_inq_grp_ncid, libnetcdf), Cint, (Cint, Ptr{UInt8}, Ptr{Cint}), ncid, grp_name, grp_ncid)
+function nc_inq_grp_ncid(ncid::Integer, grp_name, grp_ncid)
+  check(ccall((:nc_inq_grp_ncid, libnetcdf), Cint, (Cint, Ptr{UInt8}, Ptr{Cint}), ncid, grp_name, grp_ncid))
 end
 
-@checked_call function nc_inq_grp_full_ncid(ncid::Integer, full_name, grp_ncid)
-    ccall((:nc_inq_grp_full_ncid, libnetcdf), Cint, (Cint, Ptr{UInt8}, Ptr{Cint}), ncid, full_name, grp_ncid)
+function nc_inq_grp_full_ncid(ncid::Integer, full_name, grp_ncid)
+  check(ccall((:nc_inq_grp_full_ncid, libnetcdf), Cint, (Cint, Ptr{UInt8}, Ptr{Cint}), ncid, full_name, grp_ncid))
 end
 
-@checked_call function nc_inq_varids(ncid::Integer, nvars, varids)
-    ccall((:nc_inq_varids, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}), ncid, nvars, varids)
+function nc_inq_varids(ncid::Integer, nvars, varids)
+  check(ccall((:nc_inq_varids, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}), ncid, nvars, varids))
 end
 
-@checked_call function nc_inq_dimids(ncid::Integer, ndims, dimids, include_parents::Integer)
-    ccall((:nc_inq_dimids, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}, Cint), ncid, ndims, dimids, include_parents)
+function nc_inq_dimids(ncid::Integer, ndims, dimids, include_parents::Integer)
+  check(ccall((:nc_inq_dimids, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}, Cint), ncid, ndims, dimids, include_parents))
 end
 
-@checked_call function nc_inq_typeids(ncid::Integer, ntypes, typeids)
-    ccall((:nc_inq_typeids, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}), ncid, ntypes, typeids)
+function nc_inq_typeids(ncid::Integer, ntypes, typeids)
+  check(ccall((:nc_inq_typeids, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}), ncid, ntypes, typeids))
 end
 
-@checked_call function nc_inq_type_equal(ncid1::Integer, typeid1::Integer, ncid2::Integer, typeid2::Integer, equal)
-    ccall((:nc_inq_type_equal, libnetcdf), Cint, (Cint, nc_type, Cint, nc_type, Ptr{Cint}), ncid1, typeid1, ncid2, typeid2, equal)
+function nc_inq_type_equal(ncid1::Integer, typeid1::Integer, ncid2::Integer, typeid2::Integer, equal)
+  check(ccall((:nc_inq_type_equal, libnetcdf), Cint, (Cint, nc_type, Cint, nc_type, Ptr{Cint}), ncid1, typeid1, ncid2, typeid2, equal))
 end
 
-@checked_call function nc_def_grp(parent_ncid::Integer, name, new_ncid)
-    ccall((:nc_def_grp, libnetcdf), Cint, (Cint, Ptr{UInt8}, Ptr{Cint}), parent_ncid, name, new_ncid)
+function nc_def_grp(parent_ncid::Integer, name, new_ncid)
+  check(ccall((:nc_def_grp, libnetcdf), Cint, (Cint, Ptr{UInt8}, Ptr{Cint}), parent_ncid, name, new_ncid))
 end
 
-@checked_call function nc_rename_grp(grpid::Integer, name)
-    ccall((:nc_rename_grp, libnetcdf), Cint, (Cint, Ptr{UInt8}), grpid, name)
+function nc_rename_grp(grpid::Integer, name)
+  check(ccall((:nc_rename_grp, libnetcdf), Cint, (Cint, Ptr{UInt8}), grpid, name))
 end
 
-@checked_call function nc_def_compound(ncid::Integer, size::Integer, name, typeidp)
-    ccall((:nc_def_compound, libnetcdf), Cint, (Cint, Csize_t, Ptr{UInt8}, Ptr{nc_type}), ncid, size, name, typeidp)
+function nc_def_compound(ncid::Integer, size::Integer, name, typeidp)
+  check(ccall((:nc_def_compound, libnetcdf), Cint, (Cint, Csize_t, Ptr{UInt8}, Ptr{nc_type}), ncid, size, name, typeidp))
 end
 
-@checked_call function nc_insert_compound(ncid::Integer, xtype::Integer, name, offset::Integer, field_typeid::Integer)
-    ccall((:nc_insert_compound, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Csize_t, nc_type), ncid, xtype, name, offset, field_typeid)
+function nc_insert_compound(ncid::Integer, xtype::Integer, name, offset::Integer, field_typeid::Integer)
+  check(ccall((:nc_insert_compound, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Csize_t, nc_type), ncid, xtype, name, offset, field_typeid))
 end
 
-@checked_call function nc_insert_array_compound(ncid::Integer, xtype::Integer, name, offset::Integer, field_typeid::Integer, ndims::Integer, dim_sizes)
-    ccall((:nc_insert_array_compound, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Csize_t, nc_type, Cint, Ptr{Cint}), ncid, xtype, name, offset, field_typeid, ndims, dim_sizes)
+function nc_insert_array_compound(ncid::Integer, xtype::Integer, name, offset::Integer, field_typeid::Integer, ndims::Integer, dim_sizes)
+  check(ccall((:nc_insert_array_compound, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Csize_t, nc_type, Cint, Ptr{Cint}), ncid, xtype, name, offset, field_typeid, ndims, dim_sizes))
 end
 
-@checked_call function nc_inq_type(ncid::Integer, xtype::Integer, name, size)
-    ccall((:nc_inq_type, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{Csize_t}), ncid, xtype, name, size)
+function nc_inq_type(ncid::Integer, xtype::Integer, name, size)
+  check(ccall((:nc_inq_type, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{Csize_t}), ncid, xtype, name, size))
 end
 
-@checked_call function nc_inq_typeid(ncid::Integer, name, typeidp)
-    ccall((:nc_inq_typeid, libnetcdf), Cint, (Cint, Ptr{UInt8}, Ptr{nc_type}), ncid, name, typeidp)
+function nc_inq_typeid(ncid::Integer, name, typeidp)
+  check(ccall((:nc_inq_typeid, libnetcdf), Cint, (Cint, Ptr{UInt8}, Ptr{nc_type}), ncid, name, typeidp))
 end
 
-@checked_call function nc_inq_compound(ncid::Integer, xtype::Integer, name, sizep, nfieldsp)
-    ccall((:nc_inq_compound, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{Csize_t}, Ptr{Csize_t}), ncid, xtype, name, sizep, nfieldsp)
+function nc_inq_compound(ncid::Integer, xtype::Integer, name, sizep, nfieldsp)
+  check(ccall((:nc_inq_compound, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{Csize_t}, Ptr{Csize_t}), ncid, xtype, name, sizep, nfieldsp))
 end
 
-@checked_call function nc_inq_compound_name(ncid::Integer, xtype::Integer, name)
-    ccall((:nc_inq_compound_name, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}), ncid, xtype, name)
+function nc_inq_compound_name(ncid::Integer, xtype::Integer, name)
+  check(ccall((:nc_inq_compound_name, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}), ncid, xtype, name))
 end
 
-@checked_call function nc_inq_compound_size(ncid::Integer, xtype::Integer, sizep)
-    ccall((:nc_inq_compound_size, libnetcdf), Cint, (Cint, nc_type, Ptr{Csize_t}), ncid, xtype, sizep)
+function nc_inq_compound_size(ncid::Integer, xtype::Integer, sizep)
+  check(ccall((:nc_inq_compound_size, libnetcdf), Cint, (Cint, nc_type, Ptr{Csize_t}), ncid, xtype, sizep))
 end
 
-@checked_call function nc_inq_compound_nfields(ncid::Integer, xtype::Integer, nfieldsp)
-    ccall((:nc_inq_compound_nfields, libnetcdf), Cint, (Cint, nc_type, Ptr{Csize_t}), ncid, xtype, nfieldsp)
+function nc_inq_compound_nfields(ncid::Integer, xtype::Integer, nfieldsp)
+  check(ccall((:nc_inq_compound_nfields, libnetcdf), Cint, (Cint, nc_type, Ptr{Csize_t}), ncid, xtype, nfieldsp))
 end
 
-@checked_call function nc_inq_compound_field(ncid::Integer, xtype::Integer, fieldid::Integer, name, offsetp, field_typeidp, ndimsp, dim_sizesp)
-    ccall((:nc_inq_compound_field, libnetcdf), Cint, (Cint, nc_type, Cint, Ptr{UInt8}, Ptr{Csize_t}, Ptr{nc_type}, Ptr{Cint}, Ptr{Cint}), ncid, xtype, fieldid, name, offsetp, field_typeidp, ndimsp, dim_sizesp)
+function nc_inq_compound_field(ncid::Integer, xtype::Integer, fieldid::Integer, name, offsetp, field_typeidp, ndimsp, dim_sizesp)
+  check(ccall((:nc_inq_compound_field, libnetcdf), Cint, (Cint, nc_type, Cint, Ptr{UInt8}, Ptr{Csize_t}, Ptr{nc_type}, Ptr{Cint}, Ptr{Cint}), ncid, xtype, fieldid, name, offsetp, field_typeidp, ndimsp, dim_sizesp))
 end
 
-@checked_call function nc_inq_compound_fieldname(ncid::Integer, xtype::Integer, fieldid::Integer, name)
-    ccall((:nc_inq_compound_fieldname, libnetcdf), Cint, (Cint, nc_type, Cint, Ptr{UInt8}), ncid, xtype, fieldid, name)
+function nc_inq_compound_fieldname(ncid::Integer, xtype::Integer, fieldid::Integer, name)
+  check(ccall((:nc_inq_compound_fieldname, libnetcdf), Cint, (Cint, nc_type, Cint, Ptr{UInt8}), ncid, xtype, fieldid, name))
 end
 
-@checked_call function nc_inq_compound_fieldindex(ncid::Integer, xtype::Integer, name, fieldidp)
-    ccall((:nc_inq_compound_fieldindex, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{Cint}), ncid, xtype, name, fieldidp)
+function nc_inq_compound_fieldindex(ncid::Integer, xtype::Integer, name, fieldidp)
+  check(ccall((:nc_inq_compound_fieldindex, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{Cint}), ncid, xtype, name, fieldidp))
 end
 
-@checked_call function nc_inq_compound_fieldoffset(ncid::Integer, xtype::Integer, fieldid::Integer, offsetp)
-    ccall((:nc_inq_compound_fieldoffset, libnetcdf), Cint, (Cint, nc_type, Cint, Ptr{Csize_t}), ncid, xtype, fieldid, offsetp)
+function nc_inq_compound_fieldoffset(ncid::Integer, xtype::Integer, fieldid::Integer, offsetp)
+  check(ccall((:nc_inq_compound_fieldoffset, libnetcdf), Cint, (Cint, nc_type, Cint, Ptr{Csize_t}), ncid, xtype, fieldid, offsetp))
 end
 
-@checked_call function nc_inq_compound_fieldtype(ncid::Integer, xtype::Integer, fieldid::Integer, field_typeidp)
-    ccall((:nc_inq_compound_fieldtype, libnetcdf), Cint, (Cint, nc_type, Cint, Ptr{nc_type}), ncid, xtype, fieldid, field_typeidp)
+function nc_inq_compound_fieldtype(ncid::Integer, xtype::Integer, fieldid::Integer, field_typeidp)
+  check(ccall((:nc_inq_compound_fieldtype, libnetcdf), Cint, (Cint, nc_type, Cint, Ptr{nc_type}), ncid, xtype, fieldid, field_typeidp))
 end
 
-@checked_call function nc_inq_compound_fieldndims(ncid::Integer, xtype::Integer, fieldid::Integer, ndimsp)
-    ccall((:nc_inq_compound_fieldndims, libnetcdf), Cint, (Cint, nc_type, Cint, Ptr{Cint}), ncid, xtype, fieldid, ndimsp)
+function nc_inq_compound_fieldndims(ncid::Integer, xtype::Integer, fieldid::Integer, ndimsp)
+  check(ccall((:nc_inq_compound_fieldndims, libnetcdf), Cint, (Cint, nc_type, Cint, Ptr{Cint}), ncid, xtype, fieldid, ndimsp))
 end
 
-@checked_call function nc_inq_compound_fielddim_sizes(ncid::Integer, xtype::Integer, fieldid::Integer, dim_sizes)
-    ccall((:nc_inq_compound_fielddim_sizes, libnetcdf), Cint, (Cint, nc_type, Cint, Ptr{Cint}), ncid, xtype, fieldid, dim_sizes)
+function nc_inq_compound_fielddim_sizes(ncid::Integer, xtype::Integer, fieldid::Integer, dim_sizes)
+  check(ccall((:nc_inq_compound_fielddim_sizes, libnetcdf), Cint, (Cint, nc_type, Cint, Ptr{Cint}), ncid, xtype, fieldid, dim_sizes))
 end
 
-@checked_call function nc_def_vlen(ncid::Integer, name, base_typeid::Integer, xtypep)
-    ccall((:nc_def_vlen, libnetcdf), Cint, (Cint, Ptr{UInt8}, nc_type, Ptr{nc_type}), ncid, name, base_typeid, xtypep)
+function nc_def_vlen(ncid::Integer, name, base_typeid::Integer, xtypep)
+  check(ccall((:nc_def_vlen, libnetcdf), Cint, (Cint, Ptr{UInt8}, nc_type, Ptr{nc_type}), ncid, name, base_typeid, xtypep))
 end
 
-@checked_call function nc_inq_vlen(ncid::Integer, xtype::Integer, name, datum_sizep, base_nc_typep)
-    ccall((:nc_inq_vlen, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{Csize_t}, Ptr{nc_type}), ncid, xtype, name, datum_sizep, base_nc_typep)
+function nc_inq_vlen(ncid::Integer, xtype::Integer, name, datum_sizep, base_nc_typep)
+  check(ccall((:nc_inq_vlen, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{Csize_t}, Ptr{nc_type}), ncid, xtype, name, datum_sizep, base_nc_typep))
 end
 
-@checked_call function nc_free_vlen(vl)
-    ccall((:nc_free_vlen, libnetcdf), Cint, (Ptr{nc_vlen_t},), vl)
+function nc_free_vlen(vl)
+  check(ccall((:nc_free_vlen, libnetcdf), Cint, (Ptr{nc_vlen_t},), vl))
 end
 
-@checked_call function nc_free_vlens(len::Integer, vlens)
-    ccall((:nc_free_vlens, libnetcdf), Cint, (Csize_t, Ptr{nc_vlen_t}), len, vlens)
+function nc_free_vlens(len::Integer, vlens)
+  check(ccall((:nc_free_vlens, libnetcdf), Cint, (Csize_t, Ptr{nc_vlen_t}), len, vlens))
 end
 
-@checked_call function nc_put_vlen_element(ncid::Integer, typeid1::Integer, vlen_element, len::Integer, data)
-    ccall((:nc_put_vlen_element, libnetcdf), Cint, (Cint, Cint, Ptr{Nothing}, Csize_t, Ptr{Nothing}), ncid, typeid1, vlen_element, len, data)
+function nc_put_vlen_element(ncid::Integer, typeid1::Integer, vlen_element, len::Integer, data)
+  check(ccall((:nc_put_vlen_element, libnetcdf), Cint, (Cint, Cint, Ptr{Nothing}, Csize_t, Ptr{Nothing}), ncid, typeid1, vlen_element, len, data))
 end
 
-@checked_call function nc_get_vlen_element(ncid::Integer, typeid1::Integer, vlen_element, len, data)
-    ccall((:nc_get_vlen_element, libnetcdf), Cint, (Cint, Cint, Ptr{Nothing}, Ptr{Csize_t}, Ptr{Nothing}), ncid, typeid1, vlen_element, len, data)
+function nc_get_vlen_element(ncid::Integer, typeid1::Integer, vlen_element, len, data)
+  check(ccall((:nc_get_vlen_element, libnetcdf), Cint, (Cint, Cint, Ptr{Nothing}, Ptr{Csize_t}, Ptr{Nothing}), ncid, typeid1, vlen_element, len, data))
 end
 
-@checked_call function nc_free_string(len::Integer, data)
-    ccall((:nc_free_string, libnetcdf), Cint, (Csize_t, Ptr{Ptr{UInt8}}), len, data)
+function nc_free_string(len::Integer, data)
+  check(ccall((:nc_free_string, libnetcdf), Cint, (Csize_t, Ptr{Ptr{UInt8}}), len, data))
 end
 
-@checked_call function nc_inq_user_type(ncid::Integer, xtype::Integer, name, size, base_nc_typep, nfieldsp, classp)
-    ccall((:nc_inq_user_type, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{Csize_t}, Ptr{nc_type}, Ptr{Csize_t}, Ptr{Cint}), ncid, xtype, name, size, base_nc_typep, nfieldsp, classp)
+function nc_inq_user_type(ncid::Integer, xtype::Integer, name, size, base_nc_typep, nfieldsp, classp)
+  check(ccall((:nc_inq_user_type, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{Csize_t}, Ptr{nc_type}, Ptr{Csize_t}, Ptr{Cint}), ncid, xtype, name, size, base_nc_typep, nfieldsp, classp))
 end
 
-@checked_call function nc_put_att(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
-    ccall((:nc_put_att, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Nothing}), ncid, varid, name, xtype, len, op)
+function nc_put_att(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
+  check(ccall((:nc_put_att, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Nothing}), ncid, varid, name, xtype, len, op))
 end
 
-@checked_call function nc_get_att(ncid::Integer, varid::Integer, name, ip)
-    ccall((:nc_get_att, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Nothing}), ncid, varid, name, ip)
+function nc_get_att(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:nc_get_att, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Nothing}), ncid, varid, name, ip))
 end
 
-@checked_call function nc_def_enum(ncid::Integer, base_typeid::Integer, name, typeidp)
-    ccall((:nc_def_enum, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{nc_type}), ncid, base_typeid, name, typeidp)
+function nc_def_enum(ncid::Integer, base_typeid::Integer, name, typeidp)
+  check(ccall((:nc_def_enum, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{nc_type}), ncid, base_typeid, name, typeidp))
 end
 
-@checked_call function nc_insert_enum(ncid::Integer, xtype::Integer, name, value)
-    ccall((:nc_insert_enum, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{Nothing}), ncid, xtype, name, value)
+function nc_insert_enum(ncid::Integer, xtype::Integer, name, value)
+  check(ccall((:nc_insert_enum, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{Nothing}), ncid, xtype, name, value))
 end
 
-@checked_call function nc_inq_enum(ncid::Integer, xtype::Integer, name, base_nc_typep, base_sizep, num_membersp)
-    ccall((:nc_inq_enum, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{nc_type}, Ptr{Csize_t}, Ptr{Csize_t}), ncid, xtype, name, base_nc_typep, base_sizep, num_membersp)
+function nc_inq_enum(ncid::Integer, xtype::Integer, name, base_nc_typep, base_sizep, num_membersp)
+  check(ccall((:nc_inq_enum, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{nc_type}, Ptr{Csize_t}, Ptr{Csize_t}), ncid, xtype, name, base_nc_typep, base_sizep, num_membersp))
 end
 
-@checked_call function nc_inq_enum_member(ncid::Integer, xtype::Integer, idx::Integer, name, value)
-    ccall((:nc_inq_enum_member, libnetcdf), Cint, (Cint, nc_type, Cint, Ptr{UInt8}, Ptr{Nothing}), ncid, xtype, idx, name, value)
+function nc_inq_enum_member(ncid::Integer, xtype::Integer, idx::Integer, name, value)
+  check(ccall((:nc_inq_enum_member, libnetcdf), Cint, (Cint, nc_type, Cint, Ptr{UInt8}, Ptr{Nothing}), ncid, xtype, idx, name, value))
 end
 
-@checked_call function nc_inq_enum_ident(ncid::Integer, xtype::Integer, value::Clonglong, identifier)
-    ccall((:nc_inq_enum_ident, libnetcdf), Cint, (Cint, nc_type, Clonglong, Ptr{UInt8}), ncid, xtype, value, identifier)
+function nc_inq_enum_ident(ncid::Integer, xtype::Integer, value::Clonglong, identifier)
+  check(ccall((:nc_inq_enum_ident, libnetcdf), Cint, (Cint, nc_type, Clonglong, Ptr{UInt8}), ncid, xtype, value, identifier))
 end
 
-@checked_call function nc_def_opaque(ncid::Integer, size::Integer, name, xtypep)
-    ccall((:nc_def_opaque, libnetcdf), Cint, (Cint, Csize_t, Ptr{UInt8}, Ptr{nc_type}), ncid, size, name, xtypep)
+function nc_def_opaque(ncid::Integer, size::Integer, name, xtypep)
+  check(ccall((:nc_def_opaque, libnetcdf), Cint, (Cint, Csize_t, Ptr{UInt8}, Ptr{nc_type}), ncid, size, name, xtypep))
 end
 
-@checked_call function nc_inq_opaque(ncid::Integer, xtype::Integer, name, sizep)
-    ccall((:nc_inq_opaque, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{Csize_t}), ncid, xtype, name, sizep)
+function nc_inq_opaque(ncid::Integer, xtype::Integer, name, sizep)
+  check(ccall((:nc_inq_opaque, libnetcdf), Cint, (Cint, nc_type, Ptr{UInt8}, Ptr{Csize_t}), ncid, xtype, name, sizep))
 end
 
-@checked_call function nc_put_var(ncid::Integer, varid::Integer, op)
-    ccall((:nc_put_var, libnetcdf), Cint, (Cint, Cint, Ptr{Nothing}), ncid, varid, op)
+function nc_put_var(ncid::Integer, varid::Integer, op)
+  check(ccall((:nc_put_var, libnetcdf), Cint, (Cint, Cint, Ptr{Nothing}), ncid, varid, op))
 end
 
-@checked_call function nc_get_var(ncid::Integer, varid::Integer, ip)
-    ccall((:nc_get_var, libnetcdf), Cint, (Cint, Cint, Ptr{Nothing}), ncid, varid, ip)
+function nc_get_var(ncid::Integer, varid::Integer, ip)
+  check(ccall((:nc_get_var, libnetcdf), Cint, (Cint, Cint, Ptr{Nothing}), ncid, varid, ip))
 end
 
-@checked_call function nc_put_var1(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:nc_put_var1, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Nothing}), ncid, varid, indexp, op)
+function nc_put_var1(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:nc_put_var1, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Nothing}), ncid, varid, indexp, op))
 end
 
-@checked_call function nc_get_var1(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:nc_get_var1, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Nothing}), ncid, varid, indexp, ip)
+function nc_get_var1(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:nc_get_var1, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Nothing}), ncid, varid, indexp, ip))
 end
 
-@checked_call function nc_put_vara(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:nc_put_vara, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Nothing}), ncid, varid, startp, countp, op)
+function nc_put_vara(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:nc_put_vara, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Nothing}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function nc_get_vara(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:nc_get_vara, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Nothing}), ncid, varid, startp, countp, ip)
+function nc_get_vara(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:nc_get_vara, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Nothing}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function nc_put_vars(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:nc_put_vars, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, op)
+function nc_put_vars(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:nc_put_vars, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function nc_get_vars(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:nc_get_vars, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, ip)
+function nc_get_vars(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:nc_get_vars, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function nc_put_varm(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:nc_put_varm, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, imapp, op)
+function nc_put_varm(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:nc_put_varm, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function nc_get_varm(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:nc_get_varm, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, imapp, ip)
+function nc_get_varm(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:nc_get_varm, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function nc_def_var_deflate(ncid::Integer, varid::Integer, shuffle::Integer, deflate::Integer, deflate_level::Integer)
-    ccall((:nc_def_var_deflate, libnetcdf), Cint, (Cint, Cint, Cint, Cint, Cint), ncid, varid, shuffle, deflate, deflate_level)
+function nc_def_var_deflate(ncid::Integer, varid::Integer, shuffle::Integer, deflate::Integer, deflate_level::Integer)
+  check(ccall((:nc_def_var_deflate, libnetcdf), Cint, (Cint, Cint, Cint, Cint, Cint), ncid, varid, shuffle, deflate, deflate_level))
 end
 
-@checked_call function nc_inq_var_deflate(ncid::Integer, varid::Integer, shufflep, deflatep, deflate_levelp)
-    ccall((:nc_inq_var_deflate, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}), ncid, varid, shufflep, deflatep, deflate_levelp)
+function nc_inq_var_deflate(ncid::Integer, varid::Integer, shufflep, deflatep, deflate_levelp)
+  check(ccall((:nc_inq_var_deflate, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}), ncid, varid, shufflep, deflatep, deflate_levelp))
 end
 
-@checked_call function nc_inq_var_szip(ncid::Integer, varid::Integer, options_maskp, pixels_per_blockp)
-    ccall((:nc_inq_var_szip, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}, Ptr{Cint}), ncid, varid, options_maskp, pixels_per_blockp)
+function nc_inq_var_szip(ncid::Integer, varid::Integer, options_maskp, pixels_per_blockp)
+  check(ccall((:nc_inq_var_szip, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}, Ptr{Cint}), ncid, varid, options_maskp, pixels_per_blockp))
 end
 
-@checked_call function nc_def_var_fletcher32(ncid::Integer, varid::Integer, fletcher32::Integer)
-    ccall((:nc_def_var_fletcher32, libnetcdf), Cint, (Cint, Cint, Cint), ncid, varid, fletcher32)
+function nc_def_var_fletcher32(ncid::Integer, varid::Integer, fletcher32::Integer)
+  check(ccall((:nc_def_var_fletcher32, libnetcdf), Cint, (Cint, Cint, Cint), ncid, varid, fletcher32))
 end
 
-@checked_call function nc_inq_var_fletcher32(ncid::Integer, varid::Integer, fletcher32p)
-    ccall((:nc_inq_var_fletcher32, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, varid, fletcher32p)
+function nc_inq_var_fletcher32(ncid::Integer, varid::Integer, fletcher32p)
+  check(ccall((:nc_inq_var_fletcher32, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, varid, fletcher32p))
 end
 
-@checked_call function nc_def_var_chunking(ncid::Integer, varid::Integer, storage::Integer, chunksizesp)
-    ccall((:nc_def_var_chunking, libnetcdf), Cint, (Cint, Cint, Cint, Ptr{Csize_t}), ncid, varid, storage, chunksizesp)
+function nc_def_var_chunking(ncid::Integer, varid::Integer, storage::Integer, chunksizesp)
+  check(ccall((:nc_def_var_chunking, libnetcdf), Cint, (Cint, Cint, Cint, Ptr{Csize_t}), ncid, varid, storage, chunksizesp))
 end
 
-@checked_call function nc_inq_var_chunking(ncid::Integer, varid::Integer, storagep, chunksizesp)
-    ccall((:nc_inq_var_chunking, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}, Ptr{Csize_t}), ncid, varid, storagep, chunksizesp)
+function nc_inq_var_chunking(ncid::Integer, varid::Integer, storagep, chunksizesp)
+  check(ccall((:nc_inq_var_chunking, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}, Ptr{Csize_t}), ncid, varid, storagep, chunksizesp))
 end
 
-@checked_call function nc_def_var_fill(ncid::Integer, varid::Integer, no_fill::Integer, fill_value)
-    ccall((:nc_def_var_fill, libnetcdf), Cint, (Cint, Cint, Cint, Ptr{Nothing}), ncid, varid, no_fill, fill_value)
+function nc_def_var_fill(ncid::Integer, varid::Integer, no_fill::Integer, fill_value)
+  check(ccall((:nc_def_var_fill, libnetcdf), Cint, (Cint, Cint, Cint, Ptr{Nothing}), ncid, varid, no_fill, fill_value))
 end
 
-@checked_call function nc_inq_var_fill(ncid::Integer, varid::Integer, no_fill, fill_valuep)
-    ccall((:nc_inq_var_fill, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}, Ptr{Nothing}), ncid, varid, no_fill, fill_valuep)
+function nc_inq_var_fill(ncid::Integer, varid::Integer, no_fill, fill_valuep)
+  check(ccall((:nc_inq_var_fill, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}, Ptr{Nothing}), ncid, varid, no_fill, fill_valuep))
 end
 
-@checked_call function nc_def_var_endian(ncid::Integer, varid::Integer, endian::Integer)
-    ccall((:nc_def_var_endian, libnetcdf), Cint, (Cint, Cint, Cint), ncid, varid, endian)
+function nc_def_var_endian(ncid::Integer, varid::Integer, endian::Integer)
+  check(ccall((:nc_def_var_endian, libnetcdf), Cint, (Cint, Cint, Cint), ncid, varid, endian))
 end
 
-@checked_call function nc_inq_var_endian(ncid::Integer, varid::Integer, endianp)
-    ccall((:nc_inq_var_endian, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, varid, endianp)
+function nc_inq_var_endian(ncid::Integer, varid::Integer, endianp)
+  check(ccall((:nc_inq_var_endian, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, varid, endianp))
 end
 
-@checked_call function nc_set_fill(ncid::Integer, fillmode::Integer, old_modep)
-    ccall((:nc_set_fill, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, fillmode, old_modep)
+function nc_set_fill(ncid::Integer, fillmode::Integer, old_modep)
+  check(ccall((:nc_set_fill, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, fillmode, old_modep))
 end
 
-@checked_call function nc_set_default_format(format::Integer, old_formatp)
-    ccall((:nc_set_default_format, libnetcdf), Cint, (Cint, Ptr{Cint}), format, old_formatp)
+function nc_set_default_format(format::Integer, old_formatp)
+  check(ccall((:nc_set_default_format, libnetcdf), Cint, (Cint, Ptr{Cint}), format, old_formatp))
 end
 
-@checked_call function nc_set_chunk_cache(size::Integer, nelems::Integer, preemption::Cfloat)
-    ccall((:nc_set_chunk_cache, libnetcdf), Cint, (Csize_t, Csize_t, Cfloat), size, nelems, preemption)
+function nc_set_chunk_cache(size::Integer, nelems::Integer, preemption::Cfloat)
+  check(ccall((:nc_set_chunk_cache, libnetcdf), Cint, (Csize_t, Csize_t, Cfloat), size, nelems, preemption))
 end
 
-@checked_call function nc_get_chunk_cache(sizep, nelemsp, preemptionp)
-    ccall((:nc_get_chunk_cache, libnetcdf), Cint, (Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cfloat}), sizep, nelemsp, preemptionp)
+function nc_get_chunk_cache(sizep, nelemsp, preemptionp)
+  check(ccall((:nc_get_chunk_cache, libnetcdf), Cint, (Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cfloat}), sizep, nelemsp, preemptionp))
 end
 
-@checked_call function nc_set_var_chunk_cache(ncid::Integer, varid::Integer, size::Integer, nelems::Integer, preemption::Cfloat)
-    ccall((:nc_set_var_chunk_cache, libnetcdf), Cint, (Cint, Cint, Csize_t, Csize_t, Cfloat), ncid, varid, size, nelems, preemption)
+function nc_set_var_chunk_cache(ncid::Integer, varid::Integer, size::Integer, nelems::Integer, preemption::Cfloat)
+  check(ccall((:nc_set_var_chunk_cache, libnetcdf), Cint, (Cint, Cint, Csize_t, Csize_t, Cfloat), ncid, varid, size, nelems, preemption))
 end
 
-@checked_call function nc_get_var_chunk_cache(ncid::Integer, varid::Integer, sizep, nelemsp, preemptionp)
-    ccall((:nc_get_var_chunk_cache, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cfloat}), ncid, varid, sizep, nelemsp, preemptionp)
+function nc_get_var_chunk_cache(ncid::Integer, varid::Integer, sizep, nelemsp, preemptionp)
+  check(ccall((:nc_get_var_chunk_cache, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cfloat}), ncid, varid, sizep, nelemsp, preemptionp))
 end
 
-@checked_call function nc_redef(ncid::Integer)
-    ccall((:nc_redef, libnetcdf), Cint, (Cint,), ncid)
+function nc_redef(ncid::Integer)
+  check(ccall((:nc_redef, libnetcdf), Cint, (Cint,), ncid))
 end
 
-@checked_call function nc__enddef(ncid::Integer, h_minfree::Integer, v_align::Integer, v_minfree::Integer, r_align::Integer)
-    ccall((:nc__enddef, libnetcdf), Cint, (Cint, Csize_t, Csize_t, Csize_t, Csize_t), ncid, h_minfree, v_align, v_minfree, r_align)
+function nc__enddef(ncid::Integer, h_minfree::Integer, v_align::Integer, v_minfree::Integer, r_align::Integer)
+  check(ccall((:nc__enddef, libnetcdf), Cint, (Cint, Csize_t, Csize_t, Csize_t, Csize_t), ncid, h_minfree, v_align, v_minfree, r_align))
 end
 
-@checked_call function nc_enddef(ncid::Integer)
-    ccall((:nc_enddef, libnetcdf), Cint, (Cint,), ncid)
+function nc_enddef(ncid::Integer)
+  check(ccall((:nc_enddef, libnetcdf), Cint, (Cint,), ncid))
 end
 
-@checked_call function nc_sync(ncid::Integer)
-    ccall((:nc_sync, libnetcdf), Cint, (Cint,), ncid)
+function nc_sync(ncid::Integer)
+  check(ccall((:nc_sync, libnetcdf), Cint, (Cint,), ncid))
 end
 
-@checked_call function nc_abort(ncid::Integer)
-    ccall((:nc_abort, libnetcdf), Cint, (Cint,), ncid)
+function nc_abort(ncid::Integer)
+  check(ccall((:nc_abort, libnetcdf), Cint, (Cint,), ncid))
 end
 
-@checked_call function nc_close(ncid::Integer)
-    ccall((:nc_close, libnetcdf), Cint, (Cint,), ncid)
+function nc_close(ncid::Integer)
+  check(ccall((:nc_close, libnetcdf), Cint, (Cint,), ncid))
 end
 
-@checked_call function nc_inq(ncid::Integer, ndimsp, nvarsp, nattsp, unlimdimidp)
-    ccall((:nc_inq, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}), ncid, ndimsp, nvarsp, nattsp, unlimdimidp)
+function nc_inq(ncid::Integer, ndimsp, nvarsp, nattsp, unlimdimidp)
+  check(ccall((:nc_inq, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}), ncid, ndimsp, nvarsp, nattsp, unlimdimidp))
 end
 
-@checked_call function nc_inq_ndims(ncid::Integer, ndimsp)
-    ccall((:nc_inq_ndims, libnetcdf), Cint, (Cint, Ptr{Cint}), ncid, ndimsp)
+function nc_inq_ndims(ncid::Integer, ndimsp)
+  check(ccall((:nc_inq_ndims, libnetcdf), Cint, (Cint, Ptr{Cint}), ncid, ndimsp))
 end
 
-@checked_call function nc_inq_nvars(ncid::Integer, nvarsp)
-    ccall((:nc_inq_nvars, libnetcdf), Cint, (Cint, Ptr{Cint}), ncid, nvarsp)
+function nc_inq_nvars(ncid::Integer, nvarsp)
+  check(ccall((:nc_inq_nvars, libnetcdf), Cint, (Cint, Ptr{Cint}), ncid, nvarsp))
 end
 
-@checked_call function nc_inq_natts(ncid::Integer, nattsp)
-    ccall((:nc_inq_natts, libnetcdf), Cint, (Cint, Ptr{Cint}), ncid, nattsp)
+function nc_inq_natts(ncid::Integer, nattsp)
+  check(ccall((:nc_inq_natts, libnetcdf), Cint, (Cint, Ptr{Cint}), ncid, nattsp))
 end
 
-@checked_call function nc_inq_unlimdim(ncid::Integer, unlimdimidp)
-    ccall((:nc_inq_unlimdim, libnetcdf), Cint, (Cint, Ptr{Cint}), ncid, unlimdimidp)
+function nc_inq_unlimdim(ncid::Integer, unlimdimidp)
+  check(ccall((:nc_inq_unlimdim, libnetcdf), Cint, (Cint, Ptr{Cint}), ncid, unlimdimidp))
 end
 
-@checked_call function nc_inq_unlimdims(ncid::Integer, nunlimdimsp, unlimdimidsp)
-    ccall((:nc_inq_unlimdims, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}), ncid, nunlimdimsp, unlimdimidsp)
+function nc_inq_unlimdims(ncid::Integer, nunlimdimsp, unlimdimidsp)
+  check(ccall((:nc_inq_unlimdims, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}), ncid, nunlimdimsp, unlimdimidsp))
 end
 
-@checked_call function nc_inq_format(ncid::Integer, formatp)
-    ccall((:nc_inq_format, libnetcdf), Cint, (Cint, Ptr{Cint}), ncid, formatp)
+function nc_inq_format(ncid::Integer, formatp)
+  check(ccall((:nc_inq_format, libnetcdf), Cint, (Cint, Ptr{Cint}), ncid, formatp))
 end
 
-@checked_call function nc_inq_format_extended(ncid::Integer, formatp, modep)
-    ccall((:nc_inq_format_extended, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}), ncid, formatp, modep)
+function nc_inq_format_extended(ncid::Integer, formatp, modep)
+  check(ccall((:nc_inq_format_extended, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}), ncid, formatp, modep))
 end
 
-@checked_call function nc_def_dim(ncid::Integer, name, len::Integer, idp)
-    ccall((:nc_def_dim, libnetcdf), Cint, (Cint, Ptr{UInt8}, Csize_t, Ptr{Cint}), ncid, name, len, idp)
+function nc_def_dim(ncid::Integer, name, len::Integer, idp)
+  check(ccall((:nc_def_dim, libnetcdf), Cint, (Cint, Ptr{UInt8}, Csize_t, Ptr{Cint}), ncid, name, len, idp))
 end
 
-@checked_call function nc_inq_dimid(ncid::Integer, name, idp)
-    ccall((:nc_inq_dimid, libnetcdf), Cint, (Cint, Ptr{UInt8}, Ptr{Cint}), ncid, name, idp)
+function nc_inq_dimid(ncid::Integer, name, idp)
+  check(ccall((:nc_inq_dimid, libnetcdf), Cint, (Cint, Ptr{UInt8}, Ptr{Cint}), ncid, name, idp))
 end
 
-@checked_call function nc_inq_dim(ncid::Integer, dimid::Integer, name, lenp)
-    ccall((:nc_inq_dim, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Csize_t}), ncid, dimid, name, lenp)
+function nc_inq_dim(ncid::Integer, dimid::Integer, name, lenp)
+  check(ccall((:nc_inq_dim, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Csize_t}), ncid, dimid, name, lenp))
 end
 
-@checked_call function nc_inq_dimname(ncid::Integer, dimid::Integer, name)
-    ccall((:nc_inq_dimname, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, dimid, name)
+function nc_inq_dimname(ncid::Integer, dimid::Integer, name)
+  check(ccall((:nc_inq_dimname, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, dimid, name))
 end
 
-@checked_call function nc_inq_dimlen(ncid::Integer, dimid::Integer, lenp)
-    ccall((:nc_inq_dimlen, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}), ncid, dimid, lenp)
+function nc_inq_dimlen(ncid::Integer, dimid::Integer, lenp)
+  check(ccall((:nc_inq_dimlen, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}), ncid, dimid, lenp))
 end
 
-@checked_call function nc_rename_dim(ncid::Integer, dimid::Integer, name)
-    ccall((:nc_rename_dim, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, dimid, name)
+function nc_rename_dim(ncid::Integer, dimid::Integer, name)
+  check(ccall((:nc_rename_dim, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, dimid, name))
 end
 
-@checked_call function nc_inq_att(ncid::Integer, varid::Integer, name, xtypep, lenp)
-    ccall((:nc_inq_att, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{nc_type}, Ptr{Csize_t}), ncid, varid, name, xtypep, lenp)
+function nc_inq_att(ncid::Integer, varid::Integer, name, xtypep, lenp)
+  check(ccall((:nc_inq_att, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{nc_type}, Ptr{Csize_t}), ncid, varid, name, xtypep, lenp))
 end
 
-@checked_call function nc_inq_attid(ncid::Integer, varid::Integer, name, idp)
-    ccall((:nc_inq_attid, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Cint}), ncid, varid, name, idp)
+function nc_inq_attid(ncid::Integer, varid::Integer, name, idp)
+  check(ccall((:nc_inq_attid, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Cint}), ncid, varid, name, idp))
 end
 
-@checked_call function nc_inq_atttype(ncid::Integer, varid::Integer, name, xtypep)
-    ccall((:nc_inq_atttype, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{nc_type}), ncid, varid, name, xtypep)
+function nc_inq_atttype(ncid::Integer, varid::Integer, name, xtypep)
+  check(ccall((:nc_inq_atttype, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{nc_type}), ncid, varid, name, xtypep))
 end
 
-@checked_call function nc_inq_attlen(ncid::Integer, varid::Integer, name, lenp)
-    ccall((:nc_inq_attlen, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Csize_t}), ncid, varid, name, lenp)
+function nc_inq_attlen(ncid::Integer, varid::Integer, name, lenp)
+  check(ccall((:nc_inq_attlen, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Csize_t}), ncid, varid, name, lenp))
 end
 
-@checked_call function nc_inq_attname(ncid::Integer, varid::Integer, attnum::Integer, name)
-    ccall((:nc_inq_attname, libnetcdf), Cint, (Cint, Cint, Cint, Ptr{UInt8}), ncid, varid, attnum, name)
+function nc_inq_attname(ncid::Integer, varid::Integer, attnum::Integer, name)
+  check(ccall((:nc_inq_attname, libnetcdf), Cint, (Cint, Cint, Cint, Ptr{UInt8}), ncid, varid, attnum, name))
 end
 
-@checked_call function nc_copy_att(ncid_in::Integer, varid_in::Integer, name, ncid_out::Integer, varid_out::Integer)
-    ccall((:nc_copy_att, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Cint, Cint), ncid_in, varid_in, name, ncid_out, varid_out)
+function nc_copy_att(ncid_in::Integer, varid_in::Integer, name, ncid_out::Integer, varid_out::Integer)
+  check(ccall((:nc_copy_att, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Cint, Cint), ncid_in, varid_in, name, ncid_out, varid_out))
 end
 
-@checked_call function nc_rename_att(ncid::Integer, varid::Integer, name, newname)
-    ccall((:nc_rename_att, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{UInt8}), ncid, varid, name, newname)
+function nc_rename_att(ncid::Integer, varid::Integer, name, newname)
+  check(ccall((:nc_rename_att, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{UInt8}), ncid, varid, name, newname))
 end
 
-@checked_call function nc_del_att(ncid::Integer, varid::Integer, name)
-    ccall((:nc_del_att, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, name)
+function nc_del_att(ncid::Integer, varid::Integer, name)
+  check(ccall((:nc_del_att, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, name))
 end
 
-@checked_call function nc_put_att_text(ncid::Integer, varid::Integer, name, len::Integer, op)
-    ccall((:nc_put_att_text, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Csize_t, Ptr{UInt8}), ncid, varid, name, len, op)
+function nc_put_att_text(ncid::Integer, varid::Integer, name, len::Integer, op)
+  check(ccall((:nc_put_att_text, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Csize_t, Ptr{UInt8}), ncid, varid, name, len, op))
 end
 
-@checked_call function nc_get_att_text(ncid::Integer, varid::Integer, name, ip)
-    ccall((:nc_get_att_text, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{UInt8}), ncid, varid, name, ip)
+function nc_get_att_text(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:nc_get_att_text, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{UInt8}), ncid, varid, name, ip))
 end
 
-@checked_call function nc_put_att_string(ncid::Integer, varid::Integer, name, len::Integer, op)
-    ccall((:nc_put_att_string, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Csize_t, Ptr{Ptr{UInt8}}), ncid, varid, name, len, op)
+function nc_put_att_string(ncid::Integer, varid::Integer, name, len::Integer, op)
+  check(ccall((:nc_put_att_string, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Csize_t, Ptr{Ptr{UInt8}}), ncid, varid, name, len, op))
 end
 
-@checked_call function nc_get_att_string(ncid::Integer, varid::Integer, name, ip)
-    ccall((:nc_get_att_string, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Ptr{UInt8}}), ncid, varid, name, ip)
+function nc_get_att_string(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:nc_get_att_string, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Ptr{UInt8}}), ncid, varid, name, ip))
 end
 
-@checked_call function nc_put_att_uchar(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
-    ccall((:nc_put_att_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Cuchar}), ncid, varid, name, xtype, len, op)
+function nc_put_att_uchar(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
+  check(ccall((:nc_put_att_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Cuchar}), ncid, varid, name, xtype, len, op))
 end
 
-@checked_call function nc_get_att_uchar(ncid::Integer, varid::Integer, name, ip)
-    ccall((:nc_get_att_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Cuchar}), ncid, varid, name, ip)
+function nc_get_att_uchar(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:nc_get_att_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Cuchar}), ncid, varid, name, ip))
 end
 
-@checked_call function nc_put_att_schar(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
-    ccall((:nc_put_att_schar, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Int8}), ncid, varid, name, xtype, len, op)
+function nc_put_att_schar(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
+  check(ccall((:nc_put_att_schar, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Int8}), ncid, varid, name, xtype, len, op))
 end
 
-@checked_call function nc_get_att_schar(ncid::Integer, varid::Integer, name, ip)
-    ccall((:nc_get_att_schar, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{UInt8}), ncid, varid, name, ip)
+function nc_get_att_schar(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:nc_get_att_schar, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{UInt8}), ncid, varid, name, ip))
 end
 
-@checked_call function nc_put_att_short(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
-    ccall((:nc_put_att_short, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Int16}), ncid, varid, name, xtype, len, op)
+function nc_put_att_short(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
+  check(ccall((:nc_put_att_short, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Int16}), ncid, varid, name, xtype, len, op))
 end
 
-@checked_call function nc_get_att_short(ncid::Integer, varid::Integer, name, ip)
-    ccall((:nc_get_att_short, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Int16}), ncid, varid, name, ip)
+function nc_get_att_short(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:nc_get_att_short, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Int16}), ncid, varid, name, ip))
 end
 
-@checked_call function nc_put_att_int(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
-    ccall((:nc_put_att_int, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Cint}), ncid, varid, name, xtype, len, op)
+function nc_put_att_int(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
+  check(ccall((:nc_put_att_int, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Cint}), ncid, varid, name, xtype, len, op))
 end
 
-@checked_call function nc_get_att_int(ncid::Integer, varid::Integer, name, ip)
-    ccall((:nc_get_att_int, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Cint}), ncid, varid, name, ip)
+function nc_get_att_int(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:nc_get_att_int, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Cint}), ncid, varid, name, ip))
 end
 
-@checked_call function nc_put_att_long(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
-    ccall((:nc_put_att_long, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Clong}), ncid, varid, name, xtype, len, op)
+function nc_put_att_long(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
+  check(ccall((:nc_put_att_long, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Clong}), ncid, varid, name, xtype, len, op))
 end
 
-@checked_call function nc_get_att_long(ncid::Integer, varid::Integer, name, ip)
-    ccall((:nc_get_att_long, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Clong}), ncid, varid, name, ip)
+function nc_get_att_long(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:nc_get_att_long, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Clong}), ncid, varid, name, ip))
 end
 
-@checked_call function nc_put_att_float(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
-    ccall((:nc_put_att_float, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Cfloat}), ncid, varid, name, xtype, len, op)
+function nc_put_att_float(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
+  check(ccall((:nc_put_att_float, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Cfloat}), ncid, varid, name, xtype, len, op))
 end
 
-@checked_call function nc_get_att_float(ncid::Integer, varid::Integer, name, ip)
-    ccall((:nc_get_att_float, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Cfloat}), ncid, varid, name, ip)
+function nc_get_att_float(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:nc_get_att_float, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Cfloat}), ncid, varid, name, ip))
 end
 
-@checked_call function nc_put_att_double(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
-    ccall((:nc_put_att_double, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Cdouble}), ncid, varid, name, xtype, len, op)
+function nc_put_att_double(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
+  check(ccall((:nc_put_att_double, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Cdouble}), ncid, varid, name, xtype, len, op))
 end
 
-@checked_call function nc_get_att_double(ncid::Integer, varid::Integer, name, ip)
-    ccall((:nc_get_att_double, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Cdouble}), ncid, varid, name, ip)
+function nc_get_att_double(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:nc_get_att_double, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Cdouble}), ncid, varid, name, ip))
 end
 
-@checked_call function nc_put_att_ushort(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
-    ccall((:nc_put_att_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{UInt16}), ncid, varid, name, xtype, len, op)
+function nc_put_att_ushort(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
+  check(ccall((:nc_put_att_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{UInt16}), ncid, varid, name, xtype, len, op))
 end
 
-@checked_call function nc_get_att_ushort(ncid::Integer, varid::Integer, name, ip)
-    ccall((:nc_get_att_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{UInt16}), ncid, varid, name, ip)
+function nc_get_att_ushort(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:nc_get_att_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{UInt16}), ncid, varid, name, ip))
 end
 
-@checked_call function nc_put_att_uint(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
-    ccall((:nc_put_att_uint, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{UInt32}), ncid, varid, name, xtype, len, op)
+function nc_put_att_uint(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
+  check(ccall((:nc_put_att_uint, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{UInt32}), ncid, varid, name, xtype, len, op))
 end
 
-@checked_call function nc_get_att_uint(ncid::Integer, varid::Integer, name, ip)
-    ccall((:nc_get_att_uint, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{UInt32}), ncid, varid, name, ip)
+function nc_get_att_uint(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:nc_get_att_uint, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{UInt32}), ncid, varid, name, ip))
 end
 
-@checked_call function nc_put_att_longlong(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
-    ccall((:nc_put_att_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Clonglong}), ncid, varid, name, xtype, len, op)
+function nc_put_att_longlong(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
+  check(ccall((:nc_put_att_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Clonglong}), ncid, varid, name, xtype, len, op))
 end
 
-@checked_call function nc_get_att_longlong(ncid::Integer, varid::Integer, name, ip)
-    ccall((:nc_get_att_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Clonglong}), ncid, varid, name, ip)
+function nc_get_att_longlong(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:nc_get_att_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Clonglong}), ncid, varid, name, ip))
 end
 
-@checked_call function nc_put_att_ulonglong(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
-    ccall((:nc_put_att_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Culonglong}), ncid, varid, name, xtype, len, op)
+function nc_put_att_ulonglong(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
+  check(ccall((:nc_put_att_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Culonglong}), ncid, varid, name, xtype, len, op))
 end
 
-@checked_call function nc_get_att_ulonglong(ncid::Integer, varid::Integer, name, ip)
-    ccall((:nc_get_att_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Culonglong}), ncid, varid, name, ip)
+function nc_get_att_ulonglong(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:nc_get_att_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Culonglong}), ncid, varid, name, ip))
 end
 
-@checked_call function nc_def_var(ncid::Integer, name, xtype::Integer, ndims::Integer, dimidsp, varidp)
-    ccall((:nc_def_var, libnetcdf), Cint, (Cint, Ptr{UInt8}, nc_type, Cint, Ptr{Cint}, Ptr{Cint}), ncid, name, xtype, ndims, dimidsp, varidp)
+function nc_def_var(ncid::Integer, name, xtype::Integer, ndims::Integer, dimidsp, varidp)
+  check(ccall((:nc_def_var, libnetcdf), Cint, (Cint, Ptr{UInt8}, nc_type, Cint, Ptr{Cint}, Ptr{Cint}), ncid, name, xtype, ndims, dimidsp, varidp))
 end
 
-@checked_call function nc_inq_var(ncid::Integer, varid::Integer, name, xtypep, ndimsp, dimidsp, nattsp)
-    ccall((:nc_inq_var, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{nc_type}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}), ncid, varid, name, xtypep, ndimsp, dimidsp, nattsp)
+function nc_inq_var(ncid::Integer, varid::Integer, name, xtypep, ndimsp, dimidsp, nattsp)
+  check(ccall((:nc_inq_var, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{nc_type}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}), ncid, varid, name, xtypep, ndimsp, dimidsp, nattsp))
 end
 
-@checked_call function nc_inq_varid(ncid::Integer, name, varidp)
-    ccall((:nc_inq_varid, libnetcdf), Cint, (Cint, Ptr{UInt8}, Ptr{Cint}), ncid, name, varidp)
+function nc_inq_varid(ncid::Integer, name, varidp)
+  check(ccall((:nc_inq_varid, libnetcdf), Cint, (Cint, Ptr{UInt8}, Ptr{Cint}), ncid, name, varidp))
 end
 
-@checked_call function nc_inq_varname(ncid::Integer, varid::Integer, name)
-    ccall((:nc_inq_varname, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, name)
+function nc_inq_varname(ncid::Integer, varid::Integer, name)
+  check(ccall((:nc_inq_varname, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, name))
 end
 
-@checked_call function nc_inq_vartype(ncid::Integer, varid::Integer, xtypep)
-    ccall((:nc_inq_vartype, libnetcdf), Cint, (Cint, Cint, Ptr{nc_type}), ncid, varid, xtypep)
+function nc_inq_vartype(ncid::Integer, varid::Integer, xtypep)
+  check(ccall((:nc_inq_vartype, libnetcdf), Cint, (Cint, Cint, Ptr{nc_type}), ncid, varid, xtypep))
 end
 
-@checked_call function nc_inq_varndims(ncid::Integer, varid::Integer, ndimsp)
-    ccall((:nc_inq_varndims, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, varid, ndimsp)
+function nc_inq_varndims(ncid::Integer, varid::Integer, ndimsp)
+  check(ccall((:nc_inq_varndims, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, varid, ndimsp))
 end
 
-@checked_call function nc_inq_vardimid(ncid::Integer, varid::Integer, dimidsp)
-    ccall((:nc_inq_vardimid, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, varid, dimidsp)
+function nc_inq_vardimid(ncid::Integer, varid::Integer, dimidsp)
+  check(ccall((:nc_inq_vardimid, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, varid, dimidsp))
 end
 
-@checked_call function nc_inq_varnatts(ncid::Integer, varid::Integer, nattsp)
-    ccall((:nc_inq_varnatts, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, varid, nattsp)
+function nc_inq_varnatts(ncid::Integer, varid::Integer, nattsp)
+  check(ccall((:nc_inq_varnatts, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, varid, nattsp))
 end
 
-@checked_call function nc_rename_var(ncid::Integer, varid::Integer, name)
-    ccall((:nc_rename_var, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, name)
+function nc_rename_var(ncid::Integer, varid::Integer, name)
+  check(ccall((:nc_rename_var, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, name))
 end
 
-@checked_call function nc_copy_var(ncid_in::Integer, varid::Integer, ncid_out::Integer)
-    ccall((:nc_copy_var, libnetcdf), Cint, (Cint, Cint, Cint), ncid_in, varid, ncid_out)
+function nc_copy_var(ncid_in::Integer, varid::Integer, ncid_out::Integer)
+  check(ccall((:nc_copy_var, libnetcdf), Cint, (Cint, Cint, Cint), ncid_in, varid, ncid_out))
 end
 
-@checked_call function nc_put_var1_text(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:nc_put_var1_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, indexp, op)
+function nc_put_var1_text(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:nc_put_var1_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, indexp, op))
 end
 
-@checked_call function nc_get_var1_text(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:nc_get_var1_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, indexp, ip)
+function nc_get_var1_text(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:nc_get_var1_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, indexp, ip))
 end
 
-@checked_call function nc_put_var1_uchar(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:nc_put_var1_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, indexp, op)
+function nc_put_var1_uchar(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:nc_put_var1_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, indexp, op))
 end
 
-@checked_call function nc_get_var1_uchar(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:nc_get_var1_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, indexp, ip)
+function nc_get_var1_uchar(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:nc_get_var1_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, indexp, ip))
 end
 
-@checked_call function nc_put_var1_schar(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:nc_put_var1_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, indexp, op)
+function nc_put_var1_schar(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:nc_put_var1_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, indexp, op))
 end
 
-@checked_call function nc_get_var1_schar(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:nc_get_var1_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, indexp, ip)
+function nc_get_var1_schar(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:nc_get_var1_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, indexp, ip))
 end
 
-@checked_call function nc_put_var1_short(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:nc_put_var1_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Int16}), ncid, varid, indexp, op)
+function nc_put_var1_short(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:nc_put_var1_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Int16}), ncid, varid, indexp, op))
 end
 
-@checked_call function nc_get_var1_short(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:nc_get_var1_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Int16}), ncid, varid, indexp, ip)
+function nc_get_var1_short(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:nc_get_var1_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Int16}), ncid, varid, indexp, ip))
 end
 
-@checked_call function nc_put_var1_int(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:nc_put_var1_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cint}), ncid, varid, indexp, op)
+function nc_put_var1_int(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:nc_put_var1_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cint}), ncid, varid, indexp, op))
 end
 
-@checked_call function nc_get_var1_int(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:nc_get_var1_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cint}), ncid, varid, indexp, ip)
+function nc_get_var1_int(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:nc_get_var1_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cint}), ncid, varid, indexp, ip))
 end
 
-@checked_call function nc_put_var1_long(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:nc_put_var1_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Clong}), ncid, varid, indexp, op)
+function nc_put_var1_long(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:nc_put_var1_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Clong}), ncid, varid, indexp, op))
 end
 
-@checked_call function nc_get_var1_long(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:nc_get_var1_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Clong}), ncid, varid, indexp, ip)
+function nc_get_var1_long(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:nc_get_var1_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Clong}), ncid, varid, indexp, ip))
 end
 
-@checked_call function nc_put_var1_float(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:nc_put_var1_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cfloat}), ncid, varid, indexp, op)
+function nc_put_var1_float(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:nc_put_var1_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cfloat}), ncid, varid, indexp, op))
 end
 
-@checked_call function nc_get_var1_float(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:nc_get_var1_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cfloat}), ncid, varid, indexp, ip)
+function nc_get_var1_float(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:nc_get_var1_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cfloat}), ncid, varid, indexp, ip))
 end
 
-@checked_call function nc_put_var1_double(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:nc_put_var1_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cdouble}), ncid, varid, indexp, op)
+function nc_put_var1_double(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:nc_put_var1_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cdouble}), ncid, varid, indexp, op))
 end
 
-@checked_call function nc_get_var1_double(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:nc_get_var1_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cdouble}), ncid, varid, indexp, ip)
+function nc_get_var1_double(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:nc_get_var1_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cdouble}), ncid, varid, indexp, ip))
 end
 
-@checked_call function nc_put_var1_ushort(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:nc_put_var1_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt16}), ncid, varid, indexp, op)
+function nc_put_var1_ushort(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:nc_put_var1_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt16}), ncid, varid, indexp, op))
 end
 
-@checked_call function nc_get_var1_ushort(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:nc_get_var1_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt16}), ncid, varid, indexp, ip)
+function nc_get_var1_ushort(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:nc_get_var1_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt16}), ncid, varid, indexp, ip))
 end
 
-@checked_call function nc_put_var1_uint(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:nc_put_var1_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt32}), ncid, varid, indexp, op)
+function nc_put_var1_uint(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:nc_put_var1_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt32}), ncid, varid, indexp, op))
 end
 
-@checked_call function nc_get_var1_uint(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:nc_get_var1_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt32}), ncid, varid, indexp, ip)
+function nc_get_var1_uint(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:nc_get_var1_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{UInt32}), ncid, varid, indexp, ip))
 end
 
-@checked_call function nc_put_var1_longlong(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:nc_put_var1_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Clonglong}), ncid, varid, indexp, op)
+function nc_put_var1_longlong(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:nc_put_var1_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Clonglong}), ncid, varid, indexp, op))
 end
 
-@checked_call function nc_get_var1_longlong(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:nc_get_var1_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Clonglong}), ncid, varid, indexp, ip)
+function nc_get_var1_longlong(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:nc_get_var1_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Clonglong}), ncid, varid, indexp, ip))
 end
 
-@checked_call function nc_put_var1_ulonglong(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:nc_put_var1_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Culonglong}), ncid, varid, indexp, op)
+function nc_put_var1_ulonglong(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:nc_put_var1_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Culonglong}), ncid, varid, indexp, op))
 end
 
-@checked_call function nc_get_var1_ulonglong(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:nc_get_var1_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Culonglong}), ncid, varid, indexp, ip)
+function nc_get_var1_ulonglong(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:nc_get_var1_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Culonglong}), ncid, varid, indexp, ip))
 end
 
-@checked_call function nc_put_var1_string(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:nc_put_var1_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Ptr{UInt8}}), ncid, varid, indexp, op)
+function nc_put_var1_string(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:nc_put_var1_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Ptr{UInt8}}), ncid, varid, indexp, op))
 end
 
-@checked_call function nc_get_var1_string(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:nc_get_var1_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Ptr{UInt8}}), ncid, varid, indexp, ip)
+function nc_get_var1_string(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:nc_get_var1_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Ptr{UInt8}}), ncid, varid, indexp, ip))
 end
 
-@checked_call function nc_put_vara_text(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:nc_put_vara_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, startp, countp, op)
+function nc_put_vara_text(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:nc_put_vara_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function nc_get_vara_text(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:nc_get_vara_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, startp, countp, ip)
+function nc_get_vara_text(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:nc_get_vara_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function nc_put_vara_uchar(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:nc_put_vara_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, startp, countp, op)
+function nc_put_vara_uchar(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:nc_put_vara_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function nc_get_vara_uchar(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:nc_get_vara_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, startp, countp, ip)
+function nc_get_vara_uchar(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:nc_get_vara_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function nc_put_vara_schar(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:nc_put_vara_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, startp, countp, op)
+function nc_put_vara_schar(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:nc_put_vara_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function nc_get_vara_schar(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:nc_get_vara_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, startp, countp, ip)
+function nc_get_vara_schar(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:nc_get_vara_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt8}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function nc_put_vara_short(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:nc_put_vara_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Int16}), ncid, varid, startp, countp, op)
+function nc_put_vara_short(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:nc_put_vara_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Int16}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function nc_get_vara_short(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:nc_get_vara_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Int16}), ncid, varid, startp, countp, ip)
+function nc_get_vara_short(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:nc_get_vara_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Int16}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function nc_put_vara_int(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:nc_put_vara_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cint}), ncid, varid, startp, countp, op)
+function nc_put_vara_int(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:nc_put_vara_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cint}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function nc_get_vara_int(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:nc_get_vara_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cint}), ncid, varid, startp, countp, ip)
+function nc_get_vara_int(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:nc_get_vara_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cint}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function nc_put_vara_long(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:nc_put_vara_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Clong}), ncid, varid, startp, countp, op)
+function nc_put_vara_long(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:nc_put_vara_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Clong}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function nc_get_vara_long(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:nc_get_vara_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Clong}), ncid, varid, startp, countp, ip)
+function nc_get_vara_long(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:nc_get_vara_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Clong}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function nc_put_vara_float(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:nc_put_vara_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cfloat}), ncid, varid, startp, countp, op)
+function nc_put_vara_float(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:nc_put_vara_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cfloat}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function nc_get_vara_float(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:nc_get_vara_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cfloat}), ncid, varid, startp, countp, ip)
+function nc_get_vara_float(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:nc_get_vara_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cfloat}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function nc_put_vara_double(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:nc_put_vara_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cdouble}), ncid, varid, startp, countp, op)
+function nc_put_vara_double(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:nc_put_vara_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cdouble}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function nc_get_vara_double(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:nc_get_vara_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cdouble}), ncid, varid, startp, countp, ip)
+function nc_get_vara_double(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:nc_get_vara_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cdouble}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function nc_put_vara_ushort(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:nc_put_vara_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt16}), ncid, varid, startp, countp, op)
+function nc_put_vara_ushort(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:nc_put_vara_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt16}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function nc_get_vara_ushort(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:nc_get_vara_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt16}), ncid, varid, startp, countp, ip)
+function nc_get_vara_ushort(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:nc_get_vara_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt16}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function nc_put_vara_uint(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:nc_put_vara_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt32}), ncid, varid, startp, countp, op)
+function nc_put_vara_uint(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:nc_put_vara_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt32}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function nc_get_vara_uint(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:nc_get_vara_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt32}), ncid, varid, startp, countp, ip)
+function nc_get_vara_uint(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:nc_get_vara_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{UInt32}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function nc_put_vara_longlong(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:nc_put_vara_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Clonglong}), ncid, varid, startp, countp, op)
+function nc_put_vara_longlong(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:nc_put_vara_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Clonglong}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function nc_get_vara_longlong(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:nc_get_vara_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Clonglong}), ncid, varid, startp, countp, ip)
+function nc_get_vara_longlong(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:nc_get_vara_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Clonglong}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function nc_put_vara_ulonglong(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:nc_put_vara_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Culonglong}), ncid, varid, startp, countp, op)
+function nc_put_vara_ulonglong(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:nc_put_vara_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Culonglong}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function nc_get_vara_ulonglong(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:nc_get_vara_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Culonglong}), ncid, varid, startp, countp, ip)
+function nc_get_vara_ulonglong(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:nc_get_vara_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Culonglong}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function nc_put_vara_string(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:nc_put_vara_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Ptr{UInt8}}), ncid, varid, startp, countp, op)
+function nc_put_vara_string(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:nc_put_vara_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Ptr{UInt8}}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function nc_get_vara_string(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:nc_get_vara_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Ptr{UInt8}}), ncid, varid, startp, countp, ip)
+function nc_get_vara_string(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:nc_get_vara_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Ptr{UInt8}}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function nc_put_vars_text(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:nc_put_vars_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, op)
+function nc_put_vars_text(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:nc_put_vars_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function nc_get_vars_text(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:nc_get_vars_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, ip)
+function nc_get_vars_text(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:nc_get_vars_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function nc_put_vars_uchar(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:nc_put_vars_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, op)
+function nc_put_vars_uchar(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:nc_put_vars_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function nc_get_vars_uchar(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:nc_get_vars_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, ip)
+function nc_get_vars_uchar(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:nc_get_vars_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function nc_put_vars_schar(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:nc_put_vars_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, op)
+function nc_put_vars_schar(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:nc_put_vars_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function nc_get_vars_schar(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:nc_get_vars_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, ip)
+function nc_get_vars_schar(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:nc_get_vars_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function nc_put_vars_short(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:nc_put_vars_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Int16}), ncid, varid, startp, countp, stridep, op)
+function nc_put_vars_short(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:nc_put_vars_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Int16}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function nc_get_vars_short(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:nc_get_vars_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Int16}), ncid, varid, startp, countp, stridep, ip)
+function nc_get_vars_short(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:nc_get_vars_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Int16}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function nc_put_vars_int(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:nc_put_vars_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cint}), ncid, varid, startp, countp, stridep, op)
+function nc_put_vars_int(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:nc_put_vars_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cint}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function nc_get_vars_int(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:nc_get_vars_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cint}), ncid, varid, startp, countp, stridep, ip)
+function nc_get_vars_int(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:nc_get_vars_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cint}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function nc_put_vars_long(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:nc_put_vars_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Clong}), ncid, varid, startp, countp, stridep, op)
+function nc_put_vars_long(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:nc_put_vars_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Clong}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function nc_get_vars_long(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:nc_get_vars_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Clong}), ncid, varid, startp, countp, stridep, ip)
+function nc_get_vars_long(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:nc_get_vars_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Clong}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function nc_put_vars_float(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:nc_put_vars_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cfloat}), ncid, varid, startp, countp, stridep, op)
+function nc_put_vars_float(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:nc_put_vars_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cfloat}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function nc_get_vars_float(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:nc_get_vars_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cfloat}), ncid, varid, startp, countp, stridep, ip)
+function nc_get_vars_float(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:nc_get_vars_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cfloat}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function nc_put_vars_double(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:nc_put_vars_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cdouble}), ncid, varid, startp, countp, stridep, op)
+function nc_put_vars_double(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:nc_put_vars_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cdouble}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function nc_get_vars_double(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:nc_get_vars_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cdouble}), ncid, varid, startp, countp, stridep, ip)
+function nc_get_vars_double(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:nc_get_vars_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cdouble}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function nc_put_vars_ushort(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:nc_put_vars_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt16}), ncid, varid, startp, countp, stridep, op)
+function nc_put_vars_ushort(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:nc_put_vars_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt16}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function nc_get_vars_ushort(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:nc_get_vars_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt16}), ncid, varid, startp, countp, stridep, ip)
+function nc_get_vars_ushort(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:nc_get_vars_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt16}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function nc_put_vars_uint(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:nc_put_vars_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt32}), ncid, varid, startp, countp, stridep, op)
+function nc_put_vars_uint(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:nc_put_vars_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt32}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function nc_get_vars_uint(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:nc_get_vars_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt32}), ncid, varid, startp, countp, stridep, ip)
+function nc_get_vars_uint(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:nc_get_vars_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{UInt32}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function nc_put_vars_longlong(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:nc_put_vars_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Clonglong}), ncid, varid, startp, countp, stridep, op)
+function nc_put_vars_longlong(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:nc_put_vars_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Clonglong}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function nc_get_vars_longlong(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:nc_get_vars_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Clonglong}), ncid, varid, startp, countp, stridep, ip)
+function nc_get_vars_longlong(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:nc_get_vars_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Clonglong}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function nc_put_vars_ulonglong(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:nc_put_vars_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Culonglong}), ncid, varid, startp, countp, stridep, op)
+function nc_put_vars_ulonglong(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:nc_put_vars_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Culonglong}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function nc_get_vars_ulonglong(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:nc_get_vars_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Culonglong}), ncid, varid, startp, countp, stridep, ip)
+function nc_get_vars_ulonglong(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:nc_get_vars_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Culonglong}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function nc_put_vars_string(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:nc_put_vars_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Ptr{UInt8}}), ncid, varid, startp, countp, stridep, op)
+function nc_put_vars_string(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:nc_put_vars_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Ptr{UInt8}}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function nc_get_vars_string(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:nc_get_vars_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Ptr{UInt8}}), ncid, varid, startp, countp, stridep, ip)
+function nc_get_vars_string(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:nc_get_vars_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Ptr{UInt8}}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function nc_put_varm_text(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:nc_put_varm_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, imapp, op)
+function nc_put_varm_text(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:nc_put_varm_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function nc_get_varm_text(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:nc_get_varm_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, imapp, ip)
+function nc_get_varm_text(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:nc_get_varm_text, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function nc_put_varm_uchar(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:nc_put_varm_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, imapp, op)
+function nc_put_varm_uchar(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:nc_put_varm_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function nc_get_varm_uchar(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:nc_get_varm_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, imapp, ip)
+function nc_get_varm_uchar(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:nc_get_varm_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function nc_put_varm_schar(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:nc_put_varm_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, imapp, op)
+function nc_put_varm_schar(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:nc_put_varm_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function nc_get_varm_schar(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:nc_get_varm_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, imapp, ip)
+function nc_get_varm_schar(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:nc_get_varm_schar, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt8}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function nc_put_varm_short(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:nc_put_varm_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Int16}), ncid, varid, startp, countp, stridep, imapp, op)
+function nc_put_varm_short(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:nc_put_varm_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Int16}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function nc_get_varm_short(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:nc_get_varm_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Int16}), ncid, varid, startp, countp, stridep, imapp, ip)
+function nc_get_varm_short(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:nc_get_varm_short, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Int16}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function nc_put_varm_int(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:nc_put_varm_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cint}), ncid, varid, startp, countp, stridep, imapp, op)
+function nc_put_varm_int(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:nc_put_varm_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cint}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function nc_get_varm_int(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:nc_get_varm_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cint}), ncid, varid, startp, countp, stridep, imapp, ip)
+function nc_get_varm_int(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:nc_get_varm_int, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cint}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function nc_put_varm_long(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:nc_put_varm_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Clong}), ncid, varid, startp, countp, stridep, imapp, op)
+function nc_put_varm_long(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:nc_put_varm_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Clong}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function nc_get_varm_long(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:nc_get_varm_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Clong}), ncid, varid, startp, countp, stridep, imapp, ip)
+function nc_get_varm_long(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:nc_get_varm_long, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Clong}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function nc_put_varm_float(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:nc_put_varm_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cfloat}), ncid, varid, startp, countp, stridep, imapp, op)
+function nc_put_varm_float(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:nc_put_varm_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cfloat}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function nc_get_varm_float(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:nc_get_varm_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cfloat}), ncid, varid, startp, countp, stridep, imapp, ip)
+function nc_get_varm_float(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:nc_get_varm_float, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cfloat}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function nc_put_varm_double(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:nc_put_varm_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cdouble}), ncid, varid, startp, countp, stridep, imapp, op)
+function nc_put_varm_double(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:nc_put_varm_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cdouble}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function nc_get_varm_double(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:nc_get_varm_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cdouble}), ncid, varid, startp, countp, stridep, imapp, ip)
+function nc_get_varm_double(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:nc_get_varm_double, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cdouble}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function nc_put_varm_ushort(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:nc_put_varm_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt16}), ncid, varid, startp, countp, stridep, imapp, op)
+function nc_put_varm_ushort(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:nc_put_varm_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt16}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function nc_get_varm_ushort(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:nc_get_varm_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt16}), ncid, varid, startp, countp, stridep, imapp, ip)
+function nc_get_varm_ushort(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:nc_get_varm_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt16}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function nc_put_varm_uint(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:nc_put_varm_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt32}), ncid, varid, startp, countp, stridep, imapp, op)
+function nc_put_varm_uint(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:nc_put_varm_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt32}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function nc_get_varm_uint(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:nc_get_varm_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt32}), ncid, varid, startp, countp, stridep, imapp, ip)
+function nc_get_varm_uint(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:nc_get_varm_uint, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{UInt32}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function nc_put_varm_longlong(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:nc_put_varm_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Clonglong}), ncid, varid, startp, countp, stridep, imapp, op)
+function nc_put_varm_longlong(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:nc_put_varm_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Clonglong}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function nc_get_varm_longlong(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:nc_get_varm_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Clonglong}), ncid, varid, startp, countp, stridep, imapp, ip)
+function nc_get_varm_longlong(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:nc_get_varm_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Clonglong}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function nc_put_varm_ulonglong(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:nc_put_varm_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Culonglong}), ncid, varid, startp, countp, stridep, imapp, op)
+function nc_put_varm_ulonglong(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:nc_put_varm_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Culonglong}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function nc_get_varm_ulonglong(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:nc_get_varm_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Culonglong}), ncid, varid, startp, countp, stridep, imapp, ip)
+function nc_get_varm_ulonglong(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:nc_get_varm_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Culonglong}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function nc_put_varm_string(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:nc_put_varm_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Ptr{UInt8}}), ncid, varid, startp, countp, stridep, imapp, op)
+function nc_put_varm_string(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:nc_put_varm_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Ptr{UInt8}}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function nc_get_varm_string(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:nc_get_varm_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Ptr{UInt8}}), ncid, varid, startp, countp, stridep, imapp, ip)
+function nc_get_varm_string(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:nc_get_varm_string, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Ptr{UInt8}}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function nc_put_var_text(ncid::Integer, varid::Integer, op)
-    ccall((:nc_put_var_text, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, op)
+function nc_put_var_text(ncid::Integer, varid::Integer, op)
+  check(ccall((:nc_put_var_text, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, op))
 end
 
-@checked_call function nc_get_var_text(ncid::Integer, varid::Integer, ip)
-    ccall((:nc_get_var_text, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, ip)
+function nc_get_var_text(ncid::Integer, varid::Integer, ip)
+  check(ccall((:nc_get_var_text, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, ip))
 end
 
-@checked_call function nc_put_var_uchar(ncid::Integer, varid::Integer, op)
-    ccall((:nc_put_var_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Cuchar}), ncid, varid, op)
+function nc_put_var_uchar(ncid::Integer, varid::Integer, op)
+  check(ccall((:nc_put_var_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Cuchar}), ncid, varid, op))
 end
 
-@checked_call function nc_get_var_uchar(ncid::Integer, varid::Integer, ip)
-    ccall((:nc_get_var_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Cuchar}), ncid, varid, ip)
+function nc_get_var_uchar(ncid::Integer, varid::Integer, ip)
+  check(ccall((:nc_get_var_uchar, libnetcdf), Cint, (Cint, Cint, Ptr{Cuchar}), ncid, varid, ip))
 end
 
-@checked_call function nc_put_var_schar(ncid::Integer, varid::Integer, op)
-    ccall((:nc_put_var_schar, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, op)
+function nc_put_var_schar(ncid::Integer, varid::Integer, op)
+  check(ccall((:nc_put_var_schar, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, op))
 end
 
-@checked_call function nc_get_var_schar(ncid::Integer, varid::Integer, ip)
-    ccall((:nc_get_var_schar, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, ip)
+function nc_get_var_schar(ncid::Integer, varid::Integer, ip)
+  check(ccall((:nc_get_var_schar, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, ip))
 end
 
-@checked_call function nc_put_var_short(ncid::Integer, varid::Integer, op)
-    ccall((:nc_put_var_short, libnetcdf), Cint, (Cint, Cint, Ptr{Int16}), ncid, varid, op)
+function nc_put_var_short(ncid::Integer, varid::Integer, op)
+  check(ccall((:nc_put_var_short, libnetcdf), Cint, (Cint, Cint, Ptr{Int16}), ncid, varid, op))
 end
 
-@checked_call function nc_get_var_short(ncid::Integer, varid::Integer, ip)
-    ccall((:nc_get_var_short, libnetcdf), Cint, (Cint, Cint, Ptr{Int16}), ncid, varid, ip)
+function nc_get_var_short(ncid::Integer, varid::Integer, ip)
+  check(ccall((:nc_get_var_short, libnetcdf), Cint, (Cint, Cint, Ptr{Int16}), ncid, varid, ip))
 end
 
-@checked_call function nc_put_var_int(ncid::Integer, varid::Integer, op)
-    ccall((:nc_put_var_int, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, varid, op)
+function nc_put_var_int(ncid::Integer, varid::Integer, op)
+  check(ccall((:nc_put_var_int, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, varid, op))
 end
 
-@checked_call function nc_get_var_int(ncid::Integer, varid::Integer, ip)
-    ccall((:nc_get_var_int, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, varid, ip)
+function nc_get_var_int(ncid::Integer, varid::Integer, ip)
+  check(ccall((:nc_get_var_int, libnetcdf), Cint, (Cint, Cint, Ptr{Cint}), ncid, varid, ip))
 end
 
-@checked_call function nc_put_var_long(ncid::Integer, varid::Integer, op)
-    ccall((:nc_put_var_long, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}), ncid, varid, op)
+function nc_put_var_long(ncid::Integer, varid::Integer, op)
+  check(ccall((:nc_put_var_long, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}), ncid, varid, op))
 end
 
-@checked_call function nc_get_var_long(ncid::Integer, varid::Integer, ip)
-    ccall((:nc_get_var_long, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}), ncid, varid, ip)
+function nc_get_var_long(ncid::Integer, varid::Integer, ip)
+  check(ccall((:nc_get_var_long, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}), ncid, varid, ip))
 end
 
-@checked_call function nc_put_var_float(ncid::Integer, varid::Integer, op)
-    ccall((:nc_put_var_float, libnetcdf), Cint, (Cint, Cint, Ptr{Cfloat}), ncid, varid, op)
+function nc_put_var_float(ncid::Integer, varid::Integer, op)
+  check(ccall((:nc_put_var_float, libnetcdf), Cint, (Cint, Cint, Ptr{Cfloat}), ncid, varid, op))
 end
 
-@checked_call function nc_get_var_float(ncid::Integer, varid::Integer, ip)
-    ccall((:nc_get_var_float, libnetcdf), Cint, (Cint, Cint, Ptr{Cfloat}), ncid, varid, ip)
+function nc_get_var_float(ncid::Integer, varid::Integer, ip)
+  check(ccall((:nc_get_var_float, libnetcdf), Cint, (Cint, Cint, Ptr{Cfloat}), ncid, varid, ip))
 end
 
-@checked_call function nc_put_var_double(ncid::Integer, varid::Integer, op)
-    ccall((:nc_put_var_double, libnetcdf), Cint, (Cint, Cint, Ptr{Cdouble}), ncid, varid, op)
+function nc_put_var_double(ncid::Integer, varid::Integer, op)
+  check(ccall((:nc_put_var_double, libnetcdf), Cint, (Cint, Cint, Ptr{Cdouble}), ncid, varid, op))
 end
 
-@checked_call function nc_get_var_double(ncid::Integer, varid::Integer, ip)
-    ccall((:nc_get_var_double, libnetcdf), Cint, (Cint, Cint, Ptr{Cdouble}), ncid, varid, ip)
+function nc_get_var_double(ncid::Integer, varid::Integer, ip)
+  check(ccall((:nc_get_var_double, libnetcdf), Cint, (Cint, Cint, Ptr{Cdouble}), ncid, varid, ip))
 end
 
-@checked_call function nc_put_var_ushort(ncid::Integer, varid::Integer, op)
-    ccall((:nc_put_var_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{UInt16}), ncid, varid, op)
+function nc_put_var_ushort(ncid::Integer, varid::Integer, op)
+  check(ccall((:nc_put_var_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{UInt16}), ncid, varid, op))
 end
 
-@checked_call function nc_get_var_ushort(ncid::Integer, varid::Integer, ip)
-    ccall((:nc_get_var_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{UInt16}), ncid, varid, ip)
+function nc_get_var_ushort(ncid::Integer, varid::Integer, ip)
+  check(ccall((:nc_get_var_ushort, libnetcdf), Cint, (Cint, Cint, Ptr{UInt16}), ncid, varid, ip))
 end
 
-@checked_call function nc_put_var_uint(ncid::Integer, varid::Integer, op)
-    ccall((:nc_put_var_uint, libnetcdf), Cint, (Cint, Cint, Ptr{UInt32}), ncid, varid, op)
+function nc_put_var_uint(ncid::Integer, varid::Integer, op)
+  check(ccall((:nc_put_var_uint, libnetcdf), Cint, (Cint, Cint, Ptr{UInt32}), ncid, varid, op))
 end
 
-@checked_call function nc_get_var_uint(ncid::Integer, varid::Integer, ip)
-    ccall((:nc_get_var_uint, libnetcdf), Cint, (Cint, Cint, Ptr{UInt32}), ncid, varid, ip)
+function nc_get_var_uint(ncid::Integer, varid::Integer, ip)
+  check(ccall((:nc_get_var_uint, libnetcdf), Cint, (Cint, Cint, Ptr{UInt32}), ncid, varid, ip))
 end
 
-@checked_call function nc_put_var_longlong(ncid::Integer, varid::Integer, op)
-    ccall((:nc_put_var_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Clonglong}), ncid, varid, op)
+function nc_put_var_longlong(ncid::Integer, varid::Integer, op)
+  check(ccall((:nc_put_var_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Clonglong}), ncid, varid, op))
 end
 
-@checked_call function nc_get_var_longlong(ncid::Integer, varid::Integer, ip)
-    ccall((:nc_get_var_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Clonglong}), ncid, varid, ip)
+function nc_get_var_longlong(ncid::Integer, varid::Integer, ip)
+  check(ccall((:nc_get_var_longlong, libnetcdf), Cint, (Cint, Cint, Ptr{Clonglong}), ncid, varid, ip))
 end
 
-@checked_call function nc_put_var_ulonglong(ncid::Integer, varid::Integer, op)
-    ccall((:nc_put_var_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Culonglong}), ncid, varid, op)
+function nc_put_var_ulonglong(ncid::Integer, varid::Integer, op)
+  check(ccall((:nc_put_var_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Culonglong}), ncid, varid, op))
 end
 
-@checked_call function nc_get_var_ulonglong(ncid::Integer, varid::Integer, ip)
-    ccall((:nc_get_var_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Culonglong}), ncid, varid, ip)
+function nc_get_var_ulonglong(ncid::Integer, varid::Integer, ip)
+  check(ccall((:nc_get_var_ulonglong, libnetcdf), Cint, (Cint, Cint, Ptr{Culonglong}), ncid, varid, ip))
 end
 
-@checked_call function nc_put_var_string(ncid::Integer, varid::Integer, op)
-    ccall((:nc_put_var_string, libnetcdf), Cint, (Cint, Cint, Ptr{Ptr{UInt8}}), ncid, varid, op)
+function nc_put_var_string(ncid::Integer, varid::Integer, op)
+  check(ccall((:nc_put_var_string, libnetcdf), Cint, (Cint, Cint, Ptr{Ptr{UInt8}}), ncid, varid, op))
 end
 
-@checked_call function nc_get_var_string(ncid::Integer, varid::Integer, ip)
-    ccall((:nc_get_var_string, libnetcdf), Cint, (Cint, Cint, Ptr{Ptr{UInt8}}), ncid, varid, ip)
+function nc_get_var_string(ncid::Integer, varid::Integer, ip)
+  check(ccall((:nc_get_var_string, libnetcdf), Cint, (Cint, Cint, Ptr{Ptr{UInt8}}), ncid, varid, ip))
 end
 
-@checked_call function nc_put_att_ubyte(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
-    ccall((:nc_put_att_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Cuchar}), ncid, varid, name, xtype, len, op)
+function nc_put_att_ubyte(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
+  check(ccall((:nc_put_att_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Csize_t, Ptr{Cuchar}), ncid, varid, name, xtype, len, op))
 end
 
-@checked_call function nc_get_att_ubyte(ncid::Integer, varid::Integer, name, ip)
-    ccall((:nc_get_att_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Cuchar}), ncid, varid, name, ip)
+function nc_get_att_ubyte(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:nc_get_att_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Cuchar}), ncid, varid, name, ip))
 end
 
-@checked_call function nc_put_var1_ubyte(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:nc_put_var1_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, indexp, op)
+function nc_put_var1_ubyte(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:nc_put_var1_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, indexp, op))
 end
 
-@checked_call function nc_get_var1_ubyte(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:nc_get_var1_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, indexp, ip)
+function nc_get_var1_ubyte(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:nc_get_var1_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, indexp, ip))
 end
 
-@checked_call function nc_put_vara_ubyte(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:nc_put_vara_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, startp, countp, op)
+function nc_put_vara_ubyte(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:nc_put_vara_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function nc_get_vara_ubyte(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:nc_get_vara_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, startp, countp, ip)
+function nc_get_vara_ubyte(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:nc_get_vara_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cuchar}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function nc_put_vars_ubyte(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:nc_put_vars_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, op)
+function nc_put_vars_ubyte(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:nc_put_vars_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function nc_get_vars_ubyte(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:nc_get_vars_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, ip)
+function nc_get_vars_ubyte(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:nc_get_vars_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function nc_put_varm_ubyte(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:nc_put_varm_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, imapp, op)
+function nc_put_varm_ubyte(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:nc_put_varm_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function nc_get_varm_ubyte(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:nc_get_varm_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, imapp, ip)
+function nc_get_varm_ubyte(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:nc_get_varm_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Csize_t}, Ptr{Csize_t}, Ptr{Cptrdiff_t}, Ptr{Cptrdiff_t}, Ptr{Cuchar}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function nc_put_var_ubyte(ncid::Integer, varid::Integer, op)
-    ccall((:nc_put_var_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Cuchar}), ncid, varid, op)
+function nc_put_var_ubyte(ncid::Integer, varid::Integer, op)
+  check(ccall((:nc_put_var_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Cuchar}), ncid, varid, op))
 end
 
-@checked_call function nc_get_var_ubyte(ncid::Integer, varid::Integer, ip)
-    ccall((:nc_get_var_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Cuchar}), ncid, varid, ip)
+function nc_get_var_ubyte(ncid::Integer, varid::Integer, ip)
+  check(ccall((:nc_get_var_ubyte, libnetcdf), Cint, (Cint, Cint, Ptr{Cuchar}), ncid, varid, ip))
 end
 
-@checked_call function nc_show_metadata(ncid::Integer)
-    ccall((:nc_show_metadata, libnetcdf), Cint, (Cint,), ncid)
+function nc_show_metadata(ncid::Integer)
+  check(ccall((:nc_show_metadata, libnetcdf), Cint, (Cint,), ncid))
 end
 
-@checked_call function nc__create_mp(path, cmode::Integer, initialsz::Integer, basepe::Integer, chunksizehintp, ncidp)
-    ccall((:nc__create_mp, libnetcdf), Cint, (Ptr{UInt8}, Cint, Csize_t, Cint, Ptr{Csize_t}, Ptr{Cint}), path, cmode, initialsz, basepe, chunksizehintp, ncidp)
+function nc__create_mp(path, cmode::Integer, initialsz::Integer, basepe::Integer, chunksizehintp, ncidp)
+  check(ccall((:nc__create_mp, libnetcdf), Cint, (Ptr{UInt8}, Cint, Csize_t, Cint, Ptr{Csize_t}, Ptr{Cint}), path, cmode, initialsz, basepe, chunksizehintp, ncidp))
 end
 
-@checked_call function nc__open_mp(path, mode::Integer, basepe::Integer, chunksizehintp, ncidp)
-    ccall((:nc__open_mp, libnetcdf), Cint, (Ptr{UInt8}, Cint, Cint, Ptr{Csize_t}, Ptr{Cint}), path, mode, basepe, chunksizehintp, ncidp)
+function nc__open_mp(path, mode::Integer, basepe::Integer, chunksizehintp, ncidp)
+  check(ccall((:nc__open_mp, libnetcdf), Cint, (Ptr{UInt8}, Cint, Cint, Ptr{Csize_t}, Ptr{Cint}), path, mode, basepe, chunksizehintp, ncidp))
 end
 
-@checked_call function nc_delete(path)
-    ccall((:nc_delete, libnetcdf), Cint, (Ptr{UInt8},), path)
+function nc_delete(path)
+  check(ccall((:nc_delete, libnetcdf), Cint, (Ptr{UInt8},), path))
 end
 
-@checked_call function nc_delete_mp(path, basepe::Integer)
-    ccall((:nc_delete_mp, libnetcdf), Cint, (Ptr{UInt8}, Cint), path, basepe)
+function nc_delete_mp(path, basepe::Integer)
+  check(ccall((:nc_delete_mp, libnetcdf), Cint, (Ptr{UInt8}, Cint), path, basepe))
 end
 
-@checked_call function nc_set_base_pe(ncid::Integer, pe::Integer)
-    ccall((:nc_set_base_pe, libnetcdf), Cint, (Cint, Cint), ncid, pe)
+function nc_set_base_pe(ncid::Integer, pe::Integer)
+  check(ccall((:nc_set_base_pe, libnetcdf), Cint, (Cint, Cint), ncid, pe))
 end
 
-@checked_call function nc_inq_base_pe(ncid::Integer, pe)
-    ccall((:nc_inq_base_pe, libnetcdf), Cint, (Cint, Ptr{Cint}), ncid, pe)
+function nc_inq_base_pe(ncid::Integer, pe)
+  check(ccall((:nc_inq_base_pe, libnetcdf), Cint, (Cint, Ptr{Cint}), ncid, pe))
 end
 
-@checked_call function nctypelen(datatype::Integer)
-    ccall((:nctypelen, libnetcdf), Cint, (nc_type,), datatype)
+function nctypelen(datatype::Integer)
+  check(ccall((:nctypelen, libnetcdf), Cint, (nc_type,), datatype))
 end
 
-@checked_call function nccreate(path, cmode::Integer)
-    ccall((:nccreate, libnetcdf), Cint, (Ptr{UInt8}, Cint), path, cmode)
+function nccreate(path, cmode::Integer)
+  check(ccall((:nccreate, libnetcdf), Cint, (Ptr{UInt8}, Cint), path, cmode))
 end
 
-@checked_call function ncopen(path, mode::Integer)
-    ccall((:ncopen, libnetcdf), Cint, (Ptr{UInt8}, Cint), path, mode)
+function ncopen(path, mode::Integer)
+  check(ccall((:ncopen, libnetcdf), Cint, (Ptr{UInt8}, Cint), path, mode))
 end
 
-@checked_call function ncsetfill(ncid::Integer, fillmode::Integer)
-    ccall((:ncsetfill, libnetcdf), Cint, (Cint, Cint), ncid, fillmode)
+function ncsetfill(ncid::Integer, fillmode::Integer)
+  check(ccall((:ncsetfill, libnetcdf), Cint, (Cint, Cint), ncid, fillmode))
 end
 
-@checked_call function ncredef(ncid::Integer)
-    ccall((:ncredef, libnetcdf), Cint, (Cint,), ncid)
+function ncredef(ncid::Integer)
+  check(ccall((:ncredef, libnetcdf), Cint, (Cint,), ncid))
 end
 
-@checked_call function ncendef(ncid::Integer)
-    ccall((:ncendef, libnetcdf), Cint, (Cint,), ncid)
+function ncendef(ncid::Integer)
+  check(ccall((:ncendef, libnetcdf), Cint, (Cint,), ncid))
 end
 
-@checked_call function ncsync(ncid::Integer)
-    ccall((:ncsync, libnetcdf), Cint, (Cint,), ncid)
+function ncsync(ncid::Integer)
+  check(ccall((:ncsync, libnetcdf), Cint, (Cint,), ncid))
 end
 
-@checked_call function ncabort(ncid::Integer)
-    ccall((:ncabort, libnetcdf), Cint, (Cint,), ncid)
+function ncabort(ncid::Integer)
+  check(ccall((:ncabort, libnetcdf), Cint, (Cint,), ncid))
 end
 
-@checked_call function ncclose(ncid::Integer)
-    ccall((:ncclose, libnetcdf), Cint, (Cint,), ncid)
+function ncclose(ncid::Integer)
+  check(ccall((:ncclose, libnetcdf), Cint, (Cint,), ncid))
 end
 
-@checked_call function ncinquire(ncid::Integer, ndimsp, nvarsp, nattsp, unlimdimp)
-    ccall((:ncinquire, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}), ncid, ndimsp, nvarsp, nattsp, unlimdimp)
+function ncinquire(ncid::Integer, ndimsp, nvarsp, nattsp, unlimdimp)
+  check(ccall((:ncinquire, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}), ncid, ndimsp, nvarsp, nattsp, unlimdimp))
 end
 
-@checked_call function ncdimdef(ncid::Integer, name, len::Clong)
-    ccall((:ncdimdef, libnetcdf), Cint, (Cint, Ptr{UInt8}, Clong), ncid, name, len)
+function ncdimdef(ncid::Integer, name, len::Clong)
+  check(ccall((:ncdimdef, libnetcdf), Cint, (Cint, Ptr{UInt8}, Clong), ncid, name, len))
 end
 
-@checked_call function ncdimid(ncid::Integer, name)
-    ccall((:ncdimid, libnetcdf), Cint, (Cint, Ptr{UInt8}), ncid, name)
+function ncdimid(ncid::Integer, name)
+  check(ccall((:ncdimid, libnetcdf), Cint, (Cint, Ptr{UInt8}), ncid, name))
 end
 
-@checked_call function ncdiminq(ncid::Integer, dimid::Integer, name, lenp)
-    ccall((:ncdiminq, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Clong}), ncid, dimid, name, lenp)
+function ncdiminq(ncid::Integer, dimid::Integer, name, lenp)
+  check(ccall((:ncdiminq, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Clong}), ncid, dimid, name, lenp))
 end
 
-@checked_call function ncdimrename(ncid::Integer, dimid::Integer, name)
-    ccall((:ncdimrename, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, dimid, name)
+function ncdimrename(ncid::Integer, dimid::Integer, name)
+  check(ccall((:ncdimrename, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, dimid, name))
 end
 
-@checked_call function ncattput(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
-    ccall((:ncattput, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Cint, Ptr{Nothing}), ncid, varid, name, xtype, len, op)
+function ncattput(ncid::Integer, varid::Integer, name, xtype::Integer, len::Integer, op)
+  check(ccall((:ncattput, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, nc_type, Cint, Ptr{Nothing}), ncid, varid, name, xtype, len, op))
 end
 
-@checked_call function ncattinq(ncid::Integer, varid::Integer, name, xtypep, lenp)
-    ccall((:ncattinq, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{nc_type}, Ptr{Cint}), ncid, varid, name, xtypep, lenp)
+function ncattinq(ncid::Integer, varid::Integer, name, xtypep, lenp)
+  check(ccall((:ncattinq, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{nc_type}, Ptr{Cint}), ncid, varid, name, xtypep, lenp))
 end
 
-@checked_call function ncattget(ncid::Integer, varid::Integer, name, ip)
-    ccall((:ncattget, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Nothing}), ncid, varid, name, ip)
+function ncattget(ncid::Integer, varid::Integer, name, ip)
+  check(ccall((:ncattget, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{Nothing}), ncid, varid, name, ip))
 end
 
-@checked_call function ncattcopy(ncid_in::Integer, varid_in::Integer, name, ncid_out::Integer, varid_out::Integer)
-    ccall((:ncattcopy, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Cint, Cint), ncid_in, varid_in, name, ncid_out, varid_out)
+function ncattcopy(ncid_in::Integer, varid_in::Integer, name, ncid_out::Integer, varid_out::Integer)
+  check(ccall((:ncattcopy, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Cint, Cint), ncid_in, varid_in, name, ncid_out, varid_out))
 end
 
-@checked_call function ncattname(ncid::Integer, varid::Integer, attnum::Integer, name)
-    ccall((:ncattname, libnetcdf), Cint, (Cint, Cint, Cint, Ptr{UInt8}), ncid, varid, attnum, name)
+function ncattname(ncid::Integer, varid::Integer, attnum::Integer, name)
+  check(ccall((:ncattname, libnetcdf), Cint, (Cint, Cint, Cint, Ptr{UInt8}), ncid, varid, attnum, name))
 end
 
-@checked_call function ncattrename(ncid::Integer, varid::Integer, name, newname)
-    ccall((:ncattrename, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{UInt8}), ncid, varid, name, newname)
+function ncattrename(ncid::Integer, varid::Integer, name, newname)
+  check(ccall((:ncattrename, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{UInt8}), ncid, varid, name, newname))
 end
 
-@checked_call function ncattdel(ncid::Integer, varid::Integer, name)
-    ccall((:ncattdel, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, name)
+function ncattdel(ncid::Integer, varid::Integer, name)
+  check(ccall((:ncattdel, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, name))
 end
 
-@checked_call function ncvardef(ncid::Integer, name, xtype::Integer, ndims::Integer, dimidsp)
-    ccall((:ncvardef, libnetcdf), Cint, (Cint, Ptr{UInt8}, nc_type, Cint, Ptr{Cint}), ncid, name, xtype, ndims, dimidsp)
+function ncvardef(ncid::Integer, name, xtype::Integer, ndims::Integer, dimidsp)
+  check(ccall((:ncvardef, libnetcdf), Cint, (Cint, Ptr{UInt8}, nc_type, Cint, Ptr{Cint}), ncid, name, xtype, ndims, dimidsp))
 end
 
-@checked_call function ncvarid(ncid::Integer, name)
-    ccall((:ncvarid, libnetcdf), Cint, (Cint, Ptr{UInt8}), ncid, name)
+function ncvarid(ncid::Integer, name)
+  check(ccall((:ncvarid, libnetcdf), Cint, (Cint, Ptr{UInt8}), ncid, name))
 end
 
-@checked_call function ncvarinq(ncid::Integer, varid::Integer, name, xtypep, ndimsp, dimidsp, nattsp)
-    ccall((:ncvarinq, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{nc_type}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}), ncid, varid, name, xtypep, ndimsp, dimidsp, nattsp)
+function ncvarinq(ncid::Integer, varid::Integer, name, xtypep, ndimsp, dimidsp, nattsp)
+  check(ccall((:ncvarinq, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}, Ptr{nc_type}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}), ncid, varid, name, xtypep, ndimsp, dimidsp, nattsp))
 end
 
-@checked_call function ncvarput1(ncid::Integer, varid::Integer, indexp, op)
-    ccall((:ncvarput1, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Nothing}), ncid, varid, indexp, op)
+function ncvarput1(ncid::Integer, varid::Integer, indexp, op)
+  check(ccall((:ncvarput1, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Nothing}), ncid, varid, indexp, op))
 end
 
-@checked_call function ncvarget1(ncid::Integer, varid::Integer, indexp, ip)
-    ccall((:ncvarget1, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Nothing}), ncid, varid, indexp, ip)
+function ncvarget1(ncid::Integer, varid::Integer, indexp, ip)
+  check(ccall((:ncvarget1, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Nothing}), ncid, varid, indexp, ip))
 end
 
-@checked_call function ncvarput(ncid::Integer, varid::Integer, startp, countp, op)
-    ccall((:ncvarput, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Nothing}), ncid, varid, startp, countp, op)
+function ncvarput(ncid::Integer, varid::Integer, startp, countp, op)
+  check(ccall((:ncvarput, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Nothing}), ncid, varid, startp, countp, op))
 end
 
-@checked_call function ncvarget(ncid::Integer, varid::Integer, startp, countp, ip)
-    ccall((:ncvarget, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Nothing}), ncid, varid, startp, countp, ip)
+function ncvarget(ncid::Integer, varid::Integer, startp, countp, ip)
+  check(ccall((:ncvarget, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Nothing}), ncid, varid, startp, countp, ip))
 end
 
-@checked_call function ncvarputs(ncid::Integer, varid::Integer, startp, countp, stridep, op)
-    ccall((:ncvarputs, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, op)
+function ncvarputs(ncid::Integer, varid::Integer, startp, countp, stridep, op)
+  check(ccall((:ncvarputs, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, op))
 end
 
-@checked_call function ncvargets(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
-    ccall((:ncvargets, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, ip)
+function ncvargets(ncid::Integer, varid::Integer, startp, countp, stridep, ip)
+  check(ccall((:ncvargets, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, ip))
 end
 
-@checked_call function ncvarputg(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
-    ccall((:ncvarputg, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, imapp, op)
+function ncvarputg(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, op)
+  check(ccall((:ncvarputg, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, imapp, op))
 end
 
-@checked_call function ncvargetg(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
-    ccall((:ncvargetg, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, imapp, ip)
+function ncvargetg(ncid::Integer, varid::Integer, startp, countp, stridep, imapp, ip)
+  check(ccall((:ncvargetg, libnetcdf), Cint, (Cint, Cint, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Clong}, Ptr{Nothing}), ncid, varid, startp, countp, stridep, imapp, ip))
 end
 
-@checked_call function ncvarrename(ncid::Integer, varid::Integer, name)
-    ccall((:ncvarrename, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, name)
+function ncvarrename(ncid::Integer, varid::Integer, name)
+  check(ccall((:ncvarrename, libnetcdf), Cint, (Cint, Cint, Ptr{UInt8}), ncid, varid, name))
 end
 
-@checked_call function ncrecinq(ncid::Integer, nrecvarsp, recvaridsp, recsizesp)
-    ccall((:ncrecinq, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Clong}), ncid, nrecvarsp, recvaridsp, recsizesp)
+function ncrecinq(ncid::Integer, nrecvarsp, recvaridsp, recsizesp)
+  check(ccall((:ncrecinq, libnetcdf), Cint, (Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Clong}), ncid, nrecvarsp, recvaridsp, recsizesp))
 end
 
-@checked_call function ncrecget(ncid::Integer, recnum::Clong, datap)
-    ccall((:ncrecget, libnetcdf), Cint, (Cint, Clong, Ptr{Ptr{Nothing}}), ncid, recnum, datap)
+function ncrecget(ncid::Integer, recnum::Clong, datap)
+  check(ccall((:ncrecget, libnetcdf), Cint, (Cint, Clong, Ptr{Ptr{Nothing}}), ncid, recnum, datap))
 end
 
-@checked_call function ncrecput(ncid::Integer, recnum::Clong, datap)
-    ccall((:ncrecput, libnetcdf), Cint, (Cint, Clong, Ptr{Ptr{Nothing}}), ncid, recnum, datap)
+function ncrecput(ncid::Integer, recnum::Clong, datap)
+  check(ccall((:ncrecput, libnetcdf), Cint, (Cint, Clong, Ptr{Ptr{Nothing}}), ncid, recnum, datap))
 end

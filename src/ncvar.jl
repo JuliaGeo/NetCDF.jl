@@ -1,3 +1,7 @@
+# Define some types to convert missings and to apply scale and offset
+
+
+
 """
     NcVar
 
@@ -18,10 +22,12 @@ mutable struct NcVar{T,N,M} <: AbstractArray{T,N}
     atts::Dict
     compress::Int32
     chunksize::NTuple{N,Int32}
+    missval::T
+    fillval::T
 end
 
-Base.convert(::Type{NcVar{T,N,M}},v::NcVar{S,N,M}) where {S,T,N,M}=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize)
-Base.convert(::Type{NcVar{T}},v::NcVar{S,N,M}) where {S,T,N,M}=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize)
+Base.convert(::Type{NcVar{T,N,M}},v::NcVar{S,N,M}) where {S,T,N,M}=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize,convert(T,v.missval),convert(T,v.fillval))
+Base.convert(::Type{NcVar{T}},v::NcVar{S,N,M}) where {S,T,N,M}=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize,convert(T,v.missval),convert(T,v.fillval))
 
 """
     NcVar(name::AbstractString,dimin::Union{NcDim,Array{<:NcDim,1}}
@@ -35,19 +41,26 @@ list of NetCDF dimensions specified by `dimin`.
 * `t` either a Julia type, (one of `Int16, Int32, Float32, Float64, String`) or a NetCDF data type (`NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE, NC_CHAR, NC_STRING`) determines the data type of the variable. Defaults to -1
 * `compress` Integer which sets the compression level of the variable for NetCDF4 files. Defaults to -1 (no compression). Compression levels of 1..9 are valid
 """
-function NcVar(name::AbstractString,dimin::Union{NcDim,Array{<:NcDim,1}};atts::Dict=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1,chunksize=ntuple(i->zero(Int32),isa(dimin,NcDim) ? 1 : length(dimin)))
+function NcVar(name::AbstractString,dimin::Union{NcDim,Array{<:NcDim,1}};
+  atts::Dict=Dict{Any,Any}(),
+  t::Union{DataType,Integer}=Float64,
+  compress::Integer=-1,
+  chunksize=ntuple(i->zero(Int32),isa(dimin,NcDim) ? 1 : length(dimin)),
+  missings=Nothing)
     dim = isa(dimin,NcDim) ? NcDim[dimin] : dimin
-    return NcVar{getJLType(t),length(dim),getNCType(t)}(-1,-1,length(dim),length(atts), getNCType(t),name,zeros(Int32,length(dim)),dim,atts,compress,chunksize)
+    missval = get(atts,"missing_value",getfill(getJLType(t)))
+    fillval = get(atts,"_FillValue",getfill(getJLType(t)))
+    return NcVar{getJLType(t,missings),length(dim),getNCType(t)}(-1,-1,length(dim),length(atts), getNCType(t),name,zeros(Int32,length(dim)),dim,atts,compress,chunksize,missval,fillval)
 end
-NcVar(name::AbstractString,dimin::Union{NcDim,Array{<:NcDim,1}},atts,t::Union{DataType,Integer}=Float64) =
-    NcVar{getJLType(t),length(dimin),getNCType(t)}(-1,-1,length(dimin),length(atts), getNCType(t),name,zeros(Int,length(dimin)),dimin,atts,-1,ntuple(i->zero(Int32),length(dimin)))
+NcVar(name::AbstractString,dimin::Union{NcDim,Array{<:NcDim,1}},atts,t::Union{DataType,Integer}=Float64) = NcVar(name,dimin,atts=atts,t=t)
+close(v::NcVar)=nc_close(v.ncid)
 
 #Array methods
 @generated function Base.size(a::NcVar{T,N}) where {T,N}
     :(@ntuple($N,i->Int(a.dim[i].dimlen)))
 end
 const IndR  = Union{Integer,UnitRange,Colon}
-const ArNum = Union{AbstractArray,Number}
+const ArNum = Union{AbstractArray,Number,Missing}
 
 IndexStyle(::NcVar) = IndexCartesian()
 Base.getindex(v::NcVar{T,1},i1::IndR) where {T} = readvar(v,i1)
@@ -84,7 +97,7 @@ This reads all values from the first and last dimension and only the second valu
 """
 function readvar(v::NcVar{T,N};start::Vector=defaultstart(v),count::Vector=defaultcount(v)) where {T,N}
     s = [count[i]==-1 ? size(v,i)-start[i]+1 : count[i] for i=1:length(count)]
-    retvalsa = Array{T}(undef,s...)
+    retvalsa = zeros(T,s...)
     readvar!(v, retvalsa, start=start, count=count)
     return retvalsa
 end
@@ -96,7 +109,7 @@ Reads data from a NetCDF file with array-style indexing. `Integer`s and `UnitRan
 """
 function readvar(v::NcVar{T,N},I::IndR...) where {T,N}
     count=ntuple(i->counti(I[i],v.dim[i].dimlen),length(I))
-    retvalsa = Array{T}(undef,count...)
+    retvalsa = zeros(T,count...)
     readvar!(v, retvalsa, I...)
     return retvalsa
 end
@@ -110,7 +123,7 @@ end
     quote
         checkbounds(v,I...)
         gstart = @SVector $gstartex
-        nc_get_var1_x(v,gstart,T)
+        nc_get_var1_x(v,gstart)
     end
 end
 
@@ -146,12 +159,23 @@ function readvar!(v::NcVar, retvalsa::AbstractArray;start::Vector=defaultstart(v
 
     nc_get_vara_x!(v, gstart, gcount, retvalsa)
 
+    post_read_proc(v,retvalsa)
+
     retvalsa
 end
 
+post_read_proc(v::NcVar,retvalsa)=nothing
+function post_read_proc(v::NcVar{Union{T,Missing}},retvalsa::AbstractArray{Union{T,Missing}}) where T
+  missval=v.missval
+  @inbounds for i in eachindex(retvalsa)
+    retvalsa[i]==missval && (retvalsa[i]=missing)
+  end
+end
+
+
 firsti(i::Integer,l::Integer) = i-1
 counti(i::Integer,l::Integer) = 1
-firsti(r::UnitRange,l::Integer) = start(r)-1
+firsti(r::UnitRange,l::Integer) = first(r)-1
 counti(r::UnitRange,l::Integer) = length(r)
 firsti(r::Colon,l::Integer) = 0
 counti(r::Colon,l::Integer) = Int(l)
@@ -177,6 +201,7 @@ Reads data from a NetCDF file with array-style indexing and writes them to d. `I
         p = prod(gcount)
         length(retvalsa) != p && error(string("Size of output array ($(length(retvalsa))) does not equal number of elements to be read (",p,")!"))
         nc_get_vara_x!(v,gstart,gcount,retvalsa)
+        post_read_proc(v,retvalsa)
         retvalsa
     end
 end
@@ -186,8 +211,10 @@ for (t,ending,arname) in funext
     fname = Symbol("nc_get_vara_$ending")
     fname1 = Symbol("nc_get_var1_$ending")
     arsym = Symbol(arname)
+    @eval nc_get_vara_x!(v::NcVar{Union{$t,Missing}},start::AbstractVector{UInt},count::AbstractVector{UInt},retvalsa::AbstractArray{Union{$t,Missing}})=$fname(v.ncid,v.varid,start,count,retvalsa)
     @eval nc_get_vara_x!(v::NcVar{$t},start::AbstractVector{UInt},count::AbstractVector{UInt},retvalsa::AbstractArray{$t})=$fname(v.ncid,v.varid,start,count,retvalsa)
-    @eval nc_get_var1_x(v::NcVar{$t},start::AbstractVector{UInt},::Type{$t})=begin a = MVector{1,$t}(); $fname1(v.ncid,v.varid,start,a); a[1] end
+    @eval nc_get_var1_x(v::NcVar{$t},start::AbstractVector{UInt})=begin a = MVector{1,$t}(); $fname1(v.ncid,v.varid,start,a); a[1] end
+    @eval nc_get_var1_x(v::NcVar{Union{$t,Missing}},start::AbstractVector{UInt})=begin a = MVector{1,$t}(); $fname1(v.ncid,v.varid,start,a); a[1]==v.missval ? missing : a[1] end
 end
 
 nc_get_vara_x!(v::NcVar{UInt8,N,NC_CHAR},start::AbstractVector{UInt},count::AbstractVector{UInt},retvalsa::AbstractArray{UInt8}) where {N} =
@@ -206,7 +233,7 @@ function nc_get_vara_x!(v::NcVar{String,N,NC_STRING},start::AbstractVector{UInt}
     retvalsa
 end
 
-function nc_get_var1_x(v::NcVar{String,N,NC_STRING},start::Vector{UInt},::String) where N
+function nc_get_var1_x(v::NcVar{String,N,NC_STRING},start::Vector{UInt}) where N
     retvalsa_c=fill(Ptr{UInt8}(0),1)
     nc_get_var1_string(v.ncid,v.varid,start,retvalsa_c)
     retval=string(retvalsa_c[1])
@@ -252,6 +279,17 @@ ischunked(v::NcVar) = v.chunksize[1] > 0
 
 defaultstart(v::NcVar) = ones(Int, v.ndim)
 defaultcount(v::NcVar) = Int[i for i in size(v)]
+fill_missvals(v::NcVar,vals)=nothing
+function fill_missvals(v::NcVar,vals::Array{Union{T, Missing}}) where T
+  mv = v.missval
+  for i in eachindex(vals)
+    if ismissing(vals[i])
+      vals[i]=mv
+      vals[i]=missing
+    end
+  end
+end
+
 
 """
     NetCDF.putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
@@ -267,6 +305,7 @@ with the same dimension as the variable in the netcdf file.
 """
 function putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
     gstart, gcount = preparestartcount(start, count, v)
+    fill_missvals(v,vals)
     nc_put_vara_x(v, gstart, gcount, vals)
 end
 
@@ -287,6 +326,7 @@ Writes the value(s) `val` to the variable `v` while the indices are given in in 
       checkboundsNC(v,gstart,gcount)
       p=prod(gcount)
       length(val) != p && error(string("Size of output array ($(length(retvalsa))) does not equal number of elements to be read (",p,")!"))
+      fill_missvals(v,val)
       nc_put_vara_x(v,gstart,gcount,val)
     end
 end
@@ -296,9 +336,9 @@ end
     N == length(I) || error("Dimension mismatch")
     gstartex = Expr(:vect,[:(Csize_t(firsti(I[$(N-i)],v.dim[$(N-i)].dimlen))) for i=0:(N-1)]...)
     quote
-      gstart = $gstartex
+      gstart = @SVector $gstartex
       @nall($N,d->((I[d]<=v.dim[d].dimlen && I[d]>0) || v.dim[d].unlim)) || throw(BoundsError(v,I))
-      nc_put_var1_x(v.ncid,v.varid,gstart,val)
+      nc_put_var1_x(v,gstart,ismissing(val) ? v.missval : val)
     end
 
 end
@@ -307,8 +347,9 @@ for (t, ending, arname) in funext
     fname = Symbol("nc_put_vara_$ending")
     fname1 = Symbol("nc_put_var1_$ending")
     arsym = Symbol(arname)
+    @eval nc_put_vara_x(v::NcVar,start::SArray, count::SArray, vals::Array{Union{$t,Missing}}) where {N}=$fname(v.ncid,v.varid,start,count,vals)
     @eval nc_put_vara_x(v::NcVar,start::SArray, count::SArray, vals::Array{$t}) where {N}=$fname(v.ncid,v.varid,start,count,vals)
-    @eval nc_put_var1_x(v::NcVar,start::SArray,val::$t) where {N}=begin $(arsym)[1]=val; $fname1(v.ncid,v.varid,start,$(arsym)) end
+    @eval nc_put_var1_x(v::NcVar,start::SArray,val::$t) where {N}=begin ar=@SVector [val] ;$fname1(v.ncid,v.varid,start,ar) end
 end
 
 nc_put_vara_x(v::NcVar{UInt8,N,NC_CHAR},start::SArray, count::SArray, vals::Array{UInt8}) where {N}=nc_put_vara_text(v.ncid,v.varid,start,count,vals)

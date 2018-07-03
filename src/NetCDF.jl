@@ -1,4 +1,4 @@
-__precompile__()
+#__precompile__()
 
 module NetCDF
 
@@ -28,6 +28,16 @@ global const nctype2jltype = Dict(
     NC_CHAR => UInt8,
     NC_STRING => String)
 
+getfill(::Type{Int8}) = NC_FILL_BYTE
+getfill(::Type{UInt8}) = NC_FILL_UBYTE
+getfill(::Type{Int16}) = NC_FILL_SHORT
+getfill(::Type{Int32}) = NC_FILL_INT
+getfill(::Type{Int64}) = NC_FILL_INT64
+getfill(::Type{Float32}) = NC_FILL_FLOAT
+getfill(::Type{Float64}) = NC_FILL_DOUBLE
+getfill(::Type{String}) = ""
+getfill(::Type{Union{T,Missing}}) where T = getfill(T)
+
 global const nctype2string = Dict(
   NC_BYTE => "BYTE",
   NC_UBYTE => "UBYTE",
@@ -46,7 +56,9 @@ end
 jl2nc(t::Type{UInt8}) = NC_UBYTE
 
 getJLType(t::DataType) = t
-getJLType(t::Int) = nctype2jltype[t]
+getJLType(t::Integer) = nctype2jltype[t]
+getJLType(t,::Type{Nothing})=getJLType(t)
+getJLType(t,::Type{Missing})=Union{getJLType(t),Missing}
 
 getNCType(t::DataType) = jl2nc(t)
 getNCType(t::Int) = Int(t)

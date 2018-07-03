@@ -14,13 +14,16 @@ Then the next dimension is entered and so on. Have a look at examples/high.jl fo
 - **t** variable type, currently supported types are: const NC_BYTE, NC_CHAR, NC_SHORT, NC_INT, NC_FLOAT, NC_LONG, NC_DOUBLE
 - **mode** file creation mode, only valid when new file is created, choose one of: NC_NETCDF4, NC_CLASSIC_MODEL, NC_64BIT_OFFSET
 """
-function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Union{DataType,Integer}=NC_DOUBLE,mode::UInt16=NC_NETCDF4,chunksize=(0,))
+function nccreate(fil::AbstractString,varname::AbstractString,dims...;
+  atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,
+  t::Union{DataType,Integer}=NC_DOUBLE,mode::UInt16=NC_NETCDF4,chunksize=(0,),
+  missings=Nothing)
     # Checking dims argument for correctness
     dim = parsedimargs(dims)
     # Check chunksize
     chunksize = chunksize[1]==0 ? ntuple(i->0,length(dim)) : chunksize
     # create the NcVar object
-    v = NcVar(varname,dim,atts=atts,compress=compress,t=t,chunksize=chunksize)
+    v = NcVar(varname,dim,atts=atts,compress=compress,t=t,chunksize=chunksize,missings=missings)
     # Test if the file already exists
     if isfile(fil)
       open(fil,mode=NC_WRITE) do nc
@@ -28,14 +31,15 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict
         haskey(nc.vars,varname) && error("Variable $varname already exists in file $fil")
         # Check if dimensions exist, if not, create
         # Remember if dimension was created
-
         dcreate = falses(length(dim))
         for i=1:length(dim)
           @show dim[i]
             if !haskey(nc.dim,dim[i].name)
                 create_dim(nc,dim[i])
                 v.dimids[i] = dim[i].dimid
-                isempty(dim[i].vals) || create_var(nc,NcVar{Float64,1,NC_DOUBLE}(nc.ncid,0,1,length(dim[i].atts),NC_DOUBLE,dim[i].name,[dim[i].dimid],[dim[i]],dim[i].atts,-1,(0,)),mode)
+                if !isempty(dim[i].vals)
+                  create_var(nc,NcVar{Float64,1,NC_DOUBLE}(nc.ncid,0,1,length(dim[i].atts),NC_DOUBLE,dim[i].name,[dim[i].dimid],[dim[i]],dim[i].atts,-1,(0,),NC_FILL_DOUBLE,NC_FILL_DOUBLE),mode)
+                end
                 dcreate[i] = true
             else
                 v.dimids[i] = nc.dim[dim[i].name].dimid
@@ -75,7 +79,7 @@ Writes the array `x` to the file `fil` and variable `vname`.
 * `count` Vector of length `ndim(v)` setting the count of values to be written along each dimension. The value -1 is treated as a special case to write all values from this dimension. This is usually inferred by the given array size.
 """
 function ncwrite(x::Array,fil::AbstractString,vname::AbstractString;start=ones(Int,length(size(x))),count=[size(x)...])
-  open(fil,mode=NC_WRITE) do nc
+  open(fil,mode=NC_WRITE,replace_missing=isa(missing,eltype(x))) do nc
     putvar(nc,vname,x,start=start,count=count)
   end
 end
@@ -87,7 +91,7 @@ ncwrite(x::Array,fil::AbstractString,vname::AbstractString,start::Array)=ncwrite
 This reads a NetCDF attribute `attname` from the specified file and variable. To read global attributes, set varname to `Global`.
 """
 function ncgetatt(fil::AbstractString,vname::AbstractString,att::AbstractString)
-  open(fil,NC_NOWRITE) do nc
+  open(fil,mode=NC_NOWRITE) do nc
     haskey(nc.vars,vname) ? get(nc.vars[vname].atts,att,nothing) : get(nc.gatts,att,nothing)
   end
 end
@@ -110,8 +114,8 @@ To read the second slice of a 3D NetCDF variable one can write:
     ncread("filename","varname", start=[1,1,2], count = [-1,-1,1])
 
 """
-function ncread(fil::AbstractString,vname::AbstractString;start::Array{T}=Int[],count::Array{T}=Int[]) where T<:Integer
-  open(fil) do nc
+function ncread(fil::AbstractString,vname::AbstractString;start::Array{T}=Int[],count::Array{T}=Int[],replace_missing=false) where T<:Integer
+  open(fil,replace_missing=replace_missing) do nc
     length(start)==0 && (start=defaultstart(nc[vname]))
     length(count)==0 && (count=defaultcount(nc[vname]))
     readvar(nc[vname],start=start,count=count)

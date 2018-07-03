@@ -47,15 +47,6 @@ open(outfile,"w") do f
       include(depfile)
   else
       error("libnetcdf not properly installed. Please run Pkg.build(\\\"NetCDF\\\")")
-  end
-  macro checked_call(ex)
-    body = ex.args[2]
-    ex.args[2] = quote
-      ret = \$(body)
-      ret == NC_NOERR || throw(NetCDFException(ret))
-      nothing
-    end
-    ex
   end""")
   println(f,"const err=-1")
   println(f,"const nc_type=Cint")
@@ -95,7 +86,10 @@ open(outfile,"w") do f
           return string(aspl[1],"::",get(argtdict,aspl[2],aspl[2]))
         end
       end |> i->join(i,", ")
-      println(f,string("@checked_call function ",fm.captures[1],"(",s2,")") |> correct_cstring)
+      println(f,string("function ",fm.captures[1],"(",s2,")") |> correct_cstring)
+    elseif startswith(strip(s),"ccall") && !contains(s,"nc_inq_libvers") && !contains(s,"nc_strerror")
+      s=string("  check(",strip(s),")")
+      println(f,s |> correct_void |> correct_cstring)
     else
       println(f,s |> correct_void |> correct_cstring)
     end
