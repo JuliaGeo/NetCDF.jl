@@ -65,7 +65,7 @@ function create(name::AbstractString,varlist::Array{<:NcVar};gatts::Dict=Dict{An
     for d in dims
         create_dim(nc, d)
         if (length(d.vals)>0) & (!haskey(nc.vars,d.name))
-            push!(varlist,NcVar{Float64,1,NC_DOUBLE}(id,0,1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1,(zero(Int32),),NC_FILL_DOUBLE,NC_FILL_DOUBLE))
+            push!(varlist,NcVar{Float64,1,NC_DOUBLE,ManualMissings}(id,0,1,length(d.atts),NC_DOUBLE,d.name,[d.dimid],[d],d.atts,-1,(zero(Int32),),ManualMissings()))
         end
     end
 
@@ -173,11 +173,9 @@ function open(fil::AbstractString;
       ncf.dim[name].varid=varid
     end
     atts = getatts_all(ncid,varid,natts)
-    TV = replace_missing ? getJLType(nctype,Missing) : getJLType(nctype,Nothing)
-    missval = get(atts,"missing_value",getfill(TV))
-    fillval = get(atts,"_FillValue",getfill(TV))
     vdim = NcDim[ncf.dim[findfirst(i->i.dimid==did,ncf.dim)] for did in dimids]
-    ncf.vars[name]=NcVar{TV,Int(vndim),Int(nctype)}(ncid,Int32(varid),vndim,natts,nctype,name,dimids[vndim:-1:1],vdim[vndim:-1:1],atts,0,chunksize,missval,fillval)
+    TV,mc = replace_missing ? get_replace_object(atts,nctype) : (getJLType(nctype),ManualMissings())
+    ncf.vars[name]=NcVar{TV,Int(vndim),Int(nctype),typeof(mc)}(ncid,Int32(varid),vndim,natts,nctype,name,dimids[vndim:-1:1],vdim[vndim:-1:1],atts,0,chunksize,mc)
   end
   readdimvar == true && _readdimvars(ncf)
   return ncf

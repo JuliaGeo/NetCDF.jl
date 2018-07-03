@@ -16,14 +16,13 @@ Then the next dimension is entered and so on. Have a look at examples/high.jl fo
 """
 function nccreate(fil::AbstractString,varname::AbstractString,dims...;
   atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,
-  t::Union{DataType,Integer}=NC_DOUBLE,mode::UInt16=NC_NETCDF4,chunksize=(0,),
-  missings=Nothing)
+  t::Union{DataType,Integer}=NC_DOUBLE,mode::UInt16=NC_NETCDF4,chunksize=(0,))
     # Checking dims argument for correctness
     dim = parsedimargs(dims)
     # Check chunksize
     chunksize = chunksize[1]==0 ? ntuple(i->0,length(dim)) : chunksize
     # create the NcVar object
-    v = NcVar(varname,dim,atts=atts,compress=compress,t=t,chunksize=chunksize,missings=missings)
+    v = NcVar(varname,dim,atts=atts,compress=compress,t=t,chunksize=chunksize)
     # Test if the file already exists
     if isfile(fil)
       open(fil,mode=NC_WRITE) do nc

@@ -9,7 +9,7 @@ function tempname2()
     f
 end
 
-include("scale_missing.jl")
+include("scale_missings.jl")
 include("intermediate.jl")
 include("high.jl")
 include("array-like.jl")

@@ -1,6 +1,5 @@
 using NetCDF
 using Base.Test
-tempname2=tempname
 
 fnmiss  = tempname2()
 nccreate(fnmiss,"v1","d1",collect(1:10),atts=Dict("missing_value"=>-9999.0))
@@ -32,7 +31,7 @@ end
 
 
 
-fnscale = tempname2()
-nccreate(fnscale,"v1","d1",collect(1:10),
-atts=Dict("scale_factor"=>1/255, "add_offset"=>-128.0),t=NC_UBYTE)
-ncwrite()
+# fnscale = tempname2()
+# nccreate(fnscale,"v1","d1",collect(1:10),
+# atts=Dict("scale_factor"=>1/255, "add_offset"=>-128.0),t=NC_UBYTE)
+# ncwrite()

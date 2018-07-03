@@ -1,6 +1,19 @@
 # Define some types to convert missings and to apply scale and offset
-
-
+abstract type MissingConverter end
+struct ApplyMissings{T} <: MissingConverter
+  missval::T
+  fillval::T
+end
+getmissval(mc::ApplyMissings)=mc.missval
+struct ManualMissings <: MissingConverter end
+getmissval(mc::ManualMissings)=error("Write Union array to this variable. Consider opening the file with the replace_missing=true")
+function get_replace_object(a::Dict,nctype)
+  T = getJLType(nctype)
+  missval = get(a,"missing_value",getfill(T))
+  fillval = get(a,"_FillValue",getfill(T))
+  TV = Union{T,Missing}
+  TV,ApplyMissings(convert(T,missval),convert(T,fillval))
+end
 
 """
     NcVar
@@ -10,7 +23,7 @@ will work for reading and writing data to and from a NetCDF file. `NcVar` object
 indexing an `NcFile` object (e.g. `myfile["temperature"]`) or, when creating a new file, by its constructor. The type parameter `M`
 denotes the NetCDF data type of the variable, which may or may not correspond to the Julia Data Type.
 """
-mutable struct NcVar{T,N,M} <: AbstractArray{T,N}
+mutable struct NcVar{T,N,M,MC<:MissingConverter} <: AbstractArray{T,N}
     ncid::Int32
     varid::Int32
     ndim::Int32
@@ -22,12 +35,11 @@ mutable struct NcVar{T,N,M} <: AbstractArray{T,N}
     atts::Dict
     compress::Int32
     chunksize::NTuple{N,Int32}
-    missval::T
-    fillval::T
+    mc::MC
 end
 
-Base.convert(::Type{NcVar{T,N,M}},v::NcVar{S,N,M}) where {S,T,N,M}=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize,convert(T,v.missval),convert(T,v.fillval))
-Base.convert(::Type{NcVar{T}},v::NcVar{S,N,M}) where {S,T,N,M}=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize,convert(T,v.missval),convert(T,v.fillval))
+Base.convert(::Type{NcVar{T,N,M}},v::NcVar{S,N,M}) where {S,T,N,M}=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize,v.mc)
+Base.convert(::Type{NcVar{T}},v::NcVar{S,N,M}) where {S,T,N,M}=NcVar{T,N,M}(v.ncid,v.varid,v.ndim,v.natts,v.nctype,v.name,v.dimids,v.dim,v.atts,v.compress,v.chunksize,v.mc)
 
 """
     NcVar(name::AbstractString,dimin::Union{NcDim,Array{<:NcDim,1}}
@@ -46,11 +58,10 @@ function NcVar(name::AbstractString,dimin::Union{NcDim,Array{<:NcDim,1}};
   t::Union{DataType,Integer}=Float64,
   compress::Integer=-1,
   chunksize=ntuple(i->zero(Int32),isa(dimin,NcDim) ? 1 : length(dimin)),
-  missings=Nothing)
+  replace_missings=false)
     dim = isa(dimin,NcDim) ? NcDim[dimin] : dimin
-    missval = get(atts,"missing_value",getfill(getJLType(t)))
-    fillval = get(atts,"_FillValue",getfill(getJLType(t)))
-    return NcVar{getJLType(t,missings),length(dim),getNCType(t)}(-1,-1,length(dim),length(atts), getNCType(t),name,zeros(Int32,length(dim)),dim,atts,compress,chunksize,missval,fillval)
+    TV,mc = replace_missings ? get_replace_object(atts,getNCType(t)) : (getJLType(t),ManualMissings())
+    return NcVar{TV,length(dim),getNCType(t),typeof(mc)}(-1,-1,length(dim),length(atts), getNCType(t),name,zeros(Int32,length(dim)),dim,atts,compress,chunksize,mc)
 end
 NcVar(name::AbstractString,dimin::Union{NcDim,Array{<:NcDim,1}},atts,t::Union{DataType,Integer}=Float64) = NcVar(name,dimin,atts=atts,t=t)
 close(v::NcVar)=nc_close(v.ncid)
@@ -166,7 +177,7 @@ end
 
 post_read_proc(v::NcVar,retvalsa)=nothing
 function post_read_proc(v::NcVar{Union{T,Missing}},retvalsa::AbstractArray{Union{T,Missing}}) where T
-  missval=v.missval
+  missval=getmissval(v.mc)
   @inbounds for i in eachindex(retvalsa)
     retvalsa[i]==missval && (retvalsa[i]=missing)
   end
@@ -214,7 +225,7 @@ for (t,ending,arname) in funext
     @eval nc_get_vara_x!(v::NcVar{Union{$t,Missing}},start::AbstractVector{UInt},count::AbstractVector{UInt},retvalsa::AbstractArray{Union{$t,Missing}})=$fname(v.ncid,v.varid,start,count,retvalsa)
     @eval nc_get_vara_x!(v::NcVar{$t},start::AbstractVector{UInt},count::AbstractVector{UInt},retvalsa::AbstractArray{$t})=$fname(v.ncid,v.varid,start,count,retvalsa)
     @eval nc_get_var1_x(v::NcVar{$t},start::AbstractVector{UInt})=begin a = MVector{1,$t}(); $fname1(v.ncid,v.varid,start,a); a[1] end
-    @eval nc_get_var1_x(v::NcVar{Union{$t,Missing}},start::AbstractVector{UInt})=begin a = MVector{1,$t}(); $fname1(v.ncid,v.varid,start,a); a[1]==v.missval ? missing : a[1] end
+    @eval nc_get_var1_x(v::NcVar{Union{$t,Missing}},start::AbstractVector{UInt})=begin a = MVector{1,$t}(); $fname1(v.ncid,v.varid,start,a); a[1]==getmissval(v.mc) ? missing : a[1] end
 end
 
 nc_get_vara_x!(v::NcVar{UInt8,N,NC_CHAR},start::AbstractVector{UInt},count::AbstractVector{UInt},retvalsa::AbstractArray{UInt8}) where {N} =
@@ -281,7 +292,7 @@ defaultstart(v::NcVar) = ones(Int, v.ndim)
 defaultcount(v::NcVar) = Int[i for i in size(v)]
 fill_missvals(v::NcVar,vals)=nothing
 function fill_missvals(v::NcVar,vals::Array{Union{T, Missing}}) where T
-  mv = v.missval
+  mv = getmissval(v.mc)
   for i in eachindex(vals)
     if ismissing(vals[i])
       vals[i]=mv
@@ -338,7 +349,7 @@ end
     quote
       gstart = @SVector $gstartex
       @nall($N,d->((I[d]<=v.dim[d].dimlen && I[d]>0) || v.dim[d].unlim)) || throw(BoundsError(v,I))
-      nc_put_var1_x(v,gstart,ismissing(val) ? v.missval : val)
+      nc_put_var1_x(v,gstart,ismissing(val) ? getmissval(v.mc) : val)
     end
 
 end
