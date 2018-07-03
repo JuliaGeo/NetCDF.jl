@@ -32,12 +32,11 @@ function nccreate(fil::AbstractString,varname::AbstractString,dims...;
         # Remember if dimension was created
         dcreate = falses(length(dim))
         for i=1:length(dim)
-          @show dim[i]
             if !haskey(nc.dim,dim[i].name)
                 create_dim(nc,dim[i])
                 v.dimids[i] = dim[i].dimid
                 if !isempty(dim[i].vals)
-                  create_var(nc,NcVar{Float64,1,NC_DOUBLE}(nc.ncid,0,1,length(dim[i].atts),NC_DOUBLE,dim[i].name,[dim[i].dimid],[dim[i]],dim[i].atts,-1,(0,),NC_FILL_DOUBLE,NC_FILL_DOUBLE),mode)
+                  create_var(nc,NcVar{Float64,1,NC_DOUBLE,ManualMissings}(nc.ncid,0,1,length(dim[i].atts),NC_DOUBLE,dim[i].name,[dim[i].dimid],[dim[i]],dim[i].atts,-1,(0,),ManualMissings()),mode)
                 end
                 dcreate[i] = true
             else

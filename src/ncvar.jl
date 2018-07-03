@@ -15,6 +15,9 @@ function get_replace_object(a::Dict,nctype)
   TV,ApplyMissings(convert(T,missval),convert(T,fillval))
 end
 
+# And some types that do the scaling properly
+abstract type DataScaler end
+
 """
     NcVar
 
@@ -88,6 +91,9 @@ Base.setindex!(v::NcVar{T,4},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR) where
 Base.setindex!(v::NcVar{T,5},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR) where {T} = putvar(v,x,i1,i2,i3,i4,i5)
 Base.setindex!(v::NcVar{T,6},x::ArNum,i1::IndR,i2::IndR,i3::IndR,i4::IndR,i5::IndR,i6::IndR) where {T} = putvar(v,x,i1,i2,i3,i4,i5,i6)
 
+init_arr(T,s)=zeros(T,s...)
+init_arr(T::Type{String},s)=Array{T}(undef,s...)
+
 """
     NetCDF.readvar(v::NcVar;start::Vector=ones(UInt,ndims(d)),count::Vector=size(d))
 
@@ -108,7 +114,7 @@ This reads all values from the first and last dimension and only the second valu
 """
 function readvar(v::NcVar{T,N};start::Vector=defaultstart(v),count::Vector=defaultcount(v)) where {T,N}
     s = [count[i]==-1 ? size(v,i)-start[i]+1 : count[i] for i=1:length(count)]
-    retvalsa = zeros(T,s...)
+    retvalsa = init_arr(T,s)
     readvar!(v, retvalsa, start=start, count=count)
     return retvalsa
 end
@@ -120,7 +126,7 @@ Reads data from a NetCDF file with array-style indexing. `Integer`s and `UnitRan
 """
 function readvar(v::NcVar{T,N},I::IndR...) where {T,N}
     count=ntuple(i->counti(I[i],v.dim[i].dimlen),length(I))
-    retvalsa = zeros(T,count...)
+    retvalsa = init_arr(T,count)
     readvar!(v, retvalsa, I...)
     return retvalsa
 end
