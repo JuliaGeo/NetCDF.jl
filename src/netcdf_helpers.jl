@@ -168,7 +168,7 @@ nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val) = error("Writi
 function nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::AbstractString)
     val = string(val)
     len = sizeof(val)
-    nc_put_att_text(ncid,varid,name,len+1,val)
+    nc_put_att_text(ncid,varid,name,len,val)
 end
 
 function nc_get_att(ncid::Integer,varid::Integer,name::AbstractString,attype::Integer,attlen::Integer)
