@@ -151,7 +151,7 @@ end
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int8})    = nc_put_att_schar(ncid,varid,name,NC_BYTE,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int16})   = nc_put_att_short(ncid,varid,name,NC_SHORT,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int32})   = nc_put_att_int(ncid,varid,name,NC_INT,length(val),val)
-nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int64})   = nc_put_att_long(ncid,varid,name,NC_LONG,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int64})   = nc_put_att_long(ncid,varid,name,NC_INT64,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Float32}) = nc_put_att_float(ncid,varid,name,NC_FLOAT,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Float64}) = nc_put_att_double(ncid,varid,name,NC_DOUBLE,length(val),val)
 #nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::AbstractString)         = nc_put_att_text(ncid,varid,name,length(val)+1,val)
