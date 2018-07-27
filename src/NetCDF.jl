@@ -374,10 +374,9 @@ function putatt(nc::NcFile, atts::Dict)
     merge!(nc.gatts, getatts(nc.ncid,NC_GLOBAL,collect(keys(atts))))
 end
 
-function putatt(nc::NcFile, var::NcVar, atts::Dict)
-    @assert var===nc.vars[var.name]
-    putatt(nc.ncid, var.varid, atts)
-    merge!(var.atts, getatts(nc.ncid,var.varid,collect(keys(atts))))
+function putatt(var::NcVar, atts::Dict)
+    putatt(var.ncid, var.varid, atts)
+    merge!(var.atts, getatts(var.ncid,var.varid,collect(keys(atts))))
 end
 
 """
@@ -394,7 +393,7 @@ function putatt(nc::NcFile,varname::AbstractString,atts::Dict)
         nc_redef(nc.ncid)
     end
     if haskey(nc.vars,varname)
-        putatt(nc,nc.vars[varname],atts)
+        putatt(nc.vars[varname],atts)
     else
         putatt(nc,atts)
     end
