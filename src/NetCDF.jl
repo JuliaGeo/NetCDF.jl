@@ -369,6 +369,16 @@ function putatt(ncid::Integer,varid::Integer,atts::Dict)
     end
 end
 
+function putatt(nc::NcFile, atts::Dict)
+    putatt(nc.ncid, NC_GLOBAL, atts)
+    merge!(nc.gatts, getatts(nc.ncid,NC_GLOBAL,collect(keys(atts))))
+end
+
+function putatt(var::NcVar, atts::Dict)
+    putatt(var.ncid, var.varid, atts)
+    merge!(var.atts, getatts(var.ncid,var.varid,collect(keys(atts))))
+end
+
 """
     NetCDF.putatt(nc::NcFile, varname::String, atts::Dict)
 
@@ -377,13 +387,16 @@ Writes the attributes defined in `atts` to the variable `varname` in the NetCDF 
 a global attribute will be written.
 """
 function putatt(nc::NcFile,varname::AbstractString,atts::Dict)
-    varid = haskey(nc.vars,varname) ? nc.vars[varname].varid : NC_GLOBAL
     chdef = false
     if !nc.in_def_mode
         chdef = true
         nc_redef(nc.ncid)
     end
-    putatt(nc.ncid,varid,atts)
+    if haskey(nc.vars,varname)
+        putatt(nc.vars[varname],atts)
+    else
+        putatt(nc,atts)
+    end
     chdef && nc_enddef(nc.ncid)
 end
 
@@ -606,7 +619,7 @@ function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict=Dict{Any,
 
     # Put global attributes
     if !isempty(gatts)
-        putatt(id,NC_GLOBAL,gatts)
+        putatt(nc,gatts)
     end
 
     # Leave define mode

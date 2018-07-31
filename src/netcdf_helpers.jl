@@ -139,9 +139,9 @@ function nc_inq_attname(ncid::Integer, varid::Integer, attnum::Integer)
     return name
 end
 
-function nc_get_att(ncid::Integer, varid::Integer, attnum::Integer)
+function nc_get_att(ncid::Integer, varid::Integer, att::Union{Integer,AbstractString})
     #Reads attribute name, type and number of values
-    name = nc_inq_attname(ncid,varid,attnum)
+    name = typeof(att)<:Integer ? nc_inq_attname(ncid,varid,att) : string(att)
     nc_inq_att(ncid,varid,name,typea,nvals)
     text = nc_get_att(ncid,varid,string(name),typea[1],nvals[1])
     return name, text
@@ -242,6 +242,19 @@ function getatts_all(ncid::Integer, varid::Integer, natts::Integer)
     atts = Dict{Any,Any}()
     for attnum = 0:natts-1
         attname, attval = nc_get_att(ncid, varid, attnum)
+        if ((length(attval)==1) && !(typeof(attval)<:AbstractString))
+            attval = attval[1]
+        end
+        atts[attname] = attval
+    end
+    NC_VERBOSE && println(atts)
+    return atts
+end
+
+function getatts(ncid::Integer, varid::Integer, attnames::Union{AbstractString,AbstractArray})
+    atts = Dict{Any,Any}()
+    for aattname = (typeof(attnames)<:AbstractArray ? attnames : [attnames])
+        attname, attval = nc_get_att(ncid, varid, aattname)
         if ((length(attval)==1) && !(typeof(attval)<:AbstractString))
             attval = attval[1]
         end
