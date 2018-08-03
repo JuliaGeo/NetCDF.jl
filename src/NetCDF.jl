@@ -352,10 +352,10 @@ function nc_get_vara_x!(v::NcVar{String,N,NC_STRING},start::Vector{UInt},count::
     retvalsa
 end
 
-function nc_get_var1_x(v::NcVar{String,N,NC_STRING},start::Vector{UInt},::String) where N
+function nc_get_var1_x(v::NcVar{String,N,NC_STRING},start::Vector{UInt},::Type{String}) where N
     retvalsa_c=fill(Ptr{UInt8}(0),1)
     nc_get_var1_string(v.ncid,v.varid,start,retvalsa_c)
-    retval=string(retvalsa_c[1])
+    retval=unsafe_string(retvalsa_c[1])
     nc_free_string(1,retvalsa_c)
     retval
 end
