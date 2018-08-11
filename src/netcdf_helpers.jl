@@ -64,7 +64,7 @@ Convert a `UInt8` array read from a NetCDF variable of type `NC_CHAR` to a Julia
 function nc_char2string(x::Array{UInt8})
     y = copy(x)
     y[end,:] = 0
-    squeeze(mapslices(i -> unsafe_string(pointer(i)), y, 1), 1)
+    dropdims(mapslices(i -> unsafe_string(pointer(i)), y, dims=[1]), dims=1)
 end
 
 """
@@ -78,7 +78,7 @@ function nc_string2char(s::Array{String})
     c = zeros(UInt8,maxlen+1,size(s)...)
     offs=1
     for i=1:length(s)
-        copy!(c,offs,s[i],1)
+        copyto!(c,offs,s[i],1)
         offs+=maxlen+1
     end
     c
