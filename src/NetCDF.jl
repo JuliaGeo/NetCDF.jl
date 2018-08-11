@@ -42,7 +42,7 @@ global const nctype2string = Dict(
 
 
 function jl2nc(t::DataType)
-    shift!(collect(keys(nctype2jltype))[find(e->(t <: e), collect(values(nctype2jltype)))])
+    popfirst!(collect(keys(nctype2jltype))[findall(e->(t <: e), collect(values(nctype2jltype)))])
 end
 jl2nc(t::Type{UInt8}) = NC_UBYTE
 
@@ -502,7 +502,7 @@ end
 function Base.push!(v::NcVar,a::AbstractArray)
     sold = size(v)
     N = ndims(v)
-    iunlim = find(map(x->x.unlim,v.dim))
+    iunlim = findall(map(x->x.unlim,v.dim))
     length(iunlim) == 1 || error("You can only push to a NetCDF variable with one unlimited dimension")
     st = fill(1, N)
     st[iunlim[1]] = sold[iunlim[1]] + 1
