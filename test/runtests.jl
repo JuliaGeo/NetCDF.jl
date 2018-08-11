@@ -1,5 +1,4 @@
-using Base.Test
-using NetCDF
+using Test, NetCDF, Random
 
 "Function that returns a valid file name of a non-existing file for all OSs"
 function tempname2()
