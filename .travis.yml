@@ -4,7 +4,8 @@ os:
   - linux
   - osx
 julia:
-  - 0.6
+  - 0.7
+  - 1.0
   - nightly
 matrix:
   allow_failures:
@@ -17,5 +18,5 @@ notifications:
 #  - julia -e 'Pkg.clone(pwd()); Pkg.build("NetCDF"); Pkg.test("NetCDF"; coverage=true)'
 
 after_success:
-  - julia -e 'Pkg.add("Documenter")'
-  - julia -e 'cd(Pkg.dir("NetCDF")); include(joinpath("docs", "make.jl"))'
+  - julia -e 'using Pkg; Pkg.add("Documenter")'
+  - julia -e 'using Pkg; Pkg.dir("NetCDF"); include(joinpath("docs", "make.jl"))'
