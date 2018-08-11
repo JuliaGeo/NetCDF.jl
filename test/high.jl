@@ -64,14 +64,14 @@ ncwrite(zeros(1,10,20), fn4, "myvar2")
 
 # Test reading existing files
 myvar2 = ones(5,10,20)
-myvar2[1,:,:] = 0.0
+myvar2[1,:,:] .= 0.0
 @test ncread(fn4, "myvar2") == myvar2
 @test nc_char2string(ncread(fn1, "vchar")) == xs
 @test_throws NetCDF.NetCDFError ncread("nonexistant file", "a var")
 
 # Test creating 0-dimensional variable
 nccreate(fn4,"scalar")
-a = Array{Float64,0}();a[1]=10.0
+a = Array{Float64,0}(undef);a[1]=10.0
 ncwrite(a,fn4,"scalar")
 @test ncread(fn4,"scalar")[1] == a[1]
 

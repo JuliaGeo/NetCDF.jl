@@ -63,7 +63,7 @@ Convert a `UInt8` array read from a NetCDF variable of type `NC_CHAR` to a Julia
 """
 function nc_char2string(x::Array{UInt8})
     y = copy(x)
-    y[end,:] = 0
+    y[end,:] .= 0
     dropdims(mapslices(i -> unsafe_string(pointer(i)), y, dims=[1]), dims=1)
 end
 
@@ -178,7 +178,7 @@ function nc_get_att(ncid::Integer,varid::Integer,name::AbstractString,attype::In
         valsa[end] = 0
         return unsafe_string(pointer(valsa))
     else
-        valsa = Array{nctype2jltype[attype]}(attlen)
+        valsa = Array{nctype2jltype[attype]}(undef,attlen)
         return nc_get_att!(ncid,varid,name,valsa)
     end
 end
@@ -386,7 +386,7 @@ function finalizedim(dimlen, dimvals, dimatts, name)
         dimlen = 1
     end
     if (dimlen != nothing) && (dimvals == nothing)
-        dimvals = Array{Float64}(0)
+        dimvals = Array{Float64}(undef,0)
     end
     if dimatts == nothing
         dimatts = Dict("missval"=>-9999)
