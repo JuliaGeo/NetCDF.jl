@@ -22,7 +22,7 @@ vc = NcVar("vchar",[d5,d2],t=NetCDF.NC_CHAR)
 vscal = NcVar("vscal",NcDim[])
 
 tlist = [Float64, Float32, Int32, Int16, Int8]
-vt = Array{NcVar}(length(tlist))
+vt = Array{NcVar}(undef,length(tlist))
 for i= 1:length(tlist)
       vt[i]=NcVar("vt$i",d2,t = tlist[i])
 end
@@ -56,7 +56,7 @@ x1 = rand(2,10,20)
 x2 = rand(2,10,20)
 xt = [rand(tl,10) for tl in tlist]
 xs = ["a","bb","ccc","dddd","eeeee","ffffff","ggggggg","hhhhhhhh","iiiiiiiii","jjjjjjjjjj"]
-xscal = Array{Float64,0}();xscal[1]=2.5
+xscal = Array{Float64,0}(undef);xscal[1]=2.5
 #
 # And write it
 #
