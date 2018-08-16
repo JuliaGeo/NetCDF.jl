@@ -418,7 +418,7 @@ function ncputatt(nc::AbstractString,varname::AbstractString,atts::Dict)
     putatt(nc, varname, atts)
 end
 
-putvar(nc::NcFile,varname::AbstractString,vals::Array;start=ones(Int,length(size(vals))),count=[size(vals)...]) =
+putvar(nc::NcFile,varname::AbstractString,vals::AbstractArray;start=ones(Int,length(size(vals))),count=[size(vals)...]) =
     putvar(nc[varname], vals, start=start, count=count)
 
 """
@@ -433,7 +433,8 @@ with the same dimension as the variable in the netcdf file.
 * `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. The value -1 is treated as a special case to read all values from this dimension
 
 """
-function putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
+function putvar(v::NcVar,vals::AbstractArray;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
+    isa(vals,Array) || Base.iscontiguous(vals) || error("Can only write from contiguous pieces of memory")
     p=preparestartcount(start, count, v)
     nc_put_vara_x(v, gstart, gcount, vals)
 end
@@ -447,7 +448,7 @@ Writes the value(s) `val` to the variable `v` while the indices are given in in 
 
     N==length(I) || error("Dimension mismatch")
     quote
-
+        isa(val,Number) || isa(val,Array) || Base.iscontiguous(val) || error("Can only write from contiguous pieces of memory")
         @nexprs $N i->gstart[v.ndim+1-i]=firsti(I[i],v.dim[i].dimlen)
         @nexprs $N i->gcount[v.ndim+1-i]=counti(I[i],v.dim[i].dimlen)
         checkboundsNC(v)
@@ -480,14 +481,14 @@ for (t, ending, arname) in funext
     fname = Symbol("nc_put_vara_$ending")
     fname1 = Symbol("nc_put_var1_$ending")
     arsym = Symbol(arname)
-    @eval nc_put_vara_x(v::NcVar,start::Vector{UInt}, count::Vector{UInt}, vals::Array{$t})=$fname(v.ncid,v.varid,start,count,vals)
+    @eval nc_put_vara_x(v::NcVar,start::Vector{UInt}, count::Vector{UInt}, vals::AbstractArray{$t})=$fname(v.ncid,v.varid,start,count,vals)
     @eval nc_put_var1_x(v::NcVar,start::Vector{UInt},val::$t)=begin $(arsym)[1]=val; $fname1(v.ncid,v.varid,start,$(arsym)) end
 end
 
-nc_put_vara_x(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt}, count::Vector{UInt}, vals::Array{UInt8}) where {N}=nc_put_vara_text(v.ncid,v.varid,start,count,vals)
+nc_put_vara_x(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt}, count::Vector{UInt}, vals::AbstractArray{UInt8}) where {N}=nc_put_vara_text(v.ncid,v.varid,start,count,vals)
 nc_put_var1_x(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},val::UInt8) where {N}=begin vals=UInt8[val]; nc_put_var1_text(v.ncid,v.varid,start,count,vals) end
 
-function nc_put_vara_x(v::NcVar{String,N,NC_STRING}, start, count,vals::Array{String}) where N
+function nc_put_vara_x(v::NcVar{String,N,NC_STRING}, start, count,vals::AbstractArray{String}) where N
     vals_p = map(x->pointer(x),vals)
     nc_put_vara_string(v.ncid,v.varid,start,count,vals_p)
 end
