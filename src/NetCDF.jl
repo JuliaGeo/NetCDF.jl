@@ -8,7 +8,6 @@ using Base.Cartesian
 include("netcdf_c.jl")
 
 import Base.show
-import Compat: IndexStyle, IndexCartesian
 
 export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,ncputatt,
     NC_BYTE,NC_SHORT,NC_INT,NC_FLOAT,NC_DOUBLE,NC_STRING,ncgetatt,NC_NOWRITE,NC_WRITE,NC_CHAR,
