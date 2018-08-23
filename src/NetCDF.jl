@@ -296,7 +296,7 @@ end
 
 firsti(i::Integer,l::Integer) = i-1
 counti(i::Integer,l::Integer) = 1
-firsti(r::UnitRange,l::Integer) = start(r)-1
+firsti(r::UnitRange,l::Integer) = first(r)-1
 counti(r::UnitRange,l::Integer) = length(r)
 firsti(r::Colon,l::Integer) = 0
 counti(r::Colon,l::Integer) = Int(l)
