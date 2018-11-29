@@ -17,17 +17,16 @@ First of all we create an array with top-of the atmosphere radiation data:
 
 ```@example 1
 using NetCDF
-include(joinpath(Pkg.dir("NetCDF"),"examples","toa.jl"))
+include(joinpath(dirname(pathof(NetCDF)), "../examples/toa.jl"))
 
 # Define longitudes and latitudes, day and timesteps
-lat=collect(-89.5:89.5)
-lon=collect(-179.5:179.5)
-day=1
-tim=collect(0:23)
+lat = collect(-89.5:89.5)
+lon = collect(-179.5:179.5)
+day = 1
+tim = collect(0:23)
 
 # Create radiation array
 rad = [g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim];
-
 ```
 
 The resulting array is a 3-dimensional array with dimensions lon-lat-time, resembling
@@ -95,7 +94,8 @@ ts = ncread(fn,"rad",start=[180,45,1], count=[1,1,-1])
 In order to correctly label the time steps we retrieve the time information from the file:
 
 ```@example 1
-tvec = Base.Dates.DateTime(2001,1,1)+Base.Dates.Hour.(ncread(fn,"time"))
+using Dates
+tvec = DateTime(2001,1,1) + Hour.(ncread(fn,"time"))
 ```
 
 Now we can generate the plot:

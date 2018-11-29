@@ -3,7 +3,7 @@ NetCDF.jl
 
 | **Documentation**                                                               | **PackageEvaluator**                                                                            | **Build Status**                                                                                |
 |:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
-| [![][docs-latest-img]][docs-latest-url] | [![][pkg-0.5-img]][pkg-0.5-url] [![][pkg-0.6-img]][pkg-0.6-url]  | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] |
+| [![][docs-dev-img]][docs-dev-url] | [![][pkg-0.5-img]][pkg-0.5-url] [![][pkg-0.6-img]][pkg-0.6-url]  | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] |
 
 
 NetCDF support for the julia programming language, there is a high-level and a medium-level interface for writing and reading netcdf files.
@@ -48,7 +48,7 @@ Now we can write data to the file:
     d = rand(10, 20)
     ncwrite(d, filename, varname)
 
-The full documentation can be found [here][docs-latest-url]
+The full documentation can be found [here][docs-dev-url]
 
 An alternative interface for reading NetCDF files can be found here: https://github.com/Alexander-Barth/NCDatasets.jl
 
@@ -56,8 +56,8 @@ An alternative interface for reading NetCDF files can be found here: https://git
 
 This package was originally started and is mostly maintained by Fabian Gans (fgans@bgc-jena.mpg.de). The automatic C wrapper generator was contributed by Martijn Visser (https://github.com/visr). Many thanks to several people who contributed bug fixes and enhancements. 
 
-[docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
-[docs-latest-url]: https://JuliaGeo.github.io/NetCDF.jl/latest
+[docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
+[docs-dev-url]: https://JuliaGeo.github.io/NetCDF.jl/dev
 
 [travis-img]: https://travis-ci.org/JuliaGeo/NetCDF.jl.svg?branch=master
 [travis-url]: https://travis-ci.org/JuliaGeo/NetCDF.jl

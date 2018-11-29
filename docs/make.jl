@@ -2,8 +2,7 @@ using Documenter, NetCDF
 
 makedocs(
     modules = [NetCDF],
-    clean   = false,
-    format   = :html,
+    format = :html,
     sitename = "NetCDF.jl",
     authors = "Fabian Gans and contributors",
     pages = [
@@ -18,10 +17,5 @@ makedocs(
 )
 
 deploydocs(
-    #deps   = Deps.pip("mkdocs", "python-markdown-math"),
-    repo   = "github.com/JuliaGeo/NetCDF.jl.git",
-    julia  = "1.0",
-    deps   = nothing,
-    make   = nothing,
-    target = "build"
+    repo = "github.com/JuliaGeo/NetCDF.jl.git"
 )
