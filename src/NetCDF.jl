@@ -140,6 +140,7 @@ list of NetCDF dimensions specified by `dimin`.
 """
 function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1,chunksize=ntuple(i->zero(Int32),isa(dimin,NcDim) ? 1 : length(dimin)))
     dim = isa(dimin,NcDim) ? NcDim[dimin] : dimin
+    chunksize = map(Int32,chunksize)
     return NcVar{getJLType(t),length(dim),getNCType(t)}(-1,-1,length(dim),length(atts), getNCType(t),name,Array{Int32}(undef,length(dim)),dim,atts,compress,chunksize)
 end
 NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}},atts,t::Union{DataType,Integer}=Float64) =
