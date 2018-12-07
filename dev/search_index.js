@@ -1,7 +1,7 @@
 var documenterSearchIndex = {"docs": [
 
 {
-    "location": "index.html#",
+    "location": "#",
     "page": "Home",
     "title": "Home",
     "category": "page",
@@ -9,7 +9,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "index.html#NetCDF.jl-1",
+    "location": "#NetCDF.jl-1",
     "page": "Home",
     "title": "NetCDF.jl",
     "category": "section",
@@ -17,7 +17,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "index.html#Package-features-1",
+    "location": "#Package-features-1",
     "page": "Home",
     "title": "Package features",
     "category": "section",
@@ -25,7 +25,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "index.html#Manual-Outline-1",
+    "location": "#Manual-Outline-1",
     "page": "Home",
     "title": "Manual Outline",
     "category": "section",
@@ -33,7 +33,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "index.html#Acknowledgements-1",
+    "location": "#Acknowledgements-1",
     "page": "Home",
     "title": "Acknowledgements",
     "category": "section",
@@ -41,7 +41,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "index.html#Index-1",
+    "location": "#Index-1",
     "page": "Home",
     "title": "Index",
     "category": "section",
@@ -49,7 +49,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "quickstart.html#",
+    "location": "quickstart/#",
     "page": "Quickstart",
     "title": "Quickstart",
     "category": "page",
@@ -57,7 +57,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "quickstart.html#Quickstart-1",
+    "location": "quickstart/#Quickstart-1",
     "page": "Quickstart",
     "title": "Quickstart",
     "category": "section",
@@ -65,7 +65,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "quickstart.html#Reading-a-file-1",
+    "location": "quickstart/#Reading-a-file-1",
     "page": "Quickstart",
     "title": "Reading a file",
     "category": "section",
@@ -73,15 +73,15 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "quickstart.html#A-more-advanced-example-1",
+    "location": "quickstart/#A-more-advanced-example-1",
     "page": "Quickstart",
     "title": "A more advanced example",
     "category": "section",
-    "text": "In this example we show how to create a NetCDF file from scratch, write some data to it and read it back in afterwards. First of all we create an array with top-of the atmosphere radiation data:using NetCDF\ninclude(joinpath(Pkg.dir(\"NetCDF\"),\"examples\",\"toa.jl\"))\n\n# Define longitudes and latitudes, day and timesteps\nlat=collect(-89.5:89.5)\nlon=collect(-179.5:179.5)\nday=1\ntim=collect(0:23)\n\n# Create radiation array\nrad = [g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim];\nThe resulting array is a 3-dimensional array with dimensions lon-lat-time, resembling approximately the hourly top of atmosphere radiation on January 1st. For documentation purposes we want to add atributes to the variable as well as the dimensions. Throughout this package, attributes are represented Dict{String}s:varatts = Dict(\"longname\" => \"Radiation at the top of the atmosphere\",\n          \"units\"    => \"W/m^2\")\nlonatts = Dict(\"longname\" => \"Longitude\",\n          \"units\"    => \"degrees east\")\nlatatts = Dict(\"longname\" => \"Latitude\",\n          \"units\"    => \"degrees north\")\ntimatts = Dict(\"longname\" => \"Time\",\n          \"units\"    => \"hours since 01-01-2000 00:00:00\");Now we have all the meta-information ready to create the actual file:fn = joinpath(tempdir(),\"radiation.nc\")\nisfile(fn) && rm(fn)\nnccreate(fn,\"rad\",\"lon\",lon,lonatts,\"lat\",lat,latatts,\"time\",tim,timatts,atts=varatts);\nnothing # hideOnce the file is created we can write the actual data to it:ncwrite(rad,fn,\"rad\");This does not yet ensure that the data is actually written to the file, it might still be cached by the NetCDF library. In order to write and close the file we run ncclose:ncclose(fn)\nnothing # hideNow we assume we just retrieved this radiation NetCDF file and want to get some information about it. This is done using ncinfo:ncinfo(fn)Here we learn the most important information about the file, which variables it contains, the variable dimensions and their attributes. We decide to read the radiation variable:x=ncread(fn,\"rad\")\nsize(x)This reads the whole array at once. If we only want to read a certain part of the variable, for example if we only want to plot the time series at a certain location, we can use the start and count keywords:ts = ncread(fn,\"rad\",start=[180,45,1], count=[1,1,-1])In order to correctly label the time steps we retrieve the time information from the file:tvec = Base.Dates.DateTime(2001,1,1)+Base.Dates.Hour.(ncread(fn,\"time\"))Now we can generate the plot:plot(tvec,ts)Another example would be to generate a heatmap plot of the solar radiation at 12am UTC:lons = ncread(fn,\"lon\")\nlats = ncread(fn,\"lat\")\nm    = ncread(fn,\"rad\",start=[1,1,12],count=[-1,-1,1])\nplot(heatmap(x=lons,y=lats,z=m))"
+    "text": "In this example we show how to create a NetCDF file from scratch, write some data to it and read it back in afterwards. First of all we create an array with top-of the atmosphere radiation data:using NetCDF\ninclude(joinpath(dirname(pathof(NetCDF)), \"../examples/toa.jl\"))\n\n# Define longitudes and latitudes, day and timesteps\nlat = collect(-89.5:89.5)\nlon = collect(-179.5:179.5)\nday = 1\ntim = collect(0:23)\n\n# Create radiation array\nrad = [g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim];The resulting array is a 3-dimensional array with dimensions lon-lat-time, resembling approximately the hourly top of atmosphere radiation on January 1st. For documentation purposes we want to add atributes to the variable as well as the dimensions. Throughout this package, attributes are represented Dict{String}s:varatts = Dict(\"longname\" => \"Radiation at the top of the atmosphere\",\n          \"units\"    => \"W/m^2\")\nlonatts = Dict(\"longname\" => \"Longitude\",\n          \"units\"    => \"degrees east\")\nlatatts = Dict(\"longname\" => \"Latitude\",\n          \"units\"    => \"degrees north\")\ntimatts = Dict(\"longname\" => \"Time\",\n          \"units\"    => \"hours since 01-01-2000 00:00:00\");Now we have all the meta-information ready to create the actual file:fn = joinpath(tempdir(),\"radiation.nc\")\nisfile(fn) && rm(fn)\nnccreate(fn,\"rad\",\"lon\",lon,lonatts,\"lat\",lat,latatts,\"time\",tim,timatts,atts=varatts);\nnothing # hideOnce the file is created we can write the actual data to it:ncwrite(rad,fn,\"rad\");This does not yet ensure that the data is actually written to the file, it might still be cached by the NetCDF library. In order to write and close the file we run ncclose:ncclose(fn)\nnothing # hideNow we assume we just retrieved this radiation NetCDF file and want to get some information about it. This is done using ncinfo:ncinfo(fn)Here we learn the most important information about the file, which variables it contains, the variable dimensions and their attributes. We decide to read the radiation variable:x=ncread(fn,\"rad\")\nsize(x)This reads the whole array at once. If we only want to read a certain part of the variable, for example if we only want to plot the time series at a certain location, we can use the start and count keywords:ts = ncread(fn,\"rad\",start=[180,45,1], count=[1,1,-1])In order to correctly label the time steps we retrieve the time information from the file:using Dates\ntvec = DateTime(2001,1,1) + Hour.(ncread(fn,\"time\"))Now we can generate the plot:plot(tvec,ts)Another example would be to generate a heatmap plot of the solar radiation at 12am UTC:lons = ncread(fn,\"lon\")\nlats = ncread(fn,\"lat\")\nm    = ncread(fn,\"rad\",start=[1,1,12],count=[-1,-1,1])\nplot(heatmap(x=lons,y=lats,z=m))"
 },
 
 {
-    "location": "highlevel.html#",
+    "location": "highlevel/#",
     "page": "High-level interface",
     "title": "High-level interface",
     "category": "page",
@@ -89,7 +89,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#High-level-interface-1",
+    "location": "highlevel/#High-level-interface-1",
     "page": "High-level interface",
     "title": "High-level interface",
     "category": "section",
@@ -97,7 +97,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#NetCDF.ncinfo",
+    "location": "highlevel/#NetCDF.ncinfo",
     "page": "High-level interface",
     "title": "NetCDF.ncinfo",
     "category": "function",
@@ -105,7 +105,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#Getting-information-1",
+    "location": "highlevel/#Getting-information-1",
     "page": "High-level interface",
     "title": "Getting information",
     "category": "section",
@@ -113,7 +113,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#NetCDF.ncread",
+    "location": "highlevel/#NetCDF.ncread",
     "page": "High-level interface",
     "title": "NetCDF.ncread",
     "category": "function",
@@ -121,7 +121,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#NetCDF.ncread!",
+    "location": "highlevel/#NetCDF.ncread!",
     "page": "High-level interface",
     "title": "NetCDF.ncread!",
     "category": "function",
@@ -129,7 +129,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#Reading-data-1",
+    "location": "highlevel/#Reading-data-1",
     "page": "High-level interface",
     "title": "Reading data",
     "category": "section",
@@ -137,7 +137,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#NetCDF.ncwrite",
+    "location": "highlevel/#NetCDF.ncwrite",
     "page": "High-level interface",
     "title": "NetCDF.ncwrite",
     "category": "function",
@@ -145,7 +145,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#Writing-data-1",
+    "location": "highlevel/#Writing-data-1",
     "page": "High-level interface",
     "title": "Writing data",
     "category": "section",
@@ -153,7 +153,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#NetCDF.ncgetatt",
+    "location": "highlevel/#NetCDF.ncgetatt",
     "page": "High-level interface",
     "title": "NetCDF.ncgetatt",
     "category": "function",
@@ -161,7 +161,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#Reading-attributes-1",
+    "location": "highlevel/#Reading-attributes-1",
     "page": "High-level interface",
     "title": "Reading attributes",
     "category": "section",
@@ -169,7 +169,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#NetCDF.ncputatt",
+    "location": "highlevel/#NetCDF.ncputatt",
     "page": "High-level interface",
     "title": "NetCDF.ncputatt",
     "category": "function",
@@ -177,7 +177,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#Writing-attributes-1",
+    "location": "highlevel/#Writing-attributes-1",
     "page": "High-level interface",
     "title": "Writing attributes",
     "category": "section",
@@ -185,7 +185,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#NetCDF.nccreate",
+    "location": "highlevel/#NetCDF.nccreate",
     "page": "High-level interface",
     "title": "NetCDF.nccreate",
     "category": "function",
@@ -193,7 +193,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#Creating-files-1",
+    "location": "highlevel/#Creating-files-1",
     "page": "High-level interface",
     "title": "Creating files",
     "category": "section",
@@ -201,7 +201,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#NetCDF.ncsync",
+    "location": "highlevel/#NetCDF.ncsync",
     "page": "High-level interface",
     "title": "NetCDF.ncsync",
     "category": "function",
@@ -209,7 +209,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#NetCDF.ncclose",
+    "location": "highlevel/#NetCDF.ncclose",
     "page": "High-level interface",
     "title": "NetCDF.ncclose",
     "category": "function",
@@ -217,7 +217,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "highlevel.html#Miscellaneous-1",
+    "location": "highlevel/#Miscellaneous-1",
     "page": "High-level interface",
     "title": "Miscellaneous",
     "category": "section",
@@ -225,7 +225,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "intermediate.html#",
+    "location": "intermediate/#",
     "page": "Medium-level interface",
     "title": "Medium-level interface",
     "category": "page",
@@ -233,7 +233,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "intermediate.html#Medium-level-interface-1",
+    "location": "intermediate/#Medium-level-interface-1",
     "page": "Medium-level interface",
     "title": "Medium-level interface",
     "category": "section",
@@ -241,7 +241,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "intermediate.html#NetCDF.open",
+    "location": "intermediate/#NetCDF.open",
     "page": "Medium-level interface",
     "title": "NetCDF.open",
     "category": "function",
@@ -249,7 +249,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "intermediate.html#Open-a-file-1",
+    "location": "intermediate/#Open-a-file-1",
     "page": "Medium-level interface",
     "title": "Open a file",
     "category": "section",
@@ -257,7 +257,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "intermediate.html#Getting-information-1",
+    "location": "intermediate/#Getting-information-1",
     "page": "Medium-level interface",
     "title": "Getting information",
     "category": "section",
@@ -265,7 +265,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "intermediate.html#NetCDF.readvar",
+    "location": "intermediate/#NetCDF.readvar",
     "page": "Medium-level interface",
     "title": "NetCDF.readvar",
     "category": "function",
@@ -273,7 +273,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "intermediate.html#Reading-data-1",
+    "location": "intermediate/#Reading-data-1",
     "page": "Medium-level interface",
     "title": "Reading data",
     "category": "section",
@@ -281,7 +281,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "intermediate.html#NetCDF.putvar",
+    "location": "intermediate/#NetCDF.putvar",
     "page": "Medium-level interface",
     "title": "NetCDF.putvar",
     "category": "function",
@@ -289,7 +289,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "intermediate.html#Writing-data-1",
+    "location": "intermediate/#Writing-data-1",
     "page": "Medium-level interface",
     "title": "Writing data",
     "category": "section",
@@ -297,7 +297,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "intermediate.html#Creating-files-1",
+    "location": "intermediate/#Creating-files-1",
     "page": "Medium-level interface",
     "title": "Creating files",
     "category": "section",
@@ -305,7 +305,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "intermediate.html#Miscellaneous-1",
+    "location": "intermediate/#Miscellaneous-1",
     "page": "Medium-level interface",
     "title": "Miscellaneous",
     "category": "section",
@@ -313,7 +313,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "intermediate.html#NetCDF.NcDim",
+    "location": "intermediate/#NetCDF.NcDim",
     "page": "Medium-level interface",
     "title": "NetCDF.NcDim",
     "category": "type",
@@ -321,7 +321,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "intermediate.html#NetCDF.NcVar",
+    "location": "intermediate/#NetCDF.NcVar",
     "page": "Medium-level interface",
     "title": "NetCDF.NcVar",
     "category": "type",
@@ -329,7 +329,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "intermediate.html#NetCDF.create",
+    "location": "intermediate/#NetCDF.create",
     "page": "Medium-level interface",
     "title": "NetCDF.create",
     "category": "function",
@@ -337,7 +337,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "intermediate.html#Interface-for-creating-files-1",
+    "location": "intermediate/#Interface-for-creating-files-1",
     "page": "Medium-level interface",
     "title": "Interface for creating files",
     "category": "section",
@@ -345,7 +345,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "strings.html#",
+    "location": "strings/#",
     "page": "Short note on reading and writing NCCHAR and NCSTRING variables",
     "title": "Short note on reading and writing NCCHAR and NCSTRING variables",
     "category": "page",
@@ -353,7 +353,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "strings.html#Short-note-on-reading-and-writing-NC*CHAR-and-NC*STRING-variables-1",
+    "location": "strings/#Short-note-on-reading-and-writing-NC*CHAR-and-NC*STRING-variables-1",
     "page": "Short note on reading and writing NCCHAR and NCSTRING variables",
     "title": "Short note on reading and writing NCCHAR and NCSTRING variables",
     "category": "section",
@@ -361,7 +361,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "strings.html#NC_STRING-variables-1",
+    "location": "strings/#NC_STRING-variables-1",
     "page": "Short note on reading and writing NCCHAR and NCSTRING variables",
     "title": "NC_STRING variables",
     "category": "section",
@@ -369,7 +369,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "strings.html#NC_CHAR-variables-1",
+    "location": "strings/#NC_CHAR-variables-1",
     "page": "Short note on reading and writing NCCHAR and NCSTRING variables",
     "title": "NC_CHAR variables",
     "category": "section",
