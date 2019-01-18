@@ -195,7 +195,7 @@ function nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Ar
   #Assert that length of the attribute matches length of output
   nc_inq_attlen(ncid, varid, name, lengtha)
   @assert lengtha[1]==length(valsa)
-  valsa_c = Array{Ptr{UInt8}}(length(valsa))
+  valsa_c = Array{Ptr{UInt8}}(undef,length(valsa))
   nc_get_att_string(ncid,varid,name,valsa_c)
   for i = 1:length(valsa)
     valsa[i] = unsafe_string(valsa_c[i])
