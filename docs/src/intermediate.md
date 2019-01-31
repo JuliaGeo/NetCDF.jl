@@ -43,7 +43,7 @@ Here *varname* is the name of the variable, *dimlist* an array of type NcDim hol
 
 Having defined the variables, the netCDF file can be created:
 
-    netCDF.create(filename, varlist, gatts=Dict{Any,Any}(),mode=NC_netCDF4)
+    NetCDF.create(filename, varlist, gatts=Dict{Any,Any}(),mode=NC_netCDF4)
 
 Here, filename is the name of the file to be created and varlist an array of NcVar holding the variables that should appear in the file. In the optional argument *gatts* you can specify a Dict containing global attributes and mode is the file type you want to create(NC_netCDF4, NC_CLASSIC_MODEL or NC_64BIT_OFFSET).
 
@@ -52,11 +52,11 @@ Here, filename is the name of the file to be created and varlist an array of NcV
 
 once you have finished reading, writing or editing your files you can close the file with
 
-    netCDF.close(nc)
+    NetCDF.close(nc)
 
 If you just want to synchronize your changes to the disk, run
 
-    netCDF.sync(nc)
+    NetCDF.sync(nc)
 
 where nc is a netCDF file handler.
 
