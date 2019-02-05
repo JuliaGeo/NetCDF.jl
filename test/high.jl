@@ -28,7 +28,8 @@ ncputatt(fn1,"v1", Dict("Additional Int8 array attribute"=>Int8[i for i in 1:20]
                         "Additional Int16 array attribute"=>Int16[i for i in 1:20],
                         "Additional Int32 array attribute"=>Int32[i for i in 1:20],
                         "Additional Float32 array attribute"=>Float32[i for i in 1:20],
-                        "Additional Float64 array attribute"=>Float64[i for i in 1:20]))
+                        "Additional Float64 array attribute"=>Float64[i for i in 1:20],
+                        "Additional String array attribute"=>String[string("string attribute ",i) for i in 1:20]))
 
 #First generate the data
 x1 = rand(2,10,20)
@@ -86,4 +87,7 @@ ncclose()
 ncread(fn4, "myvar2")
 nccreate(fn4, "myvar3", "time", Inf)
 
+ncclose()
+nci = ncinfo(fn1);
+@test all(isequal.(nci.vars["v1"].atts["Additional String array attribute"], string.("string attribute ",1:20)))
 ncclose()

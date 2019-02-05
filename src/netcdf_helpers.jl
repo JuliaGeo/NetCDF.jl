@@ -154,7 +154,6 @@ nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int32}) 
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int64})   = nc_put_att_long(ncid,varid,name,NC_INT64,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Float32}) = nc_put_att_float(ncid,varid,name,NC_FLOAT,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Float64}) = nc_put_att_double(ncid,varid,name,NC_DOUBLE,length(val),val)
-#nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::AbstractString)         = nc_put_att_text(ncid,varid,name,length(val)+1,val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Any})     = error("Writing attribute array of type Any is not possible")
 
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Int8) = begin int8a[1] = val; nc_put_att(ncid,varid,name,int8a) end
@@ -169,6 +168,11 @@ function nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Abstr
     val = string(val)
     len = sizeof(val)
     nc_put_att_text(ncid,varid,name,len,val)
+end
+
+function nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::AbstractArray{String}) 
+    vals_p = map(x->pointer(x),val)
+    nc_put_att_string(ncid,varid,name,length(val),vals_p)
 end
 
 function nc_get_att(ncid::Integer,varid::Integer,name::AbstractString,attype::Integer,attlen::Integer)
