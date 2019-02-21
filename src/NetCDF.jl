@@ -988,5 +988,14 @@ function tolen(s::AbstractString, l::Integer)
         return s
     end
 end
+function tolen(s::Array{String,1}, l::Number)
+    cs = "["
+    for se = s
+      cs*=string(se,", ")
+    end
+    cs = isempty(s) ? string(cs,']') : string(cs[1:end-2],']')
+    return tolen(cs, l)
+end
+
 
 end # Module
