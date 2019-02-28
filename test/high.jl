@@ -89,5 +89,6 @@ nccreate(fn4, "myvar3", "time", Inf)
 
 ncclose()
 nci = ncinfo(fn1);
+@test show(nci) === nothing
 @test all(isequal.(nci.vars["v1"].atts["Additional String array attribute"], string.("string attribute ",1:20)))
 ncclose()
