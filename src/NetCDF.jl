@@ -138,13 +138,11 @@ list of NetCDF dimensions specified by `dimin`.
 * `t` either a Julia type, (one of `Int16, Int32, Float32, Float64, String`) or a NetCDF data type (`NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE, NC_CHAR, NC_STRING`) determines the data type of the variable. Defaults to -1
 * `compress` Integer which sets the compression level of the variable for NetCDF4 files. Defaults to -1 (no compression). Compression levels of 1..9 are valid
 """
-function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1,chunksize=ntuple(i->zero(Int32),isa(dimin,NcDim) ? 1 : length(dimin)))
+function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1,chunksize::Tuple=ntuple(i->zero(Int32),isa(dimin,NcDim) ? 1 : length(dimin)))
     dim = isa(dimin,NcDim) ? NcDim[dimin] : dimin
     chunksize = map(Int32,chunksize)
-    return NcVar{getJLType(t),length(dim),getNCType(t)}(-1,-1,length(dim),length(atts), getNCType(t),name,Array{Int32}(undef,length(dim)),dim,atts,compress,chunksize)
+    return NcVar{getJLType(t),length(dim),getNCType(t)}(Int32(-1),Int32(-1),Int32(length(dim)),Int32(length(atts)), getNCType(t),name,fill(Int32(-1),length(dim)),dim,atts,Int32(compress),chunksize)
 end
-NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}},atts,t::Union{DataType,Integer}=Float64) =
-    NcVar{getJLType(t),length(dimin),getNCType(t)}(-1,-1,length(dimin),length(atts), getNCType(t),name,Array{Int}(undef,length(dimin)),dimin,atts,-1,ntuple(i->zero(Int32),length(dimin)))
 
 #Array methods
 @generated function Base.size(a::NcVar{T,N}) where {T,N}
@@ -569,7 +567,7 @@ function setcompression(v::NcVar,mode)
             warn("Compression only possible for NetCDF4 file format. Compression will be ingored.")
             v.compress = -1
         else
-            v.compress = max(v.compress,9)
+            v.compress = min(v.compress,9)
             nc_def_var_deflate(v.ncid, v.varid, Int32(1), Int32(1), v.compress);
         end
     end
