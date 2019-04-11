@@ -27,10 +27,14 @@ const funext = [
     (Float64, "double", "float64a"),
     (Float32, "float", "float32a"),
     (Int32,   "int", "int32a"),
+    (UInt32,  "uint", "uint32a"),
     (UInt8,   "uchar", "uint8a"),
     (Int8,    "schar", "int8a"),
     (Int16,   "short", "int16a"),
-    (Int64,   "longlong", "int64a")]
+    (UInt16,  "ushort", "uint16a"),
+    (Int64,   "longlong", "int64a"),
+    (UInt64,   "ulonglong", "uint64a"),
+    ]
 
 const ida          = zeros(Int32,1)
 const namea        = zeros(UInt8,NC_MAX_NAME+1)
@@ -57,29 +61,37 @@ for (t,ending,aname) in funext
 end
 
 """
-    nc_char2string(x::Array{UInt8})
+    nc_char2string(x::Matrix{ASCIIChar})
 
-Convert a `UInt8` array read from a NetCDF variable of type `NC_CHAR` to a Julia array of Strings
+Convert a `ASCIIChar` array read from a NetCDF variable of type `NC_CHAR` to a Julia array of Strings
 """
-function nc_char2string(x::Array{UInt8})
-    y = copy(x)
-    y[end,:] .= 0
-    dropdims(mapslices(i -> unsafe_string(pointer(i)), y, dims=[1]), dims=1)
+function nc_char2string(x::Array{ASCIIChar})
+  mapslices(x,dims=1) do r
+    i = findfirst(isequal(ASCIIChar(0)),r)
+    if i===nothing
+      String(r)
+    else
+      String(r[1:i-1])
+    end
+  end |> vec
 end
 
 """
     nc_string2char(x::Array{String})
 
-Convert a Julia `String` array to an `Array{UInt8}` so that it can be written to a
+Convert a Julia `String` array to an `Array{ASCIIChar}` so that it can be written to a
 NetCDF variable of type `NC_CHAR`.
 """
 function nc_string2char(s::Array{String})
-    maxlen=maximum(length(i) for i in s)
-    c = zeros(UInt8,maxlen+1,size(s)...)
-    offs=1
-    for i=1:length(s)
-        copyto!(c,offs,s[i],1)
-        offs+=maxlen+1
+    maxlen=maximum(length,s)
+    c = fill(ASCIIChar(0),maxlen+1,size(s)...)
+    for ii = eachindex(s)
+      for j = 1:length(s[ii])
+        cp = s[ii][j]
+        !isascii(cp) && error("Only ascii string can be written to NC_CHAR arrays.")
+        cp2 = ASCIIChar(UInt8(cp))
+        c[j,ii] = cp2
+      end
     end
     c
 end
@@ -149,17 +161,25 @@ end
 
 #Define methods for writing attributes
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int8})    = nc_put_att_schar(ncid,varid,name,NC_BYTE,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{UInt8})   = nc_put_att_ubyte(ncid,varid,name,NC_UBYTE,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int16})   = nc_put_att_short(ncid,varid,name,NC_SHORT,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{UInt16})  = nc_put_att_ushort(ncid,varid,name,NC_USHORT,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int32})   = nc_put_att_int(ncid,varid,name,NC_INT,length(val),val)
-nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int64})   = nc_put_att_long(ncid,varid,name,NC_INT64,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{UInt32})  = nc_put_att_uint(ncid,varid,name,NC_UINT,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Int64})   = nc_put_att_longlong(ncid,varid,name,NC_INT64,length(val),val)
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{UInt64})  = nc_put_att_ulonglong(ncid,varid,name,NC_UINT64,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Float32}) = nc_put_att_float(ncid,varid,name,NC_FLOAT,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Float64}) = nc_put_att_double(ncid,varid,name,NC_DOUBLE,length(val),val)
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Array{Any})     = error("Writing attribute array of type Any is not possible")
 
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Int8) = begin int8a[1] = val; nc_put_att(ncid,varid,name,int8a) end
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::UInt8) = begin uint8a[1] = val; nc_put_att(ncid,varid,name,uint8a) end
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Int16) = begin int16a[1] = val; nc_put_att(ncid,varid,name,int16a) end
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::UInt16) = begin uint16a[1] = val; nc_put_att(ncid,varid,name,uint16a) end
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Int32) = begin int32a[1] = val; nc_put_att(ncid,varid,name,int32a) end
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::UInt32) = begin uint32a[1] = val; nc_put_att(ncid,varid,name,uint32a) end
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Int64) = begin int64a[1] = val; nc_put_att(ncid,varid,name,int64a) end
+nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::UInt64) = begin uint64a[1] = val; nc_put_att(ncid,varid,name,uint64a) end
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Float32) = begin float32a[1] = val; nc_put_att(ncid,varid,name,float32a) end
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Float64) = begin float64a[1] = val; nc_put_att(ncid,varid,name,float64a) end
 nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val) = error("Writing attribute of type $(typeof(val)) is currently not possible.")
@@ -170,17 +190,17 @@ function nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::Abstr
     nc_put_att_text(ncid,varid,name,len,val)
 end
 
-function nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::AbstractArray{String}) 
+function nc_put_att(ncid::Integer,varid::Integer,name::AbstractString,val::AbstractArray{String})
     vals_p = map(x->pointer(x),val)
     nc_put_att_string(ncid,varid,name,length(val),vals_p)
 end
 
 function nc_get_att(ncid::Integer,varid::Integer,name::AbstractString,attype::Integer,attlen::Integer)
     if attype == NC_CHAR
-        valsa = zeros(UInt8,attlen+1)
+        valsa = zeros(ASCIIChar,attlen+1)
         nc_get_att_text(ncid,varid,name,valsa)
-        valsa[end] = 0
-        return unsafe_string(pointer(valsa))
+        valsa[end] = ASCIIChar(0)
+        return String(valsa[1:findfirst(isequal(ASCIIChar(0)),valsa)])
     else
         valsa = Array{nctype2jltype[attype]}(undef,attlen)
         return nc_get_att!(ncid,varid,name,valsa)
@@ -190,8 +210,11 @@ end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{UInt8}) = begin nc_get_att_ubyte(ncid,varid,name,valsa);valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int8})  = begin nc_get_att_schar(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int16})  = begin nc_get_att_short(ncid,varid,name,valsa); valsa end
+nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{UInt16})  = begin nc_get_att_ushort(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int32})  = begin nc_get_att_int(ncid,varid,name,valsa); valsa end
+nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{UInt32})  = begin nc_get_att_uint(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int64})  = begin nc_get_att_long(ncid,varid,name,valsa); valsa end
+nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{UInt64})  = begin nc_get_att_ulonglong(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float32})  = begin nc_get_att_float(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float64})  = begin nc_get_att_double(ncid,varid,name,valsa); valsa end
 

@@ -16,24 +16,40 @@ export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncsync,ncinfo,ncclose,
 
 NC_VERBOSE = false
 #Some constants
+#Define a short ASCIIChar type to map to NC_CHAR,
+#We can not use Julias Char because it has 4 bytes size
+struct ASCIIChar
+  x::UInt8
+end
+Base.show(io::IO,c::ASCIIChar) = print(io,string("ASCIIChar: '",Char(c.x),"'"))
+Base.convert(::Type{Char},c::ASCIIChar) = Char(c.x)
+Base.convert(::Type{UInt8},c::ASCIIChar) = c.x
+Base.String(a::Vector{ASCIIChar})=String(reinterpret(UInt8,a))
+Base.zero(::Type{ASCIIChar})=ASCIIChar(0)
 
 global const nctype2jltype = Dict(
     NC_BYTE => Int8,
     NC_UBYTE => UInt8,
     NC_SHORT => Int16,
+    NC_USHORT => UInt16,
     NC_INT => Int32,
+    NC_UINT => UInt32,
     NC_INT64 => Int64,
+    NC_UINT64 => UInt64,
     NC_FLOAT => Float32,
     NC_DOUBLE => Float64,
-    NC_CHAR => UInt8,
+    NC_CHAR => ASCIIChar,
     NC_STRING => String)
 
 global const nctype2string = Dict(
   NC_BYTE => "BYTE",
   NC_UBYTE => "UBYTE",
   NC_SHORT => "SHORT",
+  NC_USHORT => "USHORT",
   NC_INT => "INT",
+  NC_UINT => "UINT",
   NC_INT64 => "INT64",
+  NC_UINT64 => "UINT64",
   NC_FLOAT => "FLOAT",
   NC_DOUBLE => "DOUBLE",
   NC_STRING => "STRING",
@@ -283,9 +299,11 @@ end
 @generated function readvar(v::NcVar{T,N},I::Integer...) where {T,N}
     N==length(I) || error("Dimension mismatch")
     if N==0
-      checkbounds(v,I...)
-      gstart[1]=0
-      nc_get_var1_x(v,gstart,T)::T
+      quote
+        checkbounds(v,I...)
+        gstart[1]=0
+        nc_get_var1_x(v,gstart,T)::T
+      end
     else
       quote
         checkbounds(v,I...)
@@ -336,12 +354,12 @@ for (t,ending,arname) in funext
     @eval nc_get_var1_x(v::NcVar{$t},start::Vector{UInt},::Type{$t})=begin $fname1(v.ncid,v.varid,start,$(arsym)); $(arsym)[1] end
 end
 
-nc_get_vara_x!(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{UInt8}) where {N} =
+nc_get_vara_x!(v::NcVar{ASCIIChar,N,NC_CHAR},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{<:ASCIIChar}) where {N} =
     nc_get_vara_text(v.ncid,v.varid,start,count,retvalsa)
-nc_get_var1_x!(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},retvalsa::AbstractArray{UInt8}) where {N} =
+nc_get_var1_x!(v::NcVar{ASCIIChar,N,NC_CHAR},start::Vector{UInt},retvalsa::AbstractArray{<:ASCIIChar}) where {N} =
     nc_get_var1_text(v.ncid,v.varid,start,retvalsa)
 
-function nc_get_vara_x!(v::NcVar{String,N,NC_STRING},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{String}) where N
+function nc_get_vara_x!(v::NcVar{String,N,NC_STRING},start::Vector{UInt},count::Vector{UInt},retvalsa::AbstractArray{<:String}) where N
     @assert length(retvalsa)==prod(view(count,1:N))
     retvalsa_c=fill(Ptr{UInt8}(0),length(retvalsa))
     nc_get_vara_string(v.ncid,v.varid,start,count,retvalsa_c)
@@ -485,8 +503,8 @@ for (t, ending, arname) in funext
     @eval nc_put_var1_x(v::NcVar,start::Vector{UInt},val::$t)=begin $(arsym)[1]=val; $fname1(v.ncid,v.varid,start,$(arsym)) end
 end
 
-nc_put_vara_x(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt}, count::Vector{UInt}, vals::AbstractArray{UInt8}) where {N}=nc_put_vara_text(v.ncid,v.varid,start,count,vals)
-nc_put_var1_x(v::NcVar{UInt8,N,NC_CHAR},start::Vector{UInt},val::UInt8) where {N}=begin vals=UInt8[val]; nc_put_var1_text(v.ncid,v.varid,start,count,vals) end
+nc_put_vara_x(v::NcVar{ASCIIChar,N,NC_CHAR},start::Vector{UInt}, count::Vector{UInt}, vals::AbstractArray{ASCIIChar}) where {N}=nc_put_vara_text(v.ncid,v.varid,start,count,vals)
+nc_put_var1_x(v::NcVar{ASCIIChar,N,NC_CHAR},start::Vector{UInt},val::ASCIIChar) where {N}=begin vals=UInt8[val]; nc_put_var1_text(v.ncid,v.varid,start,count,vals) end
 
 function nc_put_vara_x(v::NcVar{String,N,NC_STRING}, start, count,vals::AbstractArray{String}) where N
     vals_p = map(x->pointer(x),vals)
@@ -950,7 +968,7 @@ function show(io::IO,nc::NcFile)
     println(io,"##### Variables #####")
     println(io,"")
     println(io,tolen("Name",l2),tolen("Type",l1),tolen("Dimensions",l2))
-    println(hline)
+    println(io,hline)
     for v in nc.vars
         s1 = string(tolen(v[2].name,l2))
         s2 = string(tolen(nctype2string[Int(v[2].nctype)],l1))
@@ -958,7 +976,7 @@ function show(io::IO,nc::NcFile)
         for d in v[2].dim
             s3 = string(s3,d.name," ")
         end
-        println(s1,s2,tolen(s3,l2))
+        println(io,s1,s2,tolen(s3,l2))
     end
     l1 = div(ncol,4)
     l2 = 2 * l1
