@@ -18,13 +18,13 @@ NC_VERBOSE = false
 #Some constants
 #Define a short ASCIIChar type to map to NC_CHAR,
 #We can not use Julias Char because it has 4 bytes size
-struct ASCIIChar
-  x::UInt8
-end
-Base.show(io::IO,c::ASCIIChar) = print(io,string("ASCIIChar: '",Char(c.x),"'"))
-Base.convert(::Type{Char},c::ASCIIChar) = Char(c.x)
-Base.convert(::Type{UInt8},c::ASCIIChar) = c.x
-Base.String(a::Vector{ASCIIChar})=String(reinterpret(UInt8,a))
+#create a new AbstractChar type to test the fallbacks,
+#this is re-used from the julialang tests
+#https://github.com/JuliaLang/julia/blob/master/test/char.jl#L242
+primitive type ASCIIChar <: AbstractChar 8 end
+ASCIIChar(c::UInt8) = reinterpret(ASCIIChar, c)
+ASCIIChar(c::UInt32) = ASCIIChar(UInt8(c))
+Base.codepoint(c::ASCIIChar) = reinterpret(UInt8, c)
 Base.zero(::Type{ASCIIChar})=ASCIIChar(0)
 
 global const nctype2jltype = Dict(
