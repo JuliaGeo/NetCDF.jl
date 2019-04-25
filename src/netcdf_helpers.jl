@@ -200,7 +200,7 @@ function nc_get_att(ncid::Integer,varid::Integer,name::AbstractString,attype::In
         valsa = zeros(ASCIIChar,attlen+1)
         nc_get_att_text(ncid,varid,name,valsa)
         valsa[end] = ASCIIChar(0)
-        return String(valsa[1:findfirst(isequal(ASCIIChar(0)),valsa)])
+        return String(valsa[1:findfirst(isequal(ASCIIChar(0)),valsa)-1])
     else
         valsa = Array{nctype2jltype[attype]}(undef,attlen)
         return nc_get_att!(ncid,varid,name,valsa)
