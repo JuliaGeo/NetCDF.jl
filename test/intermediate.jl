@@ -21,7 +21,6 @@ vs = NcVar("vstr",d2,t=String)
 vc = NcVar("vchar",[d5,d2],t=NetCDF.NC_CHAR)
 vscal = NcVar("vscal",NcDim[])
 
-tlist = [Float64, Float32, Int32, Int16, Int8]
 vt = Array{NcVar}(undef,length(tlist))
 for i= 1:length(tlist)
       vt[i]=NcVar("vt$i",d2,t = tlist[i])
@@ -34,19 +33,16 @@ nc2 = NetCDF.create(fn2,NcVar[v2,v3,vscal],gatts=Dict("Some global attributes"=>
 nc3 = NetCDF.create(fn3,vt);
 ncunlim = NetCDF.create(fn4,vunlim)
 
+numberatts = Dict{Any,Any}("Additional $t attribute"=>t(20) for t in tlist)
+numberatts["Additional String attribute"] = "string attribute"
+arrayatts  = Dict{Any,Any}("Additional $t attribute"=>t[i for i in 1:20] for t in tlist)
+arrayatts["Additional String attribute"] = String[string("string attribute ",i) for i in 1:20]
+
 #Test Adding attributes
 NetCDF.putatt(nc1,"v1",Dict("Additional String attribute"=>"att"))
 NetCDF.putatt(nc1,"global",Dict("Additional global attribute"=>"gatt"))
-NetCDF.putatt(nc1,"global",Dict("Additional Int8 attribute"=>Int8(20),
-                                "Additional Int16 attribute"=>Int16(20),
-                                "Additional Int32 attribute"=>Int32(20),
-                                "Additional Float32 attribute"=>Float32(20),
-                                "Additional Float64 attribute"=>Float64(20)))
-NetCDF.putatt(nc1,"v1", Dict("Additional Int8 array attribute"=>Int8[i for i in 1:20],
-                             "Additional Int16 array attribute"=>Int16[i for i in 1:20],
-                             "Additional Int32 array attribute"=>Int32[i for i in 1:20],
-                             "Additional Float32 array attribute"=>Float32[i for i in 1:20],
-                             "Additional Float64 array attribute"=>Float64[i for i in 1:20]))
+NetCDF.putatt(nc1,"global",numberatts)
+NetCDF.putatt(nc1,"v1", arrayatts)
 
 
 #Test writing data

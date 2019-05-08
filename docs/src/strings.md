@@ -33,8 +33,7 @@ Second, historically the `NC_CHAR` type has been used to store compressed data, 
 these char arrays to strings. Anyhow, here is how you can deal with these variable types:
 
 Assume you have a NetCDF variable of type `NC_CHAR` of dimensions (str_len: 10, axis2: 20).
-Calling `x=ncread(...)` or `x=readvar(...)` on this variable will return an `Array{UInt8,2}` with size `(10,20)` as it is represented on disk.
-If you You can either use this data directly (if it is numeric) or convert them to a `Vector{String}` by calling
+Calling `x=ncread(...)` or `x=readvar(...)` on this variable will return an `Array{ASCIIChar,2}` with size `(10,20)` as it is represented on disk. The `ASCIIChar` type is a small wrapper around `UInt8`, needed for dispatch. You can simply convert them to either `Char` or `UInt8` using the `convert` function. The returned array can either be used directly (if it is numeric maybe use `reinterpret(UInt8,x)`) or convert them to a `Vector{String}` by calling
 
     y=nc_char2string(x)
 
