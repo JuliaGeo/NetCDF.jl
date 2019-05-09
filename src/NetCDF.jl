@@ -120,7 +120,7 @@ NcDim(name::AbstractString,values::AbstractArray,atts::Dict;unlimited=false) =
 """
     NcVar
 
-`NcVar{T,N,M}` represents a NetCDF variable. It is a subtype of AbstractArray{T,N}, so normal indexing using `[]`
+`NcVar{T,N,M}` represents a NetCDF variable. It is a subtype of `AbstractArray{T,N}`, so normal indexing using `[]`
 will work for reading and writing data to and from a NetCDF file. `NcVar` objects are returned by `NetCDF.open`, by
 indexing an `NcFile` object (e.g. `myfile["temperature"]`) or, when creating a new file, by its constructor. The type parameter `M`
 denotes the NetCDF data type of the variable, which may or may not correspond to the Julia Data Type.
@@ -151,7 +151,7 @@ list of NetCDF dimensions specified by `dimin`.
 ### Keyword arguments
 
 * `atts` Dictionary representing the variables attributes
-* `t` either a Julia type, (one of `Int16, Int32, Float32, Float64, String`) or a NetCDF data type (`NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE, NC_CHAR, NC_STRING`) determines the data type of the variable. Defaults to -1
+* `t` either a Julia type, (one of `Int16`, `Int32`, `Float32`, `Float64`, `String`) or a NetCDF data type (`NC_SHORT`, `NC_INT`, `NC_FLOAT`, `NC_DOUBLE`, `NC_CHAR`, `NC_STRING`) determines the data type of the variable. Defaults to -1
 * `compress` Integer which sets the compression level of the variable for NetCDF4 files. Defaults to -1 (no compression). Compression levels of 1..9 are valid
 """
 function NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}};atts::Dict=Dict{Any,Any}(),t::Union{DataType,Integer}=Float64,compress::Integer=-1,chunksize::Tuple=ntuple(i->zero(Int32),isa(dimin,NcDim) ? 1 : length(dimin)))
@@ -440,8 +440,8 @@ putvar(nc::NcFile,varname::AbstractString,vals::AbstractArray;start=ones(Int,len
 """
     NetCDF.putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
 
-Writes the values from the array `vals` to a netcdf file. `v` is the NcVar handle of the respective variable and `vals` an array
-with the same dimension as the variable in the netcdf file.
+Writes the values from the array `vals` to a NetCDF file. `v` is the `NcVar` handle of the respective variable and `vals` an array
+with the same dimension as the variable in the NetCDF file.
 
 ### Keyword arguments
 
@@ -600,7 +600,7 @@ Creates a new NetCDF file. Here, `name`
 ### Keyword arguments
 
 * `gatts` a Dict containing global attributes of the NetCDF file
-* `mode` NetCDF file type (NC_NETCDF4, NC_CLASSIC_MODEL or NC_64BIT_OFFSET), defaults to NC_NETCDF4
+* `mode` NetCDF file type (`NC_NETCDF4`, `NC_CLASSIC_MODEL` or `NC_64BIT_OFFSET`), defaults to `NC_NETCDF4`
 """
 function create(name::AbstractString,varlist::Array{NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
 
@@ -672,7 +672,7 @@ end
 """
     NetCDF.open(fil::AbstractString,v::AbstractString)
 
-opens a NetCDF variable `v` in the NetCDF file `fil` and returns an `NcVar` handle that implements the AbstractArray interface for reading and writing.
+opens a NetCDF variable `v` in the NetCDF file `fil` and returns an `NcVar` handle that implements the `AbstractArray` interface for reading and writing.
 
 ### Keyword arguments
 
@@ -771,7 +771,7 @@ end
 ncread(fil::AbstractString,vname::AbstractString,start::Array{T,1},count::Array{T,1}) where {T<:Integer}=ncread(fil,vname,start=start,count=count)
 
 """
-ncread!(filename, varname, d)
+    ncread!(filename, varname, d)
 
 reads the values of the variable varname from file filename and writes the results to the pre-allocated array `d`
 
@@ -784,8 +784,8 @@ reads the values of the variable varname from file filename and writes the resul
 
 To read the second slice of a 3D NetCDF variable one can write:
 
-d = zeros(10,10,1)
-ncread!("filename","varname", d, start=[1,1,2], count = [-1,-1,1])
+    d = zeros(10,10,1)
+    ncread!("filename","varname", d, start=[1,1,2], count = [-1,-1,1])
 
 """
 function ncread!(fil::AbstractString,vname::AbstractString,vals::AbstractArray;start::Vector{Int}=ones(Int,ndims(vals)),count::Vector{Int}=[size(vals,i) for i=1:ndims(vals)])
@@ -874,18 +874,18 @@ end
 """
     nccreate (filename, varname, dimensions ...)
 
-Create a variable in an existing netcdf file or generates a new file. `filename` and `varname` are strings.
+Create a variable in an existing NetCDF file or generates a new file. `filename` and `varname` are strings.
 After that follows a list of dimensions. Each dimension entry starts with a dimension name (a String), and
 may be followed by a dimension length, an array with dimension values or a Dict containing dimension attributes.
 Then the next dimension is entered and so on. Have a look at examples/high.jl for an example use.
 
-###Keyword arguments
+### Keyword arguments
 
 - **atts** Dict of attribute names and values to be assigned to the variable created
 - **gatts** Dict of attribute names and values to be written as global attributes
-- **compress** Integer [0..9] setting the compression level of the file, only valid if mode=NC_NETCDF4
-- **t** variable type, currently supported types are: const NC_BYTE, NC_CHAR, NC_SHORT, NC_INT, NC_FLOAT, NC_LONG, NC_DOUBLE
-- **mode** file creation mode, only valid when new file is created, choose one of: NC_NETCDF4, NC_CLASSIC_MODEL, NC_64BIT_OFFSET
+- **compress** Integer [0..9] setting the compression level of the file, only valid if `mode=NC_NETCDF4`
+- **t** variable type, currently supported types are: const `NC_BYTE`, `NC_CHAR`, `NC_SHORT`, `NC_INT`, `NC_FLOAT`, `NC_LONG`, `NC_DOUBLE`
+- **mode** file creation mode, only valid when new file is created, choose one of: `NC_NETCDF4`, `NC_CLASSIC_MODEL`, `NC_64BIT_OFFSET`
 """
 function nccreate(fil::AbstractString,varname::AbstractString,dims...;atts::Dict=Dict{Any,Any}(),gatts::Dict=Dict{Any,Any}(),compress::Integer=-1,t::Union{DataType,Integer}=NC_DOUBLE,mode::UInt16=NC_NETCDF4,chunksize=(0,))
     # Checking dims argument for correctness

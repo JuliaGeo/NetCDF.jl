@@ -1,4 +1,4 @@
-# Short note on reading and writing NC_CHAR and NC_STRING variables
+# Short note on reading and writing `NC_CHAR` and `NC_STRING` variables
 
 There are two common types for storing String data in NetCDF variables. The first is `NC_CHAR`,
 where a 1D array of strings is stored in a 2D `char**` array. Here the user must define the maximum
@@ -6,7 +6,7 @@ string length and add a respective NetCDF dimension. Since NetCDF4 there is the 
  the direct definition of String variables so that an N-dimensional String array directly maps to an N-dimensional
  array in the NetCDF file structure.
 
-## NC_STRING variables
+## `NC_STRING` variables
 
 In this package, the Julia type `String` maps to the `NC_STRING` datatype, which means that creating a variable with any of
 
@@ -23,7 +23,7 @@ NcVar(varname,dims,t=String)
 will result in a NetCDF variable of type `NC_STRING`. You can directly write an `Array{String}` of matching shape to these
 variables. Similarly, calling `ncread` or `NetCDF.readvar` on any of these variables will return an `Array{String}`
 
-## NC_CHAR variables
+## `NC_CHAR` variables
 
 Dealing with `NC_CHAR` variables is a bit more complicated. This has 2 reasons. First, the dimensions of the NetCDF variables
 do not match the dimensions of the resulting string array because of the additional `str_len` (or similar) axis that is introduced in the
