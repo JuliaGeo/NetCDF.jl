@@ -2,7 +2,7 @@ using Documenter, NetCDF
 
 makedocs(
     modules = [NetCDF],
-    format = :html,
+    format = Documenter.HTML(),
     sitename = "NetCDF.jl",
     authors = "Fabian Gans and contributors",
     pages = [
