@@ -1,9 +1,9 @@
 NetCDF.jl
-============
+=========
 
-| **Documentation**                                                               | **PackageEvaluator**                                                                            | **Build Status**                                                                                |
-|:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
-| [![][docs-dev-img]][docs-dev-url] | [![][pkg-0.5-img]][pkg-0.5-url] [![][pkg-0.6-img]][pkg-0.6-url]  | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] |
+| **Documentation**                                                               | **Build Status**                                                                                |
+|:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
+| [![][docs-dev-img]][docs-dev-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] |
 
 
 NetCDF support for the julia programming language, there is a high-level and a medium-level interface for writing and reading netcdf files.
@@ -64,10 +64,4 @@ This package was originally started and is mostly maintained by Fabian Gans (fga
 [travis-url]: https://travis-ci.org/JuliaGeo/NetCDF.jl
 
 [appveyor-img]: https://ci.appveyor.com/api/projects/status/m9okydt7700kgavi?svg=true
-[appveyor-url]: https://ci.appveyor.com/project/JuliaGeo/netcdf-jl/build/1.0.42
-
-
-[pkg-0.5-img]: http://pkg.julialang.org/badges/NetCDF_0.5.svg
-[pkg-0.5-url]: http://pkg.julialang.org/?pkg=NetCDFD&ver=0.5
-[pkg-0.6-img]: http://pkg.julialang.org/badges/NetCDF_0.6.svg
-[pkg-0.6-url]: http://pkg.julialang.org/?pkg=NetCDF&ver=0.6
+[appveyor-url]: https://ci.appveyor.com/project/JuliaGeo/netcdf-jl/branch/master
