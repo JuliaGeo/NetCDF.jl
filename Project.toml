@@ -10,7 +10,7 @@ Formatting = "59287772-0a20-5a39-b81b-1366585eb4c0"
 BinDeps = "≥ 0.8.10"
 CondaBinDeps = "≥ 0.1.0"
 Formatting = "≥ 0.3.2"
-julia = "≥ 0.7.0"
+julia = "≥ 1.0.0"
 
 [extras]
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
