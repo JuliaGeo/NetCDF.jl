@@ -33,7 +33,7 @@ timdim = NcDim("time", tim, timatts)
 
 # Then we create an NcVar object, the data type is defined by the corresponding julia type:
 
-radvar = NcVar("rad", [londim, latdim, timdim], varatts, Float32)
+radvar = NcVar("rad", [londim, latdim, timdim]; atts=varatts, t=Float32)
 
 # Now we can finally create the netcdf-file and get a file handler in return:
 
@@ -54,7 +54,7 @@ nc = NetCDF.open("radiation2.nc")
 
 # we now have an NcFile object that can be browsed
 
-println("Names of the NcFile fields: \n", fieldnames(nc))
+println("Names of the NcFile fields: \n", fieldnames(typeof(nc)))
 
 println("Attributes of the variable rad: ", nc.vars["rad"].atts)
 
