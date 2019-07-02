@@ -101,7 +101,7 @@ Creates a NetCDF dimension object named `name` with length `dimlength` in memory
 """
 function NcDim(name::AbstractString,dimlength::Integer;values::Union{AbstractArray,Number}=[],atts::Dict=Dict{Any,Any}(),unlimited=false)
     length(values) > 0 && length(values) != dimlength && error("Dimension value vector must have the same length as dimlength!")
-    NcDim(-1,-1,-1,string(name),dimlength,values,atts,unlimited)
+    NcDim(-1,-1,-1,string(name),dimlength,collect(values),atts,unlimited)
 end
 
 
@@ -647,6 +647,7 @@ close(v::NcVar) = nc_close(v.ncid)
     NetCDF.open(fil::AbstractString,v::AbstractString)
 
 opens a NetCDF variable `v` in the NetCDF file `fil` and returns an `NcVar` handle that implements the `AbstractArray` interface for reading and writing.
+Note that it is in the user's responsibility to close the file after usage using `NetCDF.close`.
 
 ### Keyword arguments
 
@@ -661,7 +662,7 @@ end
 """
     NetCDF.open(fil::AbstractString)
 
-opens the NetCDF file `fil` and returns a `NcFile` handle.
+opens the NetCDF file `fil` and returns a `NcFile` handle. Note that it is in the user's responsibility to close the file after usage using `NetCDF.close`.
 
 ### Keyword arguments
 
@@ -711,6 +712,16 @@ function open(fil::AbstractString; mode::Integer=NC_NOWRITE, readdimvar::Bool=fa
     return ncf
 end
 
+"""
+    NetCDF.open(f::Function, args...;kwargs...)
+
+Opens a NetCDF file, applies the function f on the resulting file or variable handle and properly closes the file after usage.
+This is convenient to use together with the `do` block syntax, for example:
+
+data = open("myfile.nc","myvar") do v
+  NetCDF.readvar(v,start=[1,1,1], count=[-1,-1,1])
+end
+"""
 function open(f::Function, args...;kwargs...)
   io = open(args...;kwargs...)
   try
@@ -720,6 +731,18 @@ function open(f::Function, args...;kwargs...)
   end
 end
 
+"""
+    NetCDF.create(f::Function, args...;kwargs...)
+
+Creates a NetCDF file, applies the function f on the resulting file or variable handle and properly closes the file after usage.
+This is convenient to use together with the `do` block syntax, for example:
+
+d = NcDim("time",1:10)
+v = NcVar("obs",d);
+NetCDF.create("newfile.nc",v) do nc
+  nc["obs"][:] = rand(10)
+end
+"""
 function create(f::Function, args...;kwargs...)
   io = create(args...;kwargs...)
   try
