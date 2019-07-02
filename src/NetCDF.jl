@@ -16,6 +16,7 @@ export NcDim,NcVar,NcFile,ncread,ncread!,ncwrite,nccreate,ncinfo,ncclose,ncputat
 
 @deprecate ncclose() nothing
 @deprecate ncsync() nothing
+@deprecate ncclose(::AbstractString) nothing
 
 NC_VERBOSE = false
 #Some constants
@@ -546,16 +547,6 @@ Synchronizes the changes made to the file and writes changes to the disk.
 """
 function sync(nc::NcFile)
     nc_sync(nc.ncid)
-end
-
-#Function to close netcdf files
-"""
-    ncclose(filename::String)
-
-Closes the file and writes changes to the disk. If argument is omitted, all open files are closed.
-"""
-function ncclose(fil::AbstractString)
-    throw(DeprecationWarning("ncclose(::String) is deprecated, use NetCDF.close(nc::NcFile) to close a file."))
 end
 
 function setcompression(v::NcVar,mode)
