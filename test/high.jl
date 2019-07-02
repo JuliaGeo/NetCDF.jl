@@ -75,14 +75,7 @@ nccreate(fn5, "x5_1", "dim1", collect(Int32, 1:4), Dict("units"=>"m"))
 nccreate(fn5, "x5_2", "dim2", collect(Float32, 1:4), Dict("units"=>"m"))
 @test typeof(ncread(fn5, "dim1")) == Array{Int32, 1}
 @test typeof(ncread(fn5, "dim2")) == Array{Float32, 1}
-ncclose()
 
 # Open file by reading and create new variable
 ncread(fn4, "myvar2")
 nccreate(fn4, "myvar3", "time", Inf)
-
-ncclose()
-nci = ncinfo(fn1);
-@test show(nci) === nothing
-@test all(isequal.(nci.vars["v1"].atts["Additional String array attribute"], string.("string attribute ",1:20)))
-ncclose()
