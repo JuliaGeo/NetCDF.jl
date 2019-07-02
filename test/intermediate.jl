@@ -27,22 +27,13 @@ for i= 1:length(tlist)
 end
 vunlim = NcVar("vunlim",d4,t=Float64)
 
-# Creating Files
-nc1 = NetCDF.create(fn1,[v1,vs,vc],mode=NC_NETCDF4);
-nc2 = NetCDF.create(fn2,NcVar[v2,v3,vscal],gatts=Dict("Some global attributes"=>2010));
-nc3 = NetCDF.create(fn3,vt);
-ncunlim = NetCDF.create(fn4,vunlim)
 
 numberatts = Dict{Any,Any}("Additional $t attribute"=>t(20) for t in tlist)
 numberatts["Additional String attribute"] = "string attribute"
 arrayatts  = Dict{Any,Any}("Additional $t attribute"=>t[i for i in 1:20] for t in tlist)
 arrayatts["Additional String attribute"] = String[string("string attribute ",i) for i in 1:20]
 
-#Test Adding attributes
-NetCDF.putatt(nc1,"v1",Dict("Additional String attribute"=>"att"))
-NetCDF.putatt(nc1,"global",Dict("Additional global attribute"=>"gatt"))
-NetCDF.putatt(nc1,"global",numberatts)
-NetCDF.putatt(nc1,"v1", arrayatts)
+
 
 
 #Test writing data
@@ -53,59 +44,87 @@ x2 = rand(2,10,20)
 xt = [rand(tl,10) for tl in tlist]
 xs = ["a","bb","ccc","dddd","eeeee","ffffff","ggggggg","hhhhhhhh","iiiiiiiii","jjjjjjjjjj"]
 xscal = Array{Float64,0}(undef);xscal[1]=2.5
-#
-# And write it
-#
-NetCDF.putvar(nc1,"v1",x1)
-NetCDF.putvar(nc1,"vstr",xs)
-NetCDF.putvar(nc1,"vchar",nc_string2char(xs))
-#Test sequential writing along one dimension
-for i = 1:10
-  NetCDF.putvar(nc2,"v2",x2[:,i,:],start=[1,i,1],count=[-1,1,-1])
-end
-#Test automatic type conversion
 x4 = [1,2]
-NetCDF.putvar(nc2,"v3",x4)
+#
 
-NetCDF.putvar(nc2,"vscal",xscal)
+# Creating Files
+NetCDF.create(fn1,[v1,vs,vc],mode=NC_NETCDF4) do nc1
+  #Test Adding attributes
+  NetCDF.putatt(nc1,"v1",Dict("Additional String attribute"=>"att"))
+  NetCDF.putatt(nc1,"global",Dict("Additional global attribute"=>"gatt"))
+  NetCDF.putatt(nc1,"global",Dict("Additional Int8 attribute"=>Int8(20),
+  "Additional Int16 attribute"=>Int16(20),
+  "Additional Int32 attribute"=>Int32(20),
+  "Additional Float32 attribute"=>Float32(20),
+  "Additional Float64 attribute"=>Float64(20)))
+  NetCDF.putatt(nc1,"v1", Dict("Additional Int8 array attribute"=>Int8[i for i in 1:20],
+  "Additional Int16 array attribute"=>Int16[i for i in 1:20],
+  "Additional Int32 array attribute"=>Int32[i for i in 1:20],
+  "Additional Float32 array attribute"=>Float32[i for i in 1:20],
+  "Additional Float64 array attribute"=>Float64[i for i in 1:20]))
 
-for i=1:length(tlist)
-  NetCDF.putvar(nc3,"vt$i",xt[i])
+  #Test Adding attributes
+  NetCDF.putatt(nc1,"v1",Dict("Additional String attribute"=>"att"))
+  NetCDF.putatt(nc1,"global",Dict("Additional global attribute"=>"gatt"))
+  NetCDF.putatt(nc1,"global",numberatts)
+  NetCDF.putatt(nc1,"v1", arrayatts)
+
+  NetCDF.putvar(nc1,"v1",x1)
+  NetCDF.putvar(nc1,"vstr",xs)
+  NetCDF.putvar(nc1,"vchar",nc_string2char(xs))
+
 end
 
-NetCDF.putvar(ncunlim,"vunlim",collect(1:10))
 
-NetCDF.close(nc1)
-NetCDF.close(nc2)
-NetCDF.close(nc3)
+NetCDF.create(fn2,NcVar[v2,v3,vscal],gatts=Dict("Some global attributes"=>2010)) do nc2
+  #Test sequential writing along one dimension
+  for i = 1:10
+    NetCDF.putvar(nc2,"v2",x2[:,i,:],start=[1,i,1],count=[-1,1,-1])
+  end
+  #Test automatic type conversion
+  NetCDF.putvar(nc2,"v3",x4)
+
+  NetCDF.putvar(nc2,"vscal",xscal)
+end
+
+
+NetCDF.create(fn3,vt) do nc3
+  for i=1:length(tlist)
+    NetCDF.putvar(nc3,"vt$i",xt[i])
+  end
+end
+
+NetCDF.create(fn4,vunlim) do ncunlim
+  NetCDF.putvar(ncunlim,"vunlim",collect(1:10))
+end
 
 ##Read the data back and compare
-nc1 = NetCDF.open(fn1,mode=NC_NOWRITE);
-nc2 = NetCDF.open(fn2,mode=NC_NOWRITE);
-nc3 = NetCDF.open(fn3,mode=NC_NOWRITE);
+NetCDF.open(fn1,mode=NC_NOWRITE) do nc1
+  @test x1 == NetCDF.readvar(nc1,"v1")
+  @test xs == NetCDF.readvar(nc1,"vstr")
+  NetCDF.readvar(nc1,"v1",start=[1,1,1],count=[-1,-1,-1])
+  @test xs == NetCDF.nc_char2string(NetCDF.readvar(nc1,"vchar"))
+end
 
-@test x1 == NetCDF.readvar(nc1,"v1")
-@test xs == NetCDF.readvar(nc1,"vstr")
-@test x2 == NetCDF.readvar(nc2,"v2")
-@test x4 == NetCDF.readvar(nc2,"v3")
-@test xscal == NetCDF.readvar(nc2,"vscal")
-
-@test xs == NetCDF.nc_char2string(NetCDF.readvar(nc1,"vchar"))
+NetCDF.open(fn2,mode=NC_NOWRITE) do nc2
+  @test x2 == NetCDF.readvar(nc2,"v2")
+  @test x4 == NetCDF.readvar(nc2,"v3")
+  @test xscal == NetCDF.readvar(nc2,"vscal")
+end
 
 
-#Test -1 reading full dimension
-NetCDF.readvar(nc1,"v1",start=[1,1,1],count=[-1,-1,-1])
-
-#Test dimension variables type
+# #Test dimension variables type
 dim1 = NcDim("dim1", 4, atts=Dict("units" => "m"), values=collect(Int32,1:4))
 x5_1 = NcVar("x5_1", [dim1], atts=Dict("units" => "m"), t=Int32)
 
 dim2 = NcDim("dim2", 4, atts=Dict("units" => "m"), values=collect(Float32, 1:4))
 x5_2 = NcVar("x5_2", [dim2], atts=Dict("units" => "m"), t=Int32)
 
-nc5 = NetCDF.create(fn5, Array{NcVar, 1}([x5_1, x5_2]))
-NetCDF.close(nc5)
 
-nc5 = NetCDF.open(fn5)
-@test typeof(NetCDF.readvar(nc5, "dim1")) == Array{Int32, 1}
-@test typeof(NetCDF.readvar(nc5, "dim2")) == Array{Float32, 1}
+NetCDF.create(fn5, [x5_1, x5_2]) do _
+end
+
+NetCDF.open(fn5) do nc5
+  @test typeof(NetCDF.readvar(nc5, "dim1")) == Array{Int32, 1}
+  @test typeof(NetCDF.readvar(nc5, "dim2")) == Array{Float32, 1}
+end
