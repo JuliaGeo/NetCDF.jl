@@ -13,7 +13,7 @@ day = 1
 tim = collect(0:23)
 
 # Create radiation array
-rad = Float64[g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim]
+rad = Float64[g_pot(x2, x1, day, x3) for x1 = lon, x2 = lat, x3 = tim]
 
 # Define some attributes of the variable (optionlal)
 varatts = Dict("longname" => "Radiation at the top of the atmosphere",
@@ -33,7 +33,7 @@ timdim = NcDim("time", tim, timatts)
 
 # Then we create an NcVar object, the data type is defined by the corresponding julia type:
 
-radvar = NcVar("rad", [londim, latdim, timdim]; atts=varatts, t=Float32)
+radvar = NcVar("rad", [londim, latdim, timdim]; atts = varatts, t = Float32)
 
 # Now we can finally create the netcdf-file and get a file handler in return:
 
@@ -60,13 +60,13 @@ println("Attributes of the variable rad: ", nc.vars["rad"].atts)
 
 # we read the whole variable:
 
-x = NetCDF.readvar(nc, "rad", start=[1, 1, 1], count=[-1, -1, -1])
+x = NetCDF.readvar(nc, "rad", start = [1, 1, 1], count = [-1, -1, -1])
 println("Successfully read an array of size ", size(x))
 
 # Additional
 # Reading parts of a file, for example reading only time steps 5 and 6 can be done with:
 
-x = NetCDF.readvar(nc, "rad", start=[1,1,5], count=[-1,-1,2])
+x = NetCDF.readvar(nc, "rad", start = [1,1,5], count = [-1,-1,2])
 println("Successfully read an array of size ", size(x))
 
 #here the first array [1,1,5] gives the starting position for reading while the second array [1,1,2] gives the number of blocks to be read along each dimension.

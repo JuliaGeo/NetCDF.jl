@@ -13,7 +13,7 @@ day = 1
 tim = collect(0:23)
 
 # Create radiation array
-rad = Float64[g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim]
+rad = Float64[g_pot(x2, x1, day, x3) for x1 = lon, x2 = lat, x3 = tim]
 
 # Define some attributes of the variable (optionlal)
 varatts = Dict("longname" => "Radiation at the top of the atmosphere",
@@ -29,7 +29,7 @@ timatts = Dict("longname" => "Time",
 
 isfile("radiation.nc") && rm("radiation.nc")
 nccreate("radiation.nc", "rad", "lon", lon, lonatts, "lat", lat, latatts,
-    "time", tim, timatts, atts=varatts)
+    "time", tim, timatts, atts = varatts)
 
 # Now we can write values to the file
 

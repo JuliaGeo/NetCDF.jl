@@ -1,6 +1,8 @@
 using Test, NetCDF, Random
 
-"Function that returns a valid file name of a non-existing file for all OSs"
+"""
+Function that returns a valid file name of a non-existing file for all OSs
+"""
 function tempname2()
     f, h = mktemp()
     close(h)
