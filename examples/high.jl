@@ -35,10 +35,6 @@ nccreate("radiation.nc", "rad", "lon", lon, lonatts, "lat", lat, latatts,
 
 ncwrite(rad, "radiation.nc", "rad")
 
-# And close the file
-
-ncclose("radiation.nc")
-
 # Reading the whole dataset is done by:
 
 x = ncread("radiation.nc", "rad")
