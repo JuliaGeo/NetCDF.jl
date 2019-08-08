@@ -60,6 +60,10 @@ If you just want to synchronize your changes to the disk, run
 
 where `nc` is a NetCDF file handle.
 
+As an alternative, `NetCDF.open` and `NetCDF.create` provide a method accepting a
+function as its first argument. This can be used to make sure the file always get
+properly closed, even if an error occurs while working with the handle. 
+
 ## Interface for creating files
 
 ```@docs

@@ -39,13 +39,3 @@ ncputatt
 ```@docs
 nccreate
 ```
-
-## Miscellaneous
-
-```@docs
-ncsync
-```
-
-```@docs
-ncclose
-```
