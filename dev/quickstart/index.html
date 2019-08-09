@@ -153,41 +153,40 @@ timatts = Dict(&quot;longname&quot; =&gt; &quot;Time&quot;,
   &quot;units&quot;    =&gt; &quot;hours since 01-01-2000 00:00:00&quot;
   &quot;longname&quot; =&gt; &quot;Time&quot;</code></pre><p>Now we have all the meta-information ready to create the actual file:</p><pre><code class="language-julia">fn = joinpath(tempdir(),&quot;radiation.nc&quot;)
 isfile(fn) &amp;&amp; rm(fn)
-nccreate(fn,&quot;rad&quot;,&quot;lon&quot;,lon,lonatts,&quot;lat&quot;,lat,latatts,&quot;time&quot;,tim,timatts,atts=varatts);</code></pre><p>Once the file is created we can write the actual data to it:</p><pre><code class="language-julia">ncwrite(rad,fn,&quot;rad&quot;);</code></pre><p>This does not yet ensure that the data is actually written to the file, it might still be cached by the NetCDF library. In order to write and close the file we run <code>ncclose</code>:</p><pre><code class="language-julia">ncclose(fn)</code></pre><p>Now we assume we just retrieved this radiation NetCDF file and want to get some information about it. This is done using <code>ncinfo</code>:</p><pre><code class="language-julia">ncinfo(fn)</code></pre><pre><code class="language-none">
+nccreate(fn,&quot;rad&quot;,&quot;lon&quot;,lon,lonatts,&quot;lat&quot;,lat,latatts,&quot;time&quot;,tim,timatts,atts=varatts);</code></pre><p>Once the file is created we can write the actual data to it:</p><pre><code class="language-julia">ncwrite(rad,fn,&quot;rad&quot;);</code></pre><p>Now we assume we just retrieved this radiation NetCDF file and want to get some information about it. This is done using <code>ncinfo</code>:</p><pre><code class="language-julia">ncinfo(fn)</code></pre><pre><code class="language-none">
 ##### NetCDF File #####
 
 /tmp/radiation.nc
 
 ##### Dimensions #####
 
-Name                                                Length                    
+Name                                                Length
 --------------------------------------------------------------------------------
-lat                                                 180                       
-time                                                24                        
-lon                                                 360                       
+lat                                                 180
+time                                                24
+lon                                                 360
 
 ##### Variables #####
 
-Name                            Type            Dimensions                      
+Name                            Type            Dimensions
 --------------------------------------------------------------------------------
-lat                             DOUBLE          lat                             
-time                            INT64           time                            
-lon                             DOUBLE          lon                             
-rad                             DOUBLE          lon lat time                    
+lat                             DOUBLE          lat
+time                            INT64           time
+lon                             DOUBLE          lon
+rad                             DOUBLE          lon lat time
 
 ##### Attributes #####
 
-Variable            Name                Value                                   
+Variable            Name                Value
 --------------------------------------------------------------------------------
-lat                 units               degrees north                           
-lat                 longname            Latitude                                
-time                units               hours since 01-01-2000 00:00:00         
-time                longname            Time                                    
-lon                 units               degrees east                            
-lon                 longname            Longitude                               
-rad                 units               W/m^2                                   
-rad                 longname            Radiation at the top of the atmosphere  
-</code></pre><p>Here we learn the most important information about the file, which variables it contains, the variable dimensions and their attributes. We decide to read the radiation variable:</p><pre><code class="language-julia">x=ncread(fn,&quot;rad&quot;)
+lat                 units               degrees north
+lat                 longname            Latitude
+time                units               hours since 01-01-2000 00:00:00
+time                longname            Time
+lon                 units               degrees east
+lon                 longname            Longitude
+rad                 units               W/m^2
+rad                 longname            Radiation at the top of the atmosphere</code></pre><p>Here we learn the most important information about the file, which variables it contains, the variable dimensions and their attributes. We decide to read the radiation variable:</p><pre><code class="language-julia">x=ncread(fn,&quot;rad&quot;)
 size(x)</code></pre><pre><code class="language-none">(360, 180, 24)</code></pre><p>This reads the whole array at once. If we only want to read a certain part of the variable, for example if we only want to plot the time series at a certain location, we can use the <code>start</code> and <code>count</code> keywords:</p><pre><code class="language-julia">ts = ncread(fn,&quot;rad&quot;,start=[180,45,1], count=[1,1,-1])</code></pre><pre><code class="language-none">1×1×24 Array{Float64,3}:
 [:, :, 1] =
  0.0
