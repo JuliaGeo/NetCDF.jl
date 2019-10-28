@@ -213,7 +213,7 @@ nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int16
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{UInt16})  = begin nc_get_att_ushort(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int32})  = begin nc_get_att_int(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{UInt32})  = begin nc_get_att_uint(ncid,varid,name,valsa); valsa end
-nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int64})  = begin nc_get_att_long(ncid,varid,name,valsa); valsa end
+nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Int64})  = begin nc_get_att_longlong(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{UInt64})  = begin nc_get_att_ulonglong(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float32})  = begin nc_get_att_float(ncid,varid,name,valsa); valsa end
 nc_get_att!(ncid::Integer,varid::Integer,name::AbstractString,valsa::Array{Float64})  = begin nc_get_att_double(ncid,varid,name,valsa); valsa end
