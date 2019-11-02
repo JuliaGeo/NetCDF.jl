@@ -7,7 +7,7 @@ function tempname2()
     rm(f)
     f
 end
-tlist = [Int8, UInt8, Int16, UInt16, Int32,UInt32, Int64,UInt64, Float32, Float64]
+tlist = [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Float32, Float64]
 
 @testset "NetCDF" begin
     include("intermediate.jl")

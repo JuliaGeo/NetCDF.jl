@@ -13,23 +13,31 @@ day = 1
 tim = collect(0:23)
 
 # Create radiation array
-rad = Float64[g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim]
+rad = Float64[g_pot(x2, x1, day, x3) for x1 in lon, x2 in lat, x3 in tim]
 
 # Define some attributes of the variable (optionlal)
-varatts = Dict("longname" => "Radiation at the top of the atmosphere",
-               "units"    => "W/m^2")
-lonatts = Dict("longname" => "Longitude",
-               "units"    => "degrees east")
-latatts = Dict("longname" => "Latitude",
-               "units"    => "degrees north")
-timatts = Dict("longname" => "Time",
-               "units"    => "hours since 01-01-2000 00:00:00")
+varatts = Dict("longname" => "Radiation at the top of the atmosphere", "units" => "W/m^2")
+lonatts = Dict("longname" => "Longitude", "units" => "degrees east")
+latatts = Dict("longname" => "Latitude", "units" => "degrees north")
+timatts = Dict("longname" => "Time", "units" => "hours since 01-01-2000 00:00:00")
 
 # Now we create the file radiation.nc and call the variable rad, define also the dimensions the variables depends on
 
 isfile("radiation.nc") && rm("radiation.nc")
-nccreate("radiation.nc", "rad", "lon", lon, lonatts, "lat", lat, latatts,
-    "time", tim, timatts, atts=varatts)
+nccreate(
+    "radiation.nc",
+    "rad",
+    "lon",
+    lon,
+    lonatts,
+    "lat",
+    lat,
+    latatts,
+    "time",
+    tim,
+    timatts,
+    atts = varatts,
+)
 
 # Now we can write values to the file
 
@@ -43,7 +51,7 @@ println("Successfully read an array of size ", size(x))
 # Additional
 # Reading parts of a file, for example reading only time steps 5 and 6 can be done with:
 
-x = ncread("radiation.nc", "rad", [1,1,5], [-1,-1,2])
+x = ncread("radiation.nc", "rad", [1, 1, 5], [-1, -1, 2])
 println("Successfully read an array of size ", size(x))
 
 # here the first array [1,1,5] gives the starting position for reading while the second array [1,1,2] gives the number of blocks to be read along each dimension.

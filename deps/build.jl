@@ -2,7 +2,10 @@ using BinDeps
 import CondaBinDeps
 
 @BinDeps.setup
-libnetcdf = library_dependency("libnetcdf", aliases = ["libnetcdf4","libnetcdf-7","netcdf"])
+libnetcdf = library_dependency(
+    "libnetcdf",
+    aliases = ["libnetcdf4", "libnetcdf-7", "netcdf"],
+)
 
 #CondaBinDeps.Conda.add_channel("conda-forge")
 provides(CondaBinDeps.Manager, "libnetcdf", libnetcdf)
