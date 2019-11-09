@@ -98,11 +98,15 @@ end
 
 function nc_open(fname::AbstractString, omode::UInt16)
     # Function to open file fname, returns a NetCDF file ID
+    # the library doesn't handle this case
+    isempty(fname) && throw(ArgumentError("Cannot open empty filename."))
     nc_open(fname, omode, ida)
     return ida[1]
 end
 
 function nc_create(name, mode)
+    # the library doesn't handle this case
+    isempty(name) && throw(ArgumentError("Cannot create empty filename."))
     nc_create(name, mode, ida)
     return ida[1]
 end
