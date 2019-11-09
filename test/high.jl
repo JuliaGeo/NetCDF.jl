@@ -114,3 +114,8 @@ nccreate(fn5, "x5_2", "dim2", collect(Float32, 1:4), Dict("units" => "m"))
 # Open file by reading and create new variable
 ncread(fn4, "myvar2")
 nccreate(fn4, "myvar3", "time", Inf)
+
+# Try opening a file that doesn't exist
+@test_throws ArgumentError ncread("", "")
+@test_throws ArgumentError nccreate("", "")
+@test_throws NetCDF.NetCDFError ncread("DoesNotExist.nc", "")
