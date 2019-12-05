@@ -12,7 +12,7 @@ Formatting = "59287772-0a20-5a39-b81b-1366585eb4c0"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 
 [compat]
-BinDeps = "0.8.10"
+BinDeps = "0.8.10, 1.0"
 CondaBinDeps = "0.1.0"
 Formatting = "0.3.2, 0.4"
 julia = "1.0.0"
