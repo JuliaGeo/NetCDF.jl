@@ -134,6 +134,7 @@ function NcDim(
     unlimited = false,
 )
     length(values) > 0 &&
+    dimlength != 0 &&
     length(values) != dimlength &&
     error("Dimension value vector must have the same length as dimlength!")
     NcDim(-1, -1, -1, string(name), dimlength, collect(values), atts, unlimited)
