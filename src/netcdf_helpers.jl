@@ -504,7 +504,9 @@ function parsedimargs(dim)
             #Assume dimension values are given
             if dimvals == nothing
                 dimvals = a
-                dimlen = length(dimvals)
+                if dimlen == nothing
+                    dimlen = length(dimvals)
+                end
             else
                 error("Dimension values of $name defined more than once")
             end
