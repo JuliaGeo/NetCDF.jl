@@ -2,8 +2,8 @@ module NetCDF
 
 using Formatting
 using Base.Cartesian
-import DiskArrays: readblock!, writeblock!, AbstractDiskArray
-
+import DiskArrays: readblock!, writeblock!, AbstractDiskArray, eachchunk, GridChunks,
+       estimate_chunksize
 
 include("netcdf_c.jl")
 
@@ -219,6 +219,13 @@ function readblock!(v::NcVar, aout, r...)
 end
 function writeblock!(v::NcVar, a, r...)
   putvar(v,a,start = [first(i) for i in r], count = [length(i) for i in r])
+end
+function eachchunk(v::NcVar)
+  if all(iszero,v.chunksize)
+    GridChunks(v, estimate_chunksize(v))
+  else
+    GridChunks(v, map(Int64,v.chunksize))
+  end
 end
 
 """
