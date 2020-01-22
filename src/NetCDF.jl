@@ -3,7 +3,7 @@ module NetCDF
 using Formatting
 using Base.Cartesian
 import DiskArrays: readblock!, writeblock!, AbstractDiskArray, eachchunk, GridChunks,
-       estimate_chunksize
+       estimate_chunksize, haschunks, Chunked, Unchunked
 
 include("netcdf_c.jl")
 
@@ -220,13 +220,11 @@ end
 function writeblock!(v::NcVar, a, r...)
   putvar(v,a,start = [first(i) for i in r], count = [length(i) for i in r])
 end
-function eachchunk(v::NcVar)
-  if all(iszero,v.chunksize)
-    GridChunks(v, estimate_chunksize(v))
-  else
-    GridChunks(v, map(Int64,v.chunksize))
-  end
-end
+getchunksize(v::NcVar) = getchunksize(haschunks(v),v)
+getchunksize(::Chunked, v::NcVar) = map(Int64,v.chunksize)
+getchunksize(::Unchunked, v::NcVar) = estimate_chunksize(v)
+eachchunk(v::NcVar) = GridChunks(v, getchunksize(v))
+haschunks(v::NcVar) = all(iszero,v.chunksize) ? Unchunked() : Chunked()
 
 """
     NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}}
