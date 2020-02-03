@@ -16,7 +16,7 @@ DiskArrays = "3c3547ce-8d99-4f5e-a174-61eb10b00ae3"
 BinDeps = "0.8.10, 1.0"
 CondaBinDeps = "0.1.0"
 Formatting = "0.3.2, 0.4"
-julia = "1.0.0"
+julia = "1.2"
 
 [extras]
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
