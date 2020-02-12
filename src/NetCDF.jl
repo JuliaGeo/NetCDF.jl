@@ -2,6 +2,8 @@ module NetCDF
 
 using Formatting
 using Base.Cartesian
+import DiskArrays: readblock!, writeblock!, AbstractDiskArray, eachchunk, GridChunks,
+       estimate_chunksize, haschunks, Chunked, Unchunked
 
 include("netcdf_c.jl")
 
@@ -169,7 +171,7 @@ will work for reading and writing data to and from a NetCDF file. `NcVar` object
 indexing an `NcFile` object (e.g. `myfile["temperature"]`) or, when creating a new file, by its constructor. The type parameter `M`
 denotes the NetCDF data type of the variable, which may or may not correspond to the Julia Data Type.
 """
-mutable struct NcVar{T,N,M} <: AbstractArray{T,N}
+mutable struct NcVar{T,N,M} <: AbstractDiskArray{T,N}
     ncid::Int32
     varid::Int32
     ndim::Int32
@@ -209,6 +211,20 @@ Base.convert(::Type{NcVar{T}}, v::NcVar{S,N,M}) where {S,T,N,M} = NcVar{T,N,M}(
     v.compress,
     v.chunksize,
 )
+
+
+# Implement the DiskArrays interface
+function readblock!(v::NcVar, aout, r...)
+  readvar!(v,aout,start = [first(i) for i in r], count = [length(i) for i in r])
+end
+function writeblock!(v::NcVar, a, r...)
+  putvar(v,a,start = [first(i) for i in r], count = [length(i) for i in r])
+end
+getchunksize(v::NcVar) = getchunksize(haschunks(v),v)
+getchunksize(::Chunked, v::NcVar) = map(Int64,v.chunksize)
+getchunksize(::Unchunked, v::NcVar) = estimate_chunksize(v)
+eachchunk(v::NcVar) = GridChunks(v, getchunksize(v))
+haschunks(v::NcVar) = all(iszero,v.chunksize) ? Unchunked() : Chunked()
 
 """
     NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}}
@@ -253,54 +269,6 @@ end
 end
 const IndR = Union{Integer,UnitRange,Colon}
 const ArNum = Union{AbstractArray,Number}
-
-IndexStyle(::NcVar) = IndexCartesian()
-Base.getindex(v::NcVar{T,0}) where {T} = readvar(v)
-Base.getindex(v::NcVar{T,1}, i1::IndR) where {T} = readvar(v, i1)
-Base.getindex(v::NcVar{T,2}, i1::IndR, i2::IndR) where {T} = readvar(v, i1, i2)
-Base.getindex(v::NcVar{T,3}, i1::IndR, i2::IndR, i3::IndR) where {T} =
-    readvar(v, i1, i2, i3)
-Base.getindex(v::NcVar{T,4}, i1::IndR, i2::IndR, i3::IndR, i4::IndR) where {T} =
-    readvar(v, i1, i2, i3, i4)
-Base.getindex(v::NcVar{T,5}, i1::IndR, i2::IndR, i3::IndR, i4::IndR, i5::IndR) where {T} =
-    readvar(v, i1, i2, i3, i4, i5)
-Base.getindex(
-    v::NcVar{T,6},
-    i1::IndR,
-    i2::IndR,
-    i3::IndR,
-    i4::IndR,
-    i5::IndR,
-    i6::IndR,
-) where {T} = readvar(v, i1, i2, i3, i4, i5, i6)
-
-Base.setindex!(v::NcVar{T,0}, x::ArNum) where {T} = putvar(v, x)
-Base.setindex!(v::NcVar{T,1}, x::ArNum, i1::IndR) where {T} = putvar(v, x, i1)
-Base.setindex!(v::NcVar{T,2}, x::ArNum, i1::IndR, i2::IndR) where {T} = putvar(v, x, i1, i2)
-Base.setindex!(v::NcVar{T,3}, x::ArNum, i1::IndR, i2::IndR, i3::IndR) where {T} =
-    putvar(v, x, i1, i2, i3)
-Base.setindex!(v::NcVar{T,4}, x::ArNum, i1::IndR, i2::IndR, i3::IndR, i4::IndR) where {T} =
-    putvar(v, x, i1, i2, i3, i4)
-Base.setindex!(
-    v::NcVar{T,5},
-    x::ArNum,
-    i1::IndR,
-    i2::IndR,
-    i3::IndR,
-    i4::IndR,
-    i5::IndR,
-) where {T} = putvar(v, x, i1, i2, i3, i4, i5)
-Base.setindex!(
-    v::NcVar{T,6},
-    x::ArNum,
-    i1::IndR,
-    i2::IndR,
-    i3::IndR,
-    i4::IndR,
-    i5::IndR,
-    i6::IndR,
-) where {T} = putvar(v, x, i1, i2, i3, i4, i5, i6)
-
 
 """
     NcFile
