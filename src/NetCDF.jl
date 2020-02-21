@@ -842,7 +842,7 @@ function create(
         end
     end
 
-    add_finalizer && finalizer(close,nc)
+    add_finalizer && finalizer(_close,nc)
 
     return nc
 end
@@ -856,17 +856,17 @@ create(
 ) = create(name, NcVar[varlist[i] for i = 1:length(varlist)]; gatts = gatts, mode = mode, add_finalizer = add_finalizer)
 
 """
-    NetCDF.close(nc::NcFile)
+    NetCDF._close(nc::NcFile)
 
 closes a NetCDF file handle
 """
-function close(nco::NcFile)
+function _close(nco::NcFile)
     #Close file
     nc_close(nco.ncid)
-    return nco.ncid
+    nothing
 end
 
-close(v::NcVar) = nc_close(v.ncid)
+close(x::Union{NcFile, NcVar}) = @warn "NetCDF.close is deprecated, since closing files is done with finalizers from now on. "
 
 
 """
@@ -975,7 +975,7 @@ function open(fil::AbstractString; mode::Integer = NC_NOWRITE, readdimvar::Bool 
         )
     end
     readdimvar == true && _readdimvars(ncf)
-    add_finalizer && finalizer(close,ncf)
+    add_finalizer && finalizer(_close,ncf)
     return ncf
 end
 
