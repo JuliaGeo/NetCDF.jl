@@ -860,14 +860,16 @@ create(
 
 closes a NetCDF file handle
 """
-function _close(nco::NcFile)
+function _close(nco::Union{NcFile, NcVar})
     #Close file
     nc_close(nco.ncid)
     nothing
 end
 
-close(x::Union{NcFile, NcVar}) = @warn "NetCDF.close is deprecated, since closing files is done with finalizers from now on. "
-
+function close(x::Union{NcFile, NcVar})
+  println(stacktrace())
+  @warn "NetCDF.close is deprecated, since closing files is done with finalizers from now on. "
+end
 
 """
     NetCDF.open(fil::AbstractString,v::AbstractString)
@@ -994,7 +996,7 @@ function open(f::Function, args...; kwargs...)
     try
         f(io)
     finally
-        close(io)
+        _close(io)
     end
 end
 
@@ -1015,7 +1017,7 @@ function create(f::Function, args...; kwargs...)
     try
         f(io)
     finally
-        close(io)
+        _close(io)
     end
 end
 
