@@ -217,10 +217,10 @@ Base.convert(::Type{NcVar{T}}, v::NcVar{S,N,M}) where {S,T,N,M} = NcVar{T,N,M}(
 
 
 # Implement the DiskArrays interface
-function readblock!(v::NcVar, aout, r...)
+function readblock!(v::NcVar, aout, r::AbstractUnitRange...)
   readvar!(v,aout,start = [first(i) for i in r], count = [length(i) for i in r])
 end
-function writeblock!(v::NcVar, a, r...)
+function writeblock!(v::NcVar, a, r::AbstractUnitRange...)
   putvar(v,a,start = [first(i) for i in r], count = [length(i) for i in r])
 end
 getchunksize(v::NcVar) = getchunksize(haschunks(v),v)
@@ -868,7 +868,7 @@ end
 
 function close(x::Union{NcFile, NcVar})
   println(stacktrace())
-  @warn "NetCDF.close is deprecated, since closing files is done with finalizers from now on. "
+  @warn "NetCDF.close is deprecated, because closing files is done with finalizers from now on. "
 end
 
 """

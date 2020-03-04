@@ -15,7 +15,7 @@ DiskArrays = "3c3547ce-8d99-4f5e-a174-61eb10b00ae3"
 [compat]
 BinDeps = "0.8.10, 1.0"
 CondaBinDeps = "0.1.0, 0.2"
-DiskArrays = "0.1"
+DiskArrays = "0.2"
 Formatting = "0.3.2, 0.4"
 julia = "1.2"
 
