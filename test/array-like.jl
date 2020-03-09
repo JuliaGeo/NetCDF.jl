@@ -12,3 +12,9 @@ NetCDF.open(fn1, "v1", mode = NC_WRITE) do v1
   v1[:,:,:] = xnew
   @test v1[:,:,:] == xnew
 end
+
+v = NetCDF.open(fn1, "v1")
+ncid = v.ncid
+v = nothing
+GC.gc()
+@test_throws NetCDF.NetCDFError NetCDF.nc_close(ncid)

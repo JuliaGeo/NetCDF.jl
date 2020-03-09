@@ -156,3 +156,10 @@ NetCDF.open(fn5) do nc5
     @test typeof(NetCDF.readvar(nc5, "dim1")) == Array{Int32,1}
     @test typeof(NetCDF.readvar(nc5, "dim2")) == Array{Float32,1}
 end
+
+# Test finalizer when working interactively with Nc objects, by trying to manually close the ncid
+nc5 = NetCDF.open(fn5)
+ncid = nc5.ncid
+nc5 = nothing
+GC.gc()
+@test_throws NetCDF.NetCDFError NetCDF.nc_close(ncid)
