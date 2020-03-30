@@ -222,6 +222,7 @@ function readblock!(v::NcVar, aout, r::AbstractUnitRange...)
 end
 function writeblock!(v::NcVar, a, r::AbstractUnitRange...)
   putvar(v,a,start = [first(i) for i in r], count = [length(i) for i in r])
+  sync(v.ncfile)
 end
 getchunksize(v::NcVar) = getchunksize(haschunks(v),v)
 getchunksize(::Chunked, v::NcVar) = map(Int64,v.chunksize)
