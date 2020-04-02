@@ -45,7 +45,7 @@ attribs  = Dict("units"   => "mm/d",
 ```
 
  Creating variables and files is done by using the nccreate command:
- 
+
 ```julia
 nccreate(filename, varname, "x1", collect(11:20), "t", 20, Dict("units"=>"s"), atts=attribs)
 ```
@@ -66,9 +66,19 @@ The full documentation can be found [here][docs-dev-url]
 
 An alternative interface for reading NetCDF files can be found here: https://github.com/Alexander-Barth/NCDatasets.jl
 
+# DiskArray interface
+
+As of version 0.9 we provide an interface to DiskArrays.jl, which lets you treat NetCDF variables as Julia AbstractArrays. Special methods for accessing, reading slices and reductions and broadcasting are implemented, so that working with the arrays should be efficient.
+
+So the following returns a lazy AbstractArray container referencing the data in the variable.
+
+```julia
+v = NetCDF.open(filename, varname)
+```
+
 ## Credits
 
-This package was originally started and is mostly maintained by Fabian Gans (fgans@bgc-jena.mpg.de). The automatic C wrapper generator was contributed by Martijn Visser (https://github.com/visr). Many thanks to several people who contributed bug fixes and enhancements. 
+This package was originally started and is mostly maintained by Fabian Gans (fgans@bgc-jena.mpg.de). The automatic C wrapper generator was contributed by Martijn Visser (https://github.com/visr). Many thanks to several people who contributed bug fixes and enhancements.
 
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-dev-url]: https://JuliaGeo.github.io/NetCDF.jl/dev

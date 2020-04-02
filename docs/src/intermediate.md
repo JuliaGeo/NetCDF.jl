@@ -50,9 +50,7 @@ Here, filename is the name of the file to be created and varlist an array of `Nc
 
 ## Miscellaneous
 
-once you have finished reading, writing or editing your files you can close the file with
-
-    NetCDF.close(nc)
+Note that as of version 0.9 there is no need to close the NetCDF files anymore. This will be done through finalizers.
 
 If you just want to synchronize your changes to the disk, run
 
@@ -61,8 +59,7 @@ If you just want to synchronize your changes to the disk, run
 where `nc` is a NetCDF file handle.
 
 As an alternative, `NetCDF.open` and `NetCDF.create` provide a method accepting a
-function as its first argument. This can be used to make sure the file always get
-properly closed, even if an error occurs while working with the handle. 
+function as its first argument.
 
 ## Interface for creating files
 

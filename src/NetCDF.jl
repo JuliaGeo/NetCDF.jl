@@ -183,6 +183,7 @@ mutable struct NcVar{T,N,M} <: AbstractDiskArray{T,N}
     atts::Dict
     compress::Int32
     chunksize::NTuple{N,Int32}
+    ncfile #Kept to prevent closing through finalizer
 end
 
 Base.convert(::Type{NcVar{T,N,M}}, v::NcVar{S,N,M}) where {S,T,N,M} = NcVar{T,N,M}(
@@ -197,6 +198,7 @@ Base.convert(::Type{NcVar{T,N,M}}, v::NcVar{S,N,M}) where {S,T,N,M} = NcVar{T,N,
     v.atts,
     v.compress,
     v.chunksize,
+    v.ncfile,
 )
 Base.convert(::Type{NcVar{T}}, v::NcVar{S,N,M}) where {S,T,N,M} = NcVar{T,N,M}(
     v.ncid,
@@ -210,15 +212,17 @@ Base.convert(::Type{NcVar{T}}, v::NcVar{S,N,M}) where {S,T,N,M} = NcVar{T,N,M}(
     v.atts,
     v.compress,
     v.chunksize,
+    v.ncfile
 )
 
 
 # Implement the DiskArrays interface
-function readblock!(v::NcVar, aout, r...)
+function readblock!(v::NcVar, aout, r::AbstractUnitRange...)
   readvar!(v,aout,start = [first(i) for i in r], count = [length(i) for i in r])
 end
-function writeblock!(v::NcVar, a, r...)
+function writeblock!(v::NcVar, a, r::AbstractUnitRange...)
   putvar(v,a,start = [first(i) for i in r], count = [length(i) for i in r])
+  sync(v.ncfile)
 end
 getchunksize(v::NcVar) = getchunksize(haschunks(v),v)
 getchunksize(::Chunked, v::NcVar) = map(Int64,v.chunksize)
@@ -260,6 +264,7 @@ function NcVar(
         atts,
         Int32(compress),
         chunksize,
+        nothing,
     )
 end
 
@@ -757,6 +762,7 @@ function create(
     varlist::Array{<:NcVar};
     gatts::Dict = Dict{Any,Any}(),
     mode::UInt16 = NC_NETCDF4,
+    add_finalizer = true,
 )
 
     #Create the file
@@ -810,6 +816,7 @@ function create(
                     d.atts,
                     -1,
                     (zero(Int32),),
+                    nc
                 ),
             )
         end
@@ -818,6 +825,7 @@ function create(
     # Create variables in the file
     for v in varlist
         create_var(nc, v, mode)
+        v.ncfile = nc
     end
 
     # Put global attributes
@@ -835,7 +843,9 @@ function create(
         end
     end
 
-    return (nc)
+    add_finalizer && finalizer(_close,nc)
+
+    return nc
 end
 
 create(
@@ -843,21 +853,24 @@ create(
     varlist::NcVar...;
     gatts::Dict = Dict{Any,Any}(),
     mode::UInt16 = NC_NETCDF4,
-) = create(name, NcVar[varlist[i] for i = 1:length(varlist)]; gatts = gatts, mode = mode)
+    add_finalizer = true,
+) = create(name, NcVar[varlist[i] for i = 1:length(varlist)]; gatts = gatts, mode = mode, add_finalizer = add_finalizer)
 
 """
-    NetCDF.close(nc::NcFile)
+    NetCDF._close(nc::NcFile)
 
 closes a NetCDF file handle
 """
-function close(nco::NcFile)
+function _close(nco::Union{NcFile, NcVar})
     #Close file
     nc_close(nco.ncid)
-    return nco.ncid
+    nothing
 end
 
-close(v::NcVar) = nc_close(v.ncid)
-
+function close(x::Union{NcFile, NcVar})
+  println(stacktrace())
+  @warn "NetCDF.close is deprecated, because closing files is done with finalizers from now on. "
+end
 
 """
     NetCDF.open(fil::AbstractString,v::AbstractString)
@@ -875,8 +888,9 @@ function open(
     v::AbstractString;
     mode::Integer = NC_NOWRITE,
     readdimvar::Bool = false,
+    add_finalizer = true,
 )
-    nc = open(fil, mode = mode, readdimvar = readdimvar)
+    nc = open(fil, mode = mode, readdimvar = readdimvar, add_finalizer=add_finalizer)
     nc.vars[v]
 end
 
@@ -890,7 +904,7 @@ opens the NetCDF file `fil` and returns a `NcFile` handle. Note that it is in th
 * `mode` mode in which the file is opened, defaults to `NC_NOWRITE`, choose `NC_WRITE` for write access
 * `readdimvar` determines if dimension variables will be read into the file structure, default is `false`
 """
-function open(fil::AbstractString; mode::Integer = NC_NOWRITE, readdimvar::Bool = false)
+function open(fil::AbstractString; mode::Integer = NC_NOWRITE, readdimvar::Bool = false, add_finalizer=true)
 
     # Open netcdf file
     ncid = nc_open(fil, mode)
@@ -960,9 +974,11 @@ function open(fil::AbstractString; mode::Integer = NC_NOWRITE, readdimvar::Bool 
             atts,
             0,
             chunksize,
+            ncf,
         )
     end
     readdimvar == true && _readdimvars(ncf)
+    add_finalizer && finalizer(_close,ncf)
     return ncf
 end
 
@@ -977,11 +993,11 @@ data = open("myfile.nc","myvar") do v
 end
 """
 function open(f::Function, args...; kwargs...)
-    io = open(args...; kwargs...)
+    io = open(args...;add_finalizer=false, kwargs...)
     try
         f(io)
     finally
-        close(io)
+        _close(io)
     end
 end
 
@@ -998,11 +1014,11 @@ NetCDF.create("newfile.nc",v) do nc
 end
 """
 function create(f::Function, args...; kwargs...)
-    io = create(args...; kwargs...)
+    io = create(args...; add_finalizer=false, kwargs...)
     try
         f(io)
     finally
-        close(io)
+        _close(io)
     end
 end
 
@@ -1196,6 +1212,7 @@ function nccreate(
     if isfile(fil)
         nc = open(fil, mode = NC_WRITE) do nc
             v.ncid = nc.ncid
+            v.ncfile = nc
             haskey(
                 nc.vars,
                 varname,
@@ -1224,6 +1241,7 @@ function nccreate(
                                 dim[i].atts,
                                 -1,
                                 (0,),
+                                nc,
                             ),
                             mode,
                         )
@@ -1246,11 +1264,11 @@ function nccreate(
             end
         end
     else
-        nc = create(fil, v, gatts = gatts, mode = mode | NC_NOCLOBBER)
-        for d in dim
+        create(fil, v, gatts = gatts, mode = mode | NC_NOCLOBBER) do nc
+          for d in dim
             !isempty(d.vals) && ncwrite(d.vals, fil, d.name)
+          end
         end
-        close(nc)
     end
     return nothing
 end

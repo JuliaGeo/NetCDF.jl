@@ -3,7 +3,7 @@ uuid = "30363a11-5582-574a-97bb-aa9a979735b9"
 keywords = ["NetCDF", "IO"]
 license = "MIT"
 desc = "NetCDF file reading and writing"
-version = "0.9.0"
+version = "0.10.0"
 
 [deps]
 BinDeps = "9e28174c-4ba2-5203-b857-d8d62c4213ee"
@@ -15,7 +15,7 @@ DiskArrays = "3c3547ce-8d99-4f5e-a174-61eb10b00ae3"
 [compat]
 BinDeps = "0.8.10, 1.0"
 CondaBinDeps = "0.1.0, 0.2"
-DiskArrays = "0.1"
+DiskArrays = "0.2"
 Formatting = "0.3.2, 0.4"
 julia = "1.2"
 
