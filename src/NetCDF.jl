@@ -1165,9 +1165,7 @@ function create_var(nc, v, mode)
     nc_def_var(nc.ncid, v.name, v.nctype, v.ndim, dumids, vara)
     v.varid = vara[1]
     if any(i -> i > 0, v.chunksize)
-        for i = 1:v.ndim
-            chunk_sizea[i] = v.chunksize[i]
-        end
+        chunk_sizea[1:v.ndim] .= reverse(v.chunksize)
         nc_def_var_chunking(nc.ncid, v.varid, NC_CHUNKED, chunk_sizea)
     end
     nc.vars[v.name] = v
