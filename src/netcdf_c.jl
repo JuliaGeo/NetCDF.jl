@@ -1,12 +1,5 @@
 # This file is based on automatically generated code from gen/wrap.jl
 
-const depfile = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
-if isfile(depfile)
-    include(depfile)
-else
-    error("libnetcdf not properly installed. Please run Pkg.build(\"NetCDF\")")
-end
-
 const NC_NAT = 0
 const NC_BYTE = 1
 const NC_CHAR = 2

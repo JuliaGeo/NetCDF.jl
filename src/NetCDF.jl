@@ -1,5 +1,6 @@
 module NetCDF
 
+using NetCDF_jll
 using Formatting
 using Base.Cartesian
 import DiskArrays: readblock!, writeblock!, AbstractDiskArray, eachchunk, GridChunks,
