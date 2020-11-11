@@ -83,8 +83,8 @@ This package was originally started and is mostly maintained by Fabian Gans (fga
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-dev-url]: https://JuliaGeo.github.io/NetCDF.jl/dev
 
-[travis-img]: https://travis-ci.org/JuliaGeo/NetCDF.jl.svg?branch=master
-[travis-url]: https://travis-ci.org/JuliaGeo/NetCDF.jl
+[travis-img]: https://travis-ci.com/JuliaGeo/NetCDF.jl.svg?branch=master
+[travis-url]: https://travis-ci.com/JuliaGeo/NetCDF.jl
 
 [appveyor-img]: https://ci.appveyor.com/api/projects/status/m9okydt7700kgavi?svg=true
 [appveyor-url]: https://ci.appveyor.com/project/JuliaGeo/netcdf-jl/branch/master
