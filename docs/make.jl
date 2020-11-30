@@ -2,7 +2,11 @@ using Documenter, NetCDF
 
 makedocs(
     modules = [NetCDF],
-    format = Documenter.HTML(),
+    format = Documenter.HTML(;
+        prettyurls = get(ENV, "CI", "false") == "true",
+        canonical = "https://juliageo.github.io/NetCDF.jl",
+        assets = String[],
+    ),
     sitename = "NetCDF.jl",
     authors = "Fabian Gans and contributors",
     pages = [
@@ -11,4 +15,4 @@ makedocs(
     ],
 )
 
-deploydocs(repo = "github.com/JuliaGeo/NetCDF.jl.git")
+deploydocs(repo = "github.com/JuliaGeo/NetCDF.jl")
