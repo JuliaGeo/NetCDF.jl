@@ -3,10 +3,10 @@ NetCDF.jl
 
 | **Documentation**                                                               | **Build Status**                                                                                |
 |:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
-| [![][docs-dev-img]][docs-dev-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] |
+| [![][docs-dev-img]][docs-dev-url] | [![][ci-img]][ci-url]
 
 
-NetCDF support for the julia programming language, there is a high-level and a medium-level interface for writing and reading netcdf files.
+NetCDF support for the Julia programming language, there is a high-level and a medium-level interface for writing and reading netcdf files.
 
 # Installation
 
@@ -83,8 +83,5 @@ This package was originally started and is mostly maintained by Fabian Gans (fga
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-dev-url]: https://JuliaGeo.github.io/NetCDF.jl/dev
 
-[travis-img]: https://travis-ci.com/JuliaGeo/NetCDF.jl.svg?branch=master
-[travis-url]: https://travis-ci.com/JuliaGeo/NetCDF.jl
-
-[appveyor-img]: https://ci.appveyor.com/api/projects/status/m9okydt7700kgavi?svg=true
-[appveyor-url]: https://ci.appveyor.com/project/JuliaGeo/netcdf-jl/branch/master
+[ci-img]: https://github.com/JuliaGeo/NetCDF.jl/workflows/CI/badge.svg
+[ci-url]: https://github.com/JuliaGeo/NetCDF.jl/actions?query=workflow%3ACI
