@@ -3,7 +3,7 @@ uuid = "30363a11-5582-574a-97bb-aa9a979735b9"
 keywords = ["NetCDF", "IO"]
 license = "MIT"
 desc = "NetCDF file reading and writing"
-version = "0.11.0"
+version = "0.11.1"
 
 [deps]
 DiskArrays = "3c3547ce-8d99-4f5e-a174-61eb10b00ae3"
@@ -13,7 +13,7 @@ NetCDF_jll = "7243133f-43d8-5620-bbf4-c2c921802cf3"
 [compat]
 DiskArrays = "0.2"
 Formatting = "0.3.2, 0.4"
-NetCDF_jll = "4.7.4"
+NetCDF_jll = "400.701.400, 400.702.400"
 julia = "1.3"
 
 [extras]
