@@ -6,6 +6,7 @@ using Base.Cartesian
 import DiskArrays: readblock!, writeblock!, AbstractDiskArray, eachchunk, GridChunks,
        estimate_chunksize, haschunks, Chunked, Unchunked
 
+include("netcdf_constants.jl")
 include("netcdf_c.jl")
 
 import Base.show
