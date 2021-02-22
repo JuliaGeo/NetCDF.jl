@@ -422,6 +422,15 @@ function nc_free_vlen(l, )
         l,
     ))
 end
+function nc_free_vlens(len, lens, )
+    check(ccall(
+        (:nc_free_vlens, libnetcdf),
+        Cint,
+        (Csize_t, Ptr{nc_vlen_t}, ),
+        len,
+        lens,
+    ))
+end
 function nc_put_vlen_element(ncid, typeid1, len_element, len, ata, )
     check(ccall(
         (:nc_put_vlen_element, libnetcdf),
