@@ -132,6 +132,7 @@ NetCDF.open(fn1, mode = NC_NOWRITE) do nc1
     @test xs == NetCDF.readvar(nc1, "vstr")
     NetCDF.readvar(nc1, "v1", start = [1, 1, 1], count = [-1, -1, -1])
     @test xs == NetCDF.nc_char2string(NetCDF.readvar(nc1, "vchar"))
+    @test sort(["vstr", "Dim2", "v1", "Dim1", "vchar"]) == sort(collect(keys(nc1)))
 end
 
 NetCDF.open(fn2, mode = NC_NOWRITE) do nc2

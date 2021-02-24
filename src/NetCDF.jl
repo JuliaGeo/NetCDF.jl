@@ -298,6 +298,7 @@ end
 #Define getindex method to retrieve a variable
 Base.getindex(nc::NcFile, i::AbstractString) = haskey(nc.vars, i) ? nc.vars[i] :
 error("NetCDF file $(nc.name) does not have a variable named $(i)")
+Base.keys(nc::NcFile) = keys(nc.vars)
 
 include("netcdf_helpers.jl")
 
