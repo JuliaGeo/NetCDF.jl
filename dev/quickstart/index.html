@@ -9,7 +9,7 @@ day = 1
 tim = collect(0:23)
 
 # Create radiation array
-rad = [g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim];</code></pre><pre class="documenter-example-output">360×180×24 Array{Float64,3}:
+rad = [g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim];</code></pre><pre class="documenter-example-output">360×180×24 Array{Float64, 3}:
 [:, :, 1] =
  569.246  591.944  614.461  636.791  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
  569.245  591.941  614.456  636.784     0.0  0.0  0.0  0.0  0.0  0.0  0.0
@@ -76,7 +76,7 @@ rad = [g_pot(x2,x1,day,x3) for x1=lon, x2=lat, x3=tim];</code></pre><pre class="
  567.929  587.992  607.876  627.575     0.0  0.0  0.0  0.0  0.0  0.0  0.0
  567.834  587.708  607.404  626.914     0.0  0.0  0.0  0.0  0.0  0.0  0.0
 
-...
+;;; … 
 
 [:, :, 22] =
  565.865  581.801  597.56   613.137  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
@@ -149,7 +149,7 @@ lonatts = Dict(&quot;longname&quot; =&gt; &quot;Longitude&quot;,
 latatts = Dict(&quot;longname&quot; =&gt; &quot;Latitude&quot;,
           &quot;units&quot;    =&gt; &quot;degrees north&quot;)
 timatts = Dict(&quot;longname&quot; =&gt; &quot;Time&quot;,
-          &quot;units&quot;    =&gt; &quot;hours since 01-01-2000 00:00:00&quot;);</code></pre><pre class="documenter-example-output">Dict{String,String} with 2 entries:
+          &quot;units&quot;    =&gt; &quot;hours since 01-01-2000 00:00:00&quot;);</code></pre><pre class="documenter-example-output">Dict{String, String} with 2 entries:
   &quot;units&quot;    =&gt; &quot;hours since 01-01-2000 00:00:00&quot;
   &quot;longname&quot; =&gt; &quot;Time&quot;</pre><p>Now we have all the meta-information ready to create the actual file:</p><pre><code class="language-julia">fn = joinpath(tempdir(),&quot;radiation.nc&quot;)
 isfile(fn) &amp;&amp; rm(fn)
@@ -187,7 +187,7 @@ lon                 units               degrees east
 lon                 longname            Longitude
 rad                 units               W/m^2
 rad                 longname            Radiation at the top of the atmosphere</pre><p>Here we learn the most important information about the file, which variables it contains, the variable dimensions and their attributes. We decide to read the radiation variable:</p><pre><code class="language-julia">x=ncread(fn,&quot;rad&quot;)
-size(x)</code></pre><pre class="documenter-example-output">(360, 180, 24)</pre><p>This reads the whole array at once. If we only want to read a certain part of the variable, for example if we only want to plot the time series at a certain location, we can use the <code>start</code> and <code>count</code> keywords:</p><pre><code class="language-julia">ts = ncread(fn,&quot;rad&quot;,start=[180,45,1], count=[1,1,-1])</code></pre><pre class="documenter-example-output">1×1×24 Array{Float64,3}:
+size(x)</code></pre><pre class="documenter-example-output">(360, 180, 24)</pre><p>This reads the whole array at once. If we only want to read a certain part of the variable, for example if we only want to plot the time series at a certain location, we can use the <code>start</code> and <code>count</code> keywords:</p><pre><code class="language-julia">ts = ncread(fn,&quot;rad&quot;,start=[180,45,1], count=[1,1,-1])</code></pre><pre class="documenter-example-output">1×1×24 Array{Float64, 3}:
 [:, :, 1] =
  0.0
 
@@ -197,7 +197,7 @@ size(x)</code></pre><pre class="documenter-example-output">(360, 180, 24)</pre><
 [:, :, 3] =
  0.0
 
-...
+;;; … 
 
 [:, :, 22] =
  0.0
@@ -207,7 +207,7 @@ size(x)</code></pre><pre class="documenter-example-output">(360, 180, 24)</pre><
 
 [:, :, 24] =
  0.0</pre><p>In order to correctly label the time steps we retrieve the time information from the file:</p><pre><code class="language-julia">using Dates
-tvec = DateTime(2001,1,1) + Hour.(ncread(fn,&quot;time&quot;))</code></pre><pre class="documenter-example-output">24-element Array{Dates.DateTime,1}:
+tvec = DateTime(2001,1,1) + Hour.(ncread(fn,&quot;time&quot;))</code></pre><pre class="documenter-example-output">24-element Vector{Dates.DateTime}:
  2001-01-01T00:00:00
  2001-01-01T01:00:00
  2001-01-01T02:00:00
@@ -230,4 +230,4 @@ tvec = DateTime(2001,1,1) + Hour.(ncread(fn,&quot;time&quot;))</code></pre><pre 
  2001-01-01T23:00:00</pre><p>Now we can generate the plot:</p><pre><code class="language-none">plot(tvec,ts)</code></pre><p>Another example would be to generate a heatmap plot of the solar radiation at 12am UTC:</p><pre><code class="language-none">lons = ncread(fn,&quot;lon&quot;)
 lats = ncread(fn,&quot;lat&quot;)
 m    = ncread(fn,&quot;rad&quot;,start=[1,1,12],count=[-1,-1,1])
-plot(heatmap(x=lons,y=lats,z=m))</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../highlevel/">High-level interface »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 24 February 2021 08:41">Wednesday 24 February 2021</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+plot(heatmap(x=lons,y=lats,z=m))</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../highlevel/">High-level interface »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Tuesday 18 January 2022 16:13">Tuesday 18 January 2022</span>. Using Julia version 1.7.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
