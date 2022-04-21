@@ -38,7 +38,7 @@ After defining the dimensions, you can create `NcVar` objects with
 
     NcVar(varname , dimlist; atts=Dict{Any,Any}(), t=Float64, compress=-1)
 
-Here *varname* is the name of the variable, *dimlist* an array of type `NcDim` holding the dimensions associated to the variable, varattributes is a Dict holding pairs of attribute names and values. *t* is the data type that should be used for storing the variable.  You can either specify a Julia type (`Int16`, `Int32`, `Int64`, `Float32`, `Float64`) which will be translated to (`NC_SHORT`, `NC_INT`, `NC_FLOAT`, `NC_DOUBLE`) or directly specify one of the latter list. You can also set the compression level of the variable by setting *compress* to a number in the range 1..9 This has only an effect in NetCDF4 files.
+Here *varname* is the name of the variable, *dimlist* an array of type `NcDim` holding the dimensions associated to the variable, varattributes is a Dict holding pairs of attribute names and values. *t* is the data type that should be used for storing the variable.  You can either specify a Julia type (`Int16`, `Int32`, `Int64`, `Float32`, `Float64`) which will be translated to (`NC_SHORT`, `NC_INT`, `NC_INT64`, `NC_FLOAT`, `NC_DOUBLE`) or directly specify one of the latter list. You can also set the compression level of the variable by setting *compress* to a number in the range 1..9 This has only an effect in NetCDF4 files.
 
 
 Having defined the variables, the NetCDF file can be created:
