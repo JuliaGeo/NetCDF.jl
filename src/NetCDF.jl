@@ -227,9 +227,9 @@ function writeblock!(v::NcVar, a, r::AbstractUnitRange...)
   sync(v.ncfile)
 end
 getchunksize(v::NcVar) = getchunksize(haschunks(v),v)
-getchunksize(::Chunked, v::NcVar) = reverse(map(Int64,v.chunksize))
+getchunksize(::Chunked, v::NcVar) = GridChunks(v,reverse(map(Int64,v.chunksize)))
 getchunksize(::Unchunked, v::NcVar) = estimate_chunksize(v)
-eachchunk(v::NcVar) = GridChunks(v, getchunksize(v))
+eachchunk(v::NcVar) = getchunksize(v)
 haschunks(v::NcVar) = all(iszero,v.chunksize) ? Unchunked() : Chunked()
 
 """
