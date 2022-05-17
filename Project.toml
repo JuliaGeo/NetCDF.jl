@@ -13,7 +13,7 @@ NetCDF_jll = "7243133f-43d8-5620-bbf4-c2c921802cf3"
 [compat]
 DiskArrays = "0.3"
 Formatting = "0.3.2, 0.4"
-NetCDF_jll = "=400.701.400, =400.702.400"
+NetCDF_jll = "=400.701.400, =400.702.402"
 julia = "1.6"
 
 [extras]
