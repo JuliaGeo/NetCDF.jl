@@ -25,7 +25,7 @@ variables. Similarly, calling `ncread` or `NetCDF.readvar` on any of these varia
 
 ## `NC_CHAR` variables
 
-Dealing with `NC_CHAR` variables is a bit more complicated. This has 2 reasons. First, the dimensions of the NetCDF variables
+Dealing with `NC_CHAR` variables is a bit more complicated because of two reasons. First, the dimensions of the NetCDF variables
 do not match the dimensions of the resulting string array because of the additional `str_len` (or similar) axis that is introduced in the
 NetCDF file. So an n-dimensional String-Array maps to an (n+1)-dimensional `NC_CHAR` array.
 
