@@ -1029,7 +1029,7 @@ end
 """
     ncread(filename, varname)
 
-reads the values of the variable `varname`` from file `filename`` and returns the values in an array.
+reads the values of the variable `varname` from file `filename` and returns the values in an array.
 
 ### Keyword arguments
 
