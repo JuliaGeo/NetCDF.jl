@@ -45,7 +45,7 @@ Having defined the variables, the NetCDF file can be created:
 
     NetCDF.create(filename, varlist, gatts=Dict{Any,Any}(),mode=NC_NETCDF4)
 
-Here, filename is the name of the file to be created and varlist an array of `NcVar` holding the variables that should appear in the file. In the optional argument *gatts* you can specify a Dict containing global attributes and mode is the file type you want to create (`NC_NETCDF4`, `NC_CLASSIC_MODEL` or `NC_64BIT_OFFSET`).
+Here, *filename* is the name of the file to be created and *varlist* an array of `NcVar` holding the variables that should appear in the file. In the optional argument *gatts* you can specify a Dict containing global attributes and *mode* is the file type you want to create (`NC_NETCDF4`, `NC_CLASSIC_MODEL` or `NC_64BIT_OFFSET`).
 
 
 ## Miscellaneous
