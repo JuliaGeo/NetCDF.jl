@@ -1038,7 +1038,7 @@ reads the values of the variable varname from file filename and returns the valu
 
 ### Example
 
-To read the second slice of a 3D NetCDF variable one can write:
+To read the second slice of a 3D NetCDF variable, you can write:
 
     ncread("filename","varname", start=[1,1,2], count = [-1,-1,1])
 
