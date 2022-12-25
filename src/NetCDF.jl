@@ -750,7 +750,7 @@ function setcompression(v::NcVar, mode)
 end
 
 """
-    NetCDF.create(name::String,varlist::Array{NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
+    NetCDF.create(name::AbstringString,varlist::Array{NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4,add_finalizer = true)
 
 Creates a new NetCDF file. Here, `name`
  is the name of the file to be created and `varlist` an array of `NcVar` holding the variables that should appear in the file.
