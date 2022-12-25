@@ -315,7 +315,7 @@ readvar!(
 """
     NetCDF.readvar!(v::NcVar, d::Array;start::Vector=ones(UInt,ndims(d)),count::Vector=size(d))
 
-Reads the values from the file associated to the `NcVar` object `v` into the array `d`. By default the whole variable is read
+Reads the values from the file associated to the `NcVar` object `v` into the array `d`. By default the whole variable is read.
 
 ### Keyword arguments
 
