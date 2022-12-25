@@ -1029,16 +1029,16 @@ end
 """
     ncread(filename, varname)
 
-reads the values of the variable varname from file filename and returns the values in an array.
+reads the values of the variable `varname` from file `filename` and returns the values in an array.
 
 ### Keyword arguments
 
 * `start` Vector of length `ndim(v)` setting the starting index for each dimension
-* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. The value -1 is treated as a special case to read all values from this dimension
+* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. The value -1 is treated as a special case to read all values along the dimension
 
 ### Example
 
-To read the second slice of a 3D NetCDF variable one can write:
+To read the second slice of a 3D NetCDF variable, you can write:
 
     ncread("filename","varname", start=[1,1,2], count = [-1,-1,1])
 
@@ -1093,7 +1093,7 @@ function ncread!(
 end
 
 """
-    ncinfo()
+    ncinfo(filename)
 
 prints information on the variables, dimension and attributes conatained in the file
 """
@@ -1112,7 +1112,7 @@ Writes the array `x` to the file `fil` and variable `vname`.
 ### Keyword arguments
 
 * `start` Vector of length `ndim(v)` setting the starting index for writing for each dimension
-* `count` Vector of length `ndim(v)` setting the count of values to be written along each dimension. The value -1 is treated as a special case to write all values from this dimension. This is usually inferred by the given array size.
+* `count` Vector of length `ndim(v)` setting the count of values to be written along each dimension. The value -1 is treated as a special case to write all values along the dimension. This is usually inferred by the given array size.
 """
 function ncwrite(
     x::Array,
@@ -1179,7 +1179,7 @@ end
 """
     nccreate (filename, varname, dimensions ...)
 
-Create a variable in an existing NetCDF file or generates a new file. `filename` and `varname` are strings.
+Creates a variable in an existing NetCDF file or generates a new file. `filename` and `varname` are strings.
 After that follows a list of dimensions. Each dimension entry starts with a dimension name (a String), and
 may be followed by a dimension length, an array with dimension values or a Dict containing dimension attributes.
 Then the next dimension is entered and so on. Have a look at examples/high.jl for an example use.
