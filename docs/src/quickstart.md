@@ -8,7 +8,7 @@ The most common task is probably to just read a NetCDF file into memory. This is
 
 This reads the whole variable into memory and returns it as a Julia array. To read only
 a slice of a NetCDF file, there are optional `start` and `count` keyword arguments, where
-on can specify the starting index and count along each dimension.
+one can specify the starting index and count along each dimension.
 
 ## A more advanced example
 
