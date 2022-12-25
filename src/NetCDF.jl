@@ -1179,7 +1179,7 @@ end
 """
     nccreate (filename, varname, dimensions ...)
 
-Create a variable in an existing NetCDF file or generates a new file. `filename` and `varname` are strings.
+Creates a variable in an existing NetCDF file or generates a new file. `filename` and `varname` are strings.
 After that follows a list of dimensions. Each dimension entry starts with a dimension name (a String), and
 may be followed by a dimension length, an array with dimension values or a Dict containing dimension attributes.
 Then the next dimension is entered and so on. Have a look at examples/high.jl for an example use.
