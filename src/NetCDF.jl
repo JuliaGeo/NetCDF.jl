@@ -1034,7 +1034,7 @@ reads the values of the variable varname from file filename and returns the valu
 ### Keyword arguments
 
 * `start` Vector of length `ndim(v)` setting the starting index for each dimension
-* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. The value -1 is treated as a special case to read all values from this dimension
+* `count` Vector of length `ndim(v)` setting the count of values to be read along each dimension. The value -1 is treated as a special case to read all values along the dimension
 
 ### Example
 
