@@ -587,7 +587,7 @@ putvar(
 """
     NetCDF.putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
 
-Writes the values from the array `vals` to a NetCDF file. `v` is the `NcVar` handle of the respective variable and `vals` an array
+Writes the values from the array `vals` to a NetCDF file. `v` is the `NcVar` handle of the respective variable and `vals` is an array
 with the same dimension as the variable in the NetCDF file.
 
 ### Keyword arguments
