@@ -30,9 +30,9 @@ NetCDF.putvar
 
 To create a NetCDF file you first have to define the dimensions and variables that it is supposed to hold. As representations for NetCDF dimensions and variables there are the predefined `NcVar` and `NcDim` types. An `NcDim` object is created by:
 
-    NcDim(dimname, dimlength, atts=Dict{Any,Any}(), values=[], unlimited=false)
+    NcDim(dimname, dimlength, atts=Dict{Any,Any}(); values=[], unlimited=false)
 
-here `dimname` is the dimension name, `dimlength` is the dimension length. The optional argument `values` is a 1D array of values that are written to the dimension variable and the optional argument `atts` is a Dict holding pairs of attribute names and values. Setting `unlimited=true` creates an unlimited dimension.
+here *dimname* is the dimension name, *dimlength* is the dimension length. The optional argument *values* is a 1D array of values that are written to the dimension variable and the optional argument *atts* is a Dict holding pairs of attribute names and values. Setting `unlimited=true` creates an unlimited dimension.
 
 After defining the dimensions, you can create `NcVar` objects with
 
