@@ -1007,7 +1007,7 @@ end
 """
     NetCDF.create(f::Function, args...;kwargs...)
 
-Creates a NetCDF file, applies the function f on the resulting file or variable handle and properly closes the file after usage.
+Creates a NetCDF file, applies the function *f* on the resulting file or variable handle and properly closes the file after usage.
 This is convenient to use together with the `do` block syntax, for example:
 
 d = NcDim("time",1:10)
