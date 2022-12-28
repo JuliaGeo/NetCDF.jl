@@ -315,7 +315,7 @@ readvar!(
 """
     NetCDF.readvar!(v::NcVar, d::Array;start::Vector=ones(UInt,ndims(d)),count::Vector=size(d))
 
-Reads the values from the file associated to the `NcVar` object `v` into the array `d`. By default the whole variable is read
+Reads the values from the file associated to the `NcVar` object `v` into the array `d`. By default the whole variable is read.
 
 ### Keyword arguments
 
@@ -587,7 +587,7 @@ putvar(
 """
     NetCDF.putvar(v::NcVar,vals::Array;start::Vector=ones(Int,length(size(vals))),count::Vector=[size(vals)...])
 
-Writes the values from the array `vals` to a NetCDF file. `v` is the `NcVar` handle of the respective variable and `vals` an array
+Writes the values from the array `vals` to a NetCDF file. `v` is the `NcVar` handle of the respective variable and `vals` is an array
 with the same dimension as the variable in the NetCDF file.
 
 ### Keyword arguments
@@ -750,7 +750,7 @@ function setcompression(v::NcVar, mode)
 end
 
 """
-    NetCDF.create(name::String,varlist::Array{NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4)
+    NetCDF.create(name::AbstringString,varlist::Array{NcVar};gatts::Dict=Dict{Any,Any}(),mode::UInt16=NC_NETCDF4,add_finalizer = true)
 
 Creates a new NetCDF file. Here, `name`
  is the name of the file to be created and `varlist` an array of `NcVar` holding the variables that should appear in the file.
@@ -1007,7 +1007,7 @@ end
 """
     NetCDF.create(f::Function, args...;kwargs...)
 
-Creates a NetCDF file, applies the function f on the resulting file or variable handle and properly closes the file after usage.
+Creates a NetCDF file, applies the function `f` on the resulting file or variable handle and properly closes the file after usage.
 This is convenient to use together with the `do` block syntax, for example:
 
 d = NcDim("time",1:10)
