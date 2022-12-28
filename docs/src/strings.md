@@ -25,7 +25,7 @@ variables. Similarly, calling `ncread` or `NetCDF.readvar` on any of these varia
 
 ## `NC_CHAR` variables
 
-Dealing with `NC_CHAR` variables is a bit more complicated. This has 2 reasons. First, the dimensions of the NetCDF variables
+Dealing with `NC_CHAR` variables is a bit more complicated because of two reasons. First, the dimensions of the NetCDF variables
 do not match the dimensions of the resulting string array because of the additional `str_len` (or similar) axis that is introduced in the
 NetCDF file. So an n-dimensional String-Array maps to an (n+1)-dimensional `NC_CHAR` array.
 
@@ -33,7 +33,7 @@ Second, historically the `NC_CHAR` type has been used to store compressed data, 
 these char arrays to strings. Anyhow, here is how you can deal with these variable types:
 
 Assume you have a NetCDF variable of type `NC_CHAR` of dimensions (str_len: 10, axis2: 20).
-Calling `x=ncread(...)` or `x=readvar(...)` on this variable will return an `Array{ASCIIChar,2}` with size `(10,20)` as it is represented on disk. The `ASCIIChar` type is a small wrapper around `UInt8`, needed for dispatch. You can simply convert them to either `Char` or `UInt8` using the `convert` function. The returned array can either be used directly (if it is numeric maybe use `reinterpret(UInt8,x)`) or convert them to a `Vector{String}` by calling
+Calling `x=ncread(...)` or `x=readvar(...)` on this variable will return an `Array{ASCIIChar,2}` with size `(10,20)` as it is represented on disk. The `ASCIIChar` type is a small wrapper around `UInt8`, needed for dispatch. You can simply convert them to either `Char` or `UInt8` using the `convert` function. The returned array can either be used directly (if it is numeric, you might be able to use `reinterpret(UInt8,x)`) or convert them to a `Vector{String}` by calling
 
     y=nc_char2string(x)
 
