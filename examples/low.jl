@@ -53,6 +53,6 @@ NetCDF.open("radiation2.nc") do nc
     println("Successfully read an array of size ", size(x))
 
     # here the first array [1,1,5] gives the starting position for reading
-    # while the second array [1,1,2] gives the number of blocks to be read along each dimension.
+    # while the second array [-1,-1,2] gives the number of blocks to be read along each dimension.
     # If the count is set to -1 the whole dimension is read.
 end
