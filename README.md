@@ -1,9 +1,21 @@
-NetCDF.jl
-=========
+## NetCDF.jl
 
-| **Documentation**                                                               | **Build Status**                                                                                |
-|:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
-| [![][docs-dev-img]][docs-dev-url] | [![][ci-img]][ci-url]
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/juliageo.org/NetCDF.jl/blob/main/LICENSE)
+[![][docs-dev-img]][docs-dev-url][![][ci-img]][ci-url] [![][codecov-img]][codecov-url]
+[![][coveralls-img]][coveralls-url][![Downloads](https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/NetCDF&label=Downloads)](https://pkgs.genieframework.com?packages=NetCDF)
+
+
+[docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
+[docs-dev-url]: https://juliageo.org/NetCDF.jl/dev/
+
+[codecov-img]: https://codecov.io/gh/juliageo.org/NetCDF.jl/branch/master/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/juliageo.org/NetCDF.jl
+
+[ci-img]: https://github.com/juliageo.org/NetCDF.jl/workflows/CI/badge.svg
+[ci-url]: https://github.com/juliageo.org/NetCDF.jl/actions?query=workflow%3ACI
+
+[coveralls-img]: https://coveralls.io/repos/github/juliageo.org/NetCDF.jl/badge.svg?branch=master
+[coveralls-url]: https://coveralls.io/github/juliageo.org/NetCDF.jl?branch=master
 
 
 NetCDF support for the Julia programming language, there is a high-level and a medium-level interface for writing and reading netcdf files.
