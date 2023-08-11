@@ -991,9 +991,9 @@ end
 Opens a NetCDF file, applies the function f on the resulting file or variable handle and properly closes the file after usage.
 This is convenient to use together with the `do` block syntax, for example:
 
-data = open("myfile.nc","myvar") do v
-  NetCDF.readvar(v,start=[1,1,1], count=[-1,-1,1])
-end
+    data = open("myfile.nc","myvar") do v
+        NetCDF.readvar(v,start=[1,1,1], count=[-1,-1,1])
+    end
 """
 function open(f::Function, args...; kwargs...)
     io = open(args...;add_finalizer=false, kwargs...)
@@ -1010,11 +1010,11 @@ end
 Creates a NetCDF file, applies the function `f` on the resulting file or variable handle and properly closes the file after usage.
 This is convenient to use together with the `do` block syntax, for example:
 
-d = NcDim("time",1:10)
-v = NcVar("obs",d);
-NetCDF.create("newfile.nc",v) do nc
-  nc["obs"][:] = rand(10)
-end
+    d = NcDim("time",1:10)
+    v = NcVar("obs",d);
+    NetCDF.create("newfile.nc",v) do nc
+        nc["obs"][:] = rand(10)
+    end
 """
 function create(f::Function, args...; kwargs...)
     io = create(args...; add_finalizer=false, kwargs...)

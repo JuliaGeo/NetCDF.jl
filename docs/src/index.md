@@ -1,31 +1,20 @@
-# NetCDF.jl
+## NetCDF.jl
 
-*Reading and writing NetCDF files in Julia*
+_Reading and writing NetCDF files in Julia_
 
-## Package features
+NetCDF support for the Julia programming language, is a high-level and a medium-level interface for writing and reading `netcdf` files.
 
-High-level (MATLAB-like), low-level (C-like) and array-based access to NetCDF files.
+!!! info "Package features"
 
+    - High-level (MATLAB-like), low-level (C-like) and array-based access to NetCDF files.
 
-## Manual Outline
+Start by adding the package:
 
-```@contents
-Pages = [
-    "intro.md",
-    "quickstart.md",
-    "highlevel.md",
-    "intermediate.md",
-    "strings.md"
+```julia
 ]
-Depth = 1
+add NetCDF
 ```
 
-## Acknowledgements
+!!! success "Acknowledgements"
 
-Thanks to everyone who contributed to the package with pull requests, especially to Martijn Visser
-for creating the new generated C wrapper.
-
-## Index
-
-```@index
-```
+    Thanks to everyone who contributed to the package with pull requests, especially to Martijn Visser for creating the new generated C wrapper.
