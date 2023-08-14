@@ -1,6 +1,7 @@
 [deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+DocumenterMarkdown = "997ab1e6-3595-5248-9280-8efb232c3433"
+Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
 NetCDF = "30363a11-5582-574a-97bb-aa9a979735b9"
-
-[compat]
-Documenter = "0.26"
