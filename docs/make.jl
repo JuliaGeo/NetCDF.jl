@@ -4,7 +4,7 @@ using NetCDF
 makedocs(
     modules=[NetCDF],
     clean=true,
-    doctest=false,
+    doctest=true,
     #format   = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
     sitename="NetCDF.jl",
     authors="Fabian Gans et al.",

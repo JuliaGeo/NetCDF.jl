@@ -8,7 +8,7 @@ theme:
     # - content.tabs.link
     #- content.tooltips
     # - header.autohide
-    # - navigation.expand
+    - navigation.expand
     #- navigation.indexes
     # - navigation.instant
     # - navigation.prune
@@ -117,6 +117,11 @@ plugins:
 nav:
   - "Home": "index.md"
   - "Quick start" : "scripts/generated/guide/quick_start.md"
-  - "Open, read, create" : "scripts/generated/guide/open_read.md"
-  - "Strings" : "strings.md"
+  - "User Guide":
+    - "Open, read, create" : "scripts/generated/guide/open_read.md"
+    - "Strings" : "strings.md"
+    - "Dimensions": "scripts/generated/guide/dimensions.md"
+    - "Variables": "scripts/generated/guide/variables.md"
+    - "Attributes": "scripts/generated/guide/attributes.md"
+    - "Performance tips?": "scripts/generated/guide/performance.md"
   - "High-level interface" : "reference.md"
