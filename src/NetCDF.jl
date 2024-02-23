@@ -4,7 +4,7 @@ using NetCDF_jll
 using Formatting
 using Base.Cartesian
 import DiskArrays: readblock!, writeblock!, AbstractDiskArray, eachchunk, GridChunks,
-       estimate_chunksize, haschunks, Chunked, Unchunked
+       estimate_chunksize, haschunks, Chunked, Unchunked, SubRanges
 
 include("netcdf_constants.jl")
 include("netcdf_c.jl")
@@ -230,7 +230,7 @@ getchunksize(v::NcVar) = getchunksize(haschunks(v),v)
 getchunksize(::Chunked, v::NcVar) = GridChunks(v,reverse(map(Int64,v.chunksize)))
 getchunksize(::Unchunked, v::NcVar) = estimate_chunksize(v)
 eachchunk(v::NcVar) = getchunksize(v)
-haschunks(v::NcVar) = all(iszero,v.chunksize) ? Unchunked() : Chunked()
+haschunks(v::NcVar) = all(iszero,v.chunksize) ? Unchunked(SubRanges()) : Chunked()
 
 """
     NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}}
