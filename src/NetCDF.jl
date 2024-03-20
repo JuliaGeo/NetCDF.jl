@@ -341,7 +341,7 @@ function readvar!(
     Base.iscontiguous(retvalsa) || error("Can only read into contiguous pieces of memory")
 
     length(start) == v.ndim || error("Length of start ($(length(start))) must equal the number of variable dimensions ($(v.ndim))")
-    length(count) == v.ndim || error("Length of start ($(length(count))) must equal the number of variable dimensions ($(v.ndim))")
+    length(count) == v.ndim || error("Length of count ($(length(count))) must equal the number of variable dimensions ($(v.ndim))")
 
     p = preparestartcount(start, count, v)
 
