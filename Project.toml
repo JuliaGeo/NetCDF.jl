@@ -3,7 +3,7 @@ uuid = "30363a11-5582-574a-97bb-aa9a979735b9"
 keywords = ["NetCDF", "IO"]
 license = "MIT"
 desc = "NetCDF file reading and writing"
-version = "0.11.8"
+version = "0.12.0"
 
 [deps]
 DiskArrays = "3c3547ce-8d99-4f5e-a174-61eb10b00ae3"
