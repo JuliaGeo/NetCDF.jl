@@ -229,7 +229,13 @@ getchunksize(v::NcVar) = getchunksize(haschunks(v),v)
 getchunksize(::Chunked, v::NcVar) = GridChunks(v,reverse(map(Int64,v.chunksize)))
 getchunksize(::Unchunked, v::NcVar) = estimate_chunksize(v)
 eachchunk(v::NcVar) = getchunksize(v)
-haschunks(v::NcVar) = all(iszero,v.chunksize) ? Unchunked(SubRanges()) : Chunked()
+function haschunks(v::NcVar) 
+    if all(iszero,v.chunksize) 
+        Unchunked(SubRanges()) 
+    else 
+        Chunked(SubRanges())
+    end
+end
 
 """
     NcVar(name::AbstractString,dimin::Union{NcDim,Array{NcDim,1}}
