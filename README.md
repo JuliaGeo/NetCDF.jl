@@ -8,6 +8,11 @@ NetCDF.jl
 
 NetCDF support for the Julia programming language, there is a high-level and a medium-level interface for writing and reading netcdf files.
 
+
+# Missing maintenance warning
+
+This package is currently lacking maintenance. NetCDF.jl should be stable and useful for most operations on NetCDF files, but most users should consider using [NCDatasets.jl](https://github.com/JuliaGeo/NCDatasets.jl) instead, which has more features, like automatic application of CF metadata conventions, is actively maintained and developed and very well documented. 
+
 # Installation
 
 ```julia
