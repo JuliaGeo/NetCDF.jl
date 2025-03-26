@@ -15,4 +15,4 @@ makedocs(
     ],
 )
 
-deploydocs(repo = "github.com/JuliaGeo/NetCDF.jl")
+deploydocs(repo="github.com/meggart/NetCDF.jl")

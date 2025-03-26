@@ -86,7 +86,7 @@ v = NetCDF.open(filename, varname)
 This package was originally started and is mostly maintained by Fabian Gans (fgans@bgc-jena.mpg.de). The automatic C wrapper generator was contributed by Martijn Visser (https://github.com/visr). Many thanks to several people who contributed bug fixes and enhancements.
 
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
-[docs-dev-url]: https://JuliaGeo.github.io/NetCDF.jl/dev
+[docs-dev-url]: https://meggart.github.io/NetCDF.jl/dev
 
-[ci-img]: https://github.com/JuliaGeo/NetCDF.jl/workflows/CI/badge.svg
-[ci-url]: https://github.com/JuliaGeo/NetCDF.jl/actions?query=workflow%3ACI
+[ci-img]: https://github.com/meggart/NetCDF.jl/workflows/CI/badge.svg
+[ci-url]: https://github.com/meggart/NetCDF.jl/actions?query=workflow%3ACI
